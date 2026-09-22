@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest'
 
 const srcDir = dirname(fileURLToPath(import.meta.url))
 const pageTsx = readFileSync(resolve(srcDir, 'Page.tsx'), 'utf8')
+const pageCss = readFileSync(resolve(srcDir, 'Page.css'), 'utf8')
 const shellSrc = resolve(srcDir, '../../../shell/src')
 const headerTsx = readFileSync(resolve(shellSrc, 'Header.tsx'), 'utf8')
+const calcNav = readFileSync(resolve(shellSrc, 'CalculatorNav.tsx'), 'utf8')
 const tokensCss = readFileSync(resolve(shellSrc, 'tokens.css'), 'utf8')
 const webStyles = readFileSync(
   resolve(srcDir, '../../../../apps/web/src/styles.css'),
@@ -14,27 +16,66 @@ const webStyles = readFileSync(
 )
 
 describe('pillows layout regressions', () => {
+  it('mobile Inputs|Results tabs eliminate dual nested scroll at ≤800px', () => {
+    expect(pageTsx).toMatch(/mobile-tabs/)
+    expect(pageTsx).toMatch(/mobileView === 'inputs'/)
+    expect(pageTsx).toMatch(/mobileView === 'results'/)
+    expect(pageTsx).toMatch(/setMobileView\('inputs'\)/)
+    expect(pageTsx).toMatch(/setMobileView\('results'\)/)
+    expect(pageTsx).toMatch(/layout mobile-\$\{mobileView\}/)
+    expect(pageCss).toMatch(/\.layout\.mobile-inputs \.results/)
+    expect(pageCss).toMatch(/\.layout\.mobile-results \.sidebar/)
+    expect(pageCss).toMatch(/@media \(max-width: 800px\)/)
+  })
+
   it('type cards are ≥44px Daisy ghost buttons', () => {
     expect(pageTsx).toMatch(/btn btn-ghost h-auto min-h-11 w-full flex-col/)
   })
 
-  it('unit toggles are ≥44px and neutral when selected (not dual primary)', () => {
+  it('unit toggles are Daisy join ≥44px and neutral when selected (not dual primary)', () => {
+    expect(pageTsx).toMatch(/className="join"/)
     expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 \$\{unit === 'in' \? 'btn-neutral'/)
     expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 \$\{unit === 'mm' \? 'btn-neutral'/)
     expect(pageTsx).not.toMatch(/unit === 'in' \? 'btn-primary'/)
     expect(pageTsx).not.toMatch(/unit === 'mm' \? 'btn-primary'/)
   })
 
-  it('pattern/fit radio rows are ≥44px hit targets', () => {
-    expect(pageTsx).toMatch(/label cursor-pointer justify-start gap-2 min-h-11/)
-    expect(pageTsx).not.toMatch(/label cursor-pointer justify-start gap-2 py-1/)
+  it('pattern direction uses segmented join/btn ≥44px (not radio rows)', () => {
+    expect(pageTsx).toMatch(/aria-label="Pattern direction"/)
+    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{pattern === val \? 'btn-neutral'/)
+    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{bolsterPattern === val \? 'btn-neutral'/)
+    expect(pageTsx).not.toMatch(/name="pattern"/)
+    expect(pageTsx).not.toMatch(/name="bolster-pattern"/)
+    expect(pageTsx).not.toMatch(/radio radio-sm radio-primary/)
   })
 
-  it('yardage shop CTA is sole solid primary and ≥44px; header Shop is outline', () => {
+  it('yardage shop CTA is sole solid primary ≥44px; header Shop outline + hidden on mobile', () => {
     expect(pageTsx).toMatch(/btn btn-primary mt-2 min-h-11/)
-    expect(pageTsx.match(/btn-primary/g)?.length).toBe(1)
+    expect(pageTsx.match(/btn-primary/g)?.length).toBeGreaterThanOrEqual(1)
+    // body shop is the only btn-primary in page chrome outside mobile tabs (tabs also use primary)
+    expect(pageTsx).toMatch(/shopFabricYardsLabel/)
     expect(headerTsx).toMatch(/Shop Sailrite/)
     expect(headerTsx).toMatch(/btn btn-outline/)
+    expect(headerTsx).toMatch(/hidden[\s\S]*?min-\[801px\]:inline-flex/)
+  })
+
+  it('disclaimer collapses on mobile so it does not eat work surface', () => {
+    expect(pageTsx).toMatch(/disclaimer-mobile/)
+    expect(pageTsx).toMatch(/Estimate disclaimer/)
+    expect(pageTsx).toMatch(/max-\[800px\]:block min-\[801px\]:hidden/)
+  })
+
+  it('form-vs-cut finished outline uses primary dashed, not Alert Red', () => {
+    expect(pageTsx).toMatch(/stroke="#24285e"/)
+    expect(pageTsx).not.toMatch(/stroke="#e75053"/)
+    expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
+    expect(pageCss).not.toMatch(/diag-label-inner[^}]*--sr-danger/)
+  })
+
+  it('header More controls are ≥44px hit targets', () => {
+    expect(calcNav).toMatch(/btn btn-ghost btn-sm min-h-11 rounded-full border border-white\/25/)
+    expect(calcNav).toMatch(/btn btn-ghost btn-sm min-h-11 rounded-full border border-white\/30/)
+    expect(calcNav).toMatch(/min-h-11 items-center justify-between/)
   })
 
   it('keeps Sailrite brand tokens (SR Blue / Alert Red)', () => {

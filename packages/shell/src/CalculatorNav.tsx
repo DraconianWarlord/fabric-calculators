@@ -143,7 +143,7 @@ export function CalculatorNav({
       <div className="relative shrink-0" ref={moreRef}>
         <button
           type="button"
-          className={`btn btn-ghost btn-sm rounded-full border border-white/25 text-neutral-content hover:bg-white/10 ${
+          className={`btn btn-ghost btn-sm min-h-11 rounded-full border border-white/25 text-neutral-content hover:bg-white/10 ${
             moreOpen ? 'bg-white/10' : ''
           }`}
           aria-expanded={moreOpen}
@@ -203,7 +203,7 @@ export function MobileMoreCalculators({
     <div className="relative ml-1 shrink-0 max-[800px]:inline-flex min-[801px]:hidden" ref={ref}>
       <button
         type="button"
-        className={`btn btn-ghost btn-xs min-h-7 rounded-full border border-white/30 px-2.5 text-[0.7rem] font-semibold text-neutral-content hover:bg-white/10 ${
+        className={`btn btn-ghost btn-sm min-h-11 rounded-full border border-white/30 px-2.5 text-xs font-semibold text-neutral-content hover:bg-white/10 ${
           open ? 'bg-white/10' : ''
         }`}
         aria-expanded={open}

@@ -83,7 +83,7 @@ function ThrowDiagram({
         width={finW}
         height={finL}
         fill="none"
-        stroke="#e75053"
+        stroke="#24285e"
         strokeWidth={1.5}
         strokeDasharray="4 3"
         rx={2}
@@ -106,7 +106,7 @@ function ThrowDiagram({
           y1={18}
           x2={14}
           y2={18}
-          stroke="#e75053"
+          stroke="#24285e"
           strokeWidth={1.5}
           strokeDasharray="4 3"
         />
@@ -184,6 +184,7 @@ export default function PillowsPage() {
   const [pillowTypeId, setPillowTypeId] = useState('throw')
   const [bolsterFit, setBolsterFit] = useState<BolsterFit>('regular')
   const [bolsterPattern, setBolsterPattern] = useState<BolsterPattern>('horizontal')
+  const [mobileView, setMobileView] = useState<'inputs' | 'results'>('results')
 
   const formWidthIn = Math.max(0.1, toInches(Number(widthDraft) || 0, unit))
   const formLengthIn = Math.max(0.1, toInches(Number(lengthDraft) || 0, unit))
@@ -273,15 +274,44 @@ export default function PillowsPage() {
 
   return (
     <div className="calc-page calc-page--pillows">
-      
-
-      <p className="disclaimer" role="note">
+      <details className="disclaimer-mobile shrink-0 border-b border-base-300 bg-base-100 px-3 max-[800px]:block min-[801px]:hidden">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center text-xs font-semibold text-base-content/70 [&::-webkit-details-marker]:hidden">
+          Estimate disclaimer
+        </summary>
+        <p className="pb-2 text-xs leading-snug text-base-content/60" role="note">
+          Estimate only — double-check all results thoroughly. Sailrite is not responsible for
+          miscalculations, cut fabric, or purchased fabric from this tool.
+        </p>
+      </details>
+      <p className="disclaimer hidden shrink-0 border-b border-base-300 px-3 py-2 text-xs leading-snug text-base-content/60 min-[801px]:block" role="note">
         Estimate only — double-check all results thoroughly. Sailrite is not responsible for
         miscalculations, cut fabric, or purchased fabric from this tool.
       </p>
 
-      <div className="layout grid min-h-0 flex-1 grid-cols-1 min-[801px]:grid-cols-[minmax(280px,360px)_1fr]">
-        <aside className="sidebar left bg-base-100 border-r border-base-300 overflow-y-auto p-3.5">
+      <nav
+        className="mobile-tabs hidden shrink-0 gap-1.5 border-b border-base-300 bg-base-100 px-2.5 py-1.5 max-[800px]:flex"
+        aria-label="Main sections"
+      >
+        <button
+          type="button"
+          className={`btn btn-sm min-h-11 flex-1 ${mobileView === 'inputs' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
+          aria-pressed={mobileView === 'inputs'}
+          onClick={() => setMobileView('inputs')}
+        >
+          Inputs
+        </button>
+        <button
+          type="button"
+          className={`btn btn-sm min-h-11 flex-1 ${mobileView === 'results' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
+          aria-pressed={mobileView === 'results'}
+          onClick={() => setMobileView('results')}
+        >
+          Results
+        </button>
+      </nav>
+
+      <div className={`layout mobile-${mobileView} grid min-h-0 flex-1 grid-cols-1 min-[801px]:grid-cols-[minmax(280px,360px)_1fr]`}>
+        <aside className="sidebar left bg-base-100 border-r border-base-300 overflow-y-auto p-3.5" data-mobile-pane="inputs">
           <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
             <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">pillow type</h2>
             <div className="grid gap-2" role="list">
@@ -391,23 +421,24 @@ export default function PillowsPage() {
               <>
                 <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
                   <legend>pattern direction</legend>
-                  {(
-                    [
-                      ['horizontal', 'horizontal'],
-                      ['vertical', 'vertical'],
-                    ] as const
-                  ).map(([val, label]) => (
-                    <label key={val} className="label cursor-pointer justify-start gap-2 min-h-11 py-2">
-                      <input className="radio radio-sm radio-primary"
-                        type="radio"
-                        name="bolster-pattern"
-                        value={val}
-                        checked={bolsterPattern === val}
-                        onChange={() => setBolsterPattern(val)}
-                      />
-                      {label}
-                    </label>
-                  ))}
+                  <div className="join w-full" role="group" aria-label="Bolster pattern direction">
+                    {(
+                      [
+                        ['horizontal', 'horizontal'],
+                        ['vertical', 'vertical'],
+                      ] as const
+                    ).map(([val, label]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterPattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                        aria-pressed={bolsterPattern === val}
+                        onClick={() => setBolsterPattern(val)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                   <span className="text-xs text-base-content/60 mt-1 leading-snug">
                     horizontal = pattern around the pillow (circ along bolt). vertical = pattern
                     across the pillow (length along bolt).
@@ -415,23 +446,24 @@ export default function PillowsPage() {
                 </fieldset>
                 <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
                   <legend>fit</legend>
-                  {(
-                    [
-                      ['regular', 'regular'],
-                      ['tight', 'tight'],
-                    ] as const
-                  ).map(([val, label]) => (
-                    <label key={val} className="label cursor-pointer justify-start gap-2 min-h-11 py-2">
-                      <input className="radio radio-sm radio-primary"
-                        type="radio"
-                        name="bolster-fit"
-                        value={val}
-                        checked={bolsterFit === val}
-                        onChange={() => setBolsterFit(val)}
-                      />
-                      {label}
-                    </label>
-                  ))}
+                  <div className="join w-full" role="group" aria-label="Bolster fit">
+                    {(
+                      [
+                        ['regular', 'regular'],
+                        ['tight', 'tight'],
+                      ] as const
+                    ).map(([val, label]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterFit === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                        aria-pressed={bolsterFit === val}
+                        onClick={() => setBolsterFit(val)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                   <span className="text-xs text-base-content/60 mt-1 leading-snug">
                     Regular adds ½″ SA (default). Tight adds none — cover ~1″ smaller. Closure
                     overlap 2″ on circumference (tips mention 2¼″ for Velcro).
@@ -441,24 +473,26 @@ export default function PillowsPage() {
             ) : (
               <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
                 <legend>pattern direction</legend>
-                {(
-                  [
-                    ['horizontal', 'horizontal'],
-                    ['vertical', 'vertical'],
-                    ['none', 'none / best pack'],
-                  ] as const
-                ).map(([val, label]) => (
-                  <label key={val} className="label cursor-pointer justify-start gap-2 min-h-11 py-2">
-                    <input className="radio radio-sm radio-primary"
-                        type="radio"
-                      name="pattern"
-                      value={val}
-                      checked={pattern === val}
-                      onChange={() => setPattern(val)}
-                    />
-                    {label}
-                  </label>
-                ))}
+                <div className="join w-full" role="group" aria-label="Pattern direction">
+                  {(
+                    [
+                      ['horizontal', 'horizontal'],
+                      ['vertical', 'vertical'],
+                      ['none', 'none'],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`btn join-item btn-sm min-h-11 flex-1 ${pattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                      aria-pressed={pattern === val}
+                      onClick={() => setPattern(val)}
+                      title={val === 'none' ? 'none / best pack' : label}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <span className="text-xs text-base-content/60 mt-1 leading-snug">
                   Sailrite default is horizontal (pattern on pillow length). vertical = pattern on
                   width. none / best pack = pick lower yardage orientation.
