@@ -2,9 +2,14 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "es2023",
-    "lib": ["ES2023", "DOM"],
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
     "module": "esnext",
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -17,14 +22,41 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@sailrite/calc-shell": ["../../packages/shell/src"],
-      "@sailrite/calc-shell/*": ["../../packages/shell/src/*"],
-      "@sailrite/calc-registry": ["../../packages/registry/src"],
-      "@sailrite/calc-nesting": ["../../packages/calculators/nesting/src"],
-      "@sailrite/calc-nesting/*": ["../../packages/calculators/nesting/src/*"],
-      "@sailrite/calc-pillows": ["../../packages/calculators/pillows/src"],
-      "@sailrite/calc-pillows/*": ["../../packages/calculators/pillows/src/*"]
+      "@sailrite/calc-shell": [
+        "../../packages/shell/src"
+      ],
+      "@sailrite/calc-shell/*": [
+        "../../packages/shell/src/*"
+      ],
+      "@sailrite/calc-registry": [
+        "../../packages/registry/src"
+      ],
+      "@sailrite/calc-nesting": [
+        "../../packages/calculators/nesting/src"
+      ],
+      "@sailrite/calc-nesting/*": [
+        "../../packages/calculators/nesting/src/*"
+      ],
+      "@sailrite/calc-pillows": [
+        "../../packages/calculators/pillows/src"
+      ],
+      "@sailrite/calc-pillows/*": [
+        "../../packages/calculators/pillows/src/*"
+      ]
     }
   },
-  "include": ["src", "../../packages/shell/src", "../../packages/registry/src", "../../packages/calculators/nesting/src", "../../packages/calculators/pillows/src"]
+  "include": [
+    "src",
+    "../../packages/shell/src",
+    "../../packages/registry/src",
+    "../../packages/calculators/nesting/src",
+    "../../packages/calculators/pillows/src"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/test/**"
+  ]
 }
