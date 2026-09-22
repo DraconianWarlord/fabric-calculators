@@ -12,21 +12,25 @@ import {
 import { PILLOW_TYPES } from './pillowTypes'
 import {
   DEFAULT_FABRIC_WIDTH_IN,
-  FORM_TO_FINISHED_REDUCTION_IN,
+  DEFAULT_FILL_STYLE,
   MAX_QUANTITY,
   MIN_QUANTITY,
-  SEAM_ALLOWANCE_IN,
   calculateThrowPillows,
   fromInches,
   toInches,
+  type FillStyle,
   type PatternDirection,
   type Unit,
 } from './lib/throwPillows'
 import {
   calculateBolster,
-  type BolsterFit,
   type BolsterPattern,
 } from './lib/bolsterPillows'
+import { FILL_STYLE_HELP, BOLSTER_FILL_HELP } from './lib/fillStyle'
+import { DOG_EAR_OPTIONAL_NOTE } from './lib/dogEar'
+import { throwNestPreview, bolsterNestPreview } from './lib/nestPreview'
+import { ThrowReference, BolsterReference } from './diagrams/ReferenceSvg'
+import { NestPreviewSvg } from './diagrams/NestPreviewSvg'
 import './Page.css'
 
 const SHOP = buildShopLinks('pillows', 'fabric_pillows')
@@ -39,132 +43,6 @@ function formatDim(inches: number, unit: Unit): string {
   return v.toFixed(0)
 }
 
-function ThrowDiagram({
-  formW,
-  formL,
-  cutW,
-  cutL,
-  finishedW,
-  finishedL,
-  unit,
-}: {
-  formW: number
-  formL: number
-  cutW: number
-  cutL: number
-  finishedW: number
-  finishedL: number
-  unit: Unit
-}) {
-  const max = Math.max(cutW, cutL, finishedW, finishedL, 1)
-  const scale = 140 / max
-  const cw = cutW * scale
-  const cl = cutL * scale
-  const finW = Math.max(4, finishedW * scale)
-  const finL = Math.max(4, finishedL * scale)
-  const pad = 28
-  const svgW = cw + pad * 2 + 120
-  const svgH = cl + pad * 2 + 8
-
-  return (
-    <svg
-      className="pillow-diagram"
-      viewBox={`0 0 ${svgW} ${svgH}`}
-      role="img"
-      aria-label="Form, cut, and finished cover diagram"
-    >
-      <rect
-        x={pad}
-        y={pad}
-        width={cw}
-        height={cl}
-        rx={2}
-        {...cutShapeSvgProps()}
-      />
-      <text x={pad + cw / 2} y={pad - 10} textAnchor="middle" className="diag-label">
-        cut (= form) {formatDim(cutW, unit)} × {formatDim(cutL, unit)} {unit}
-      </text>
-      <rect
-        x={pad + (cw - finW) / 2}
-        y={pad + (cl - finL) / 2}
-        width={finW}
-        height={finL}
-        rx={2}
-        {...finishedShapeSvgProps()}
-      />
-      <text
-        x={pad + cw / 2}
-        y={pad + cl / 2 + 4}
-        textAnchor="middle"
-        className="diag-label diag-label-inner"
-      >
-        finished
-      </text>
-      <CutFinishedLegend
-        x={pad + cw + 16}
-        y={pad + 8}
-        cutLabel={`cut / form ${formatDim(formW, unit)}×${formatDim(formL, unit)}`}
-        finishedLabel={`finished (−${FORM_TO_FINISHED_REDUCTION_IN}")`}
-      />
-    </svg>
-  )
-}
-
-function BolsterDiagram({
-  diameterIn,
-  lengthIn,
-  endDiameterIn,
-  barrelAlongIn,
-  barrelCircIn,
-  unit,
-}: {
-  diameterIn: number
-  lengthIn: number
-  endDiameterIn: number
-  barrelAlongIn: number
-  barrelCircIn: number
-  unit: Unit
-}) {
-  const r = 36
-  const bodyW = 120
-  const bodyH = 72
-  const cx = 50
-  const cy = 70
-  return (
-    <svg
-      className="pillow-diagram"
-      viewBox="0 0 280 150"
-      role="img"
-      aria-label="Bolster form and cut diagram"
-    >
-      <ellipse cx={cx} cy={cy} rx={r * 0.45} ry={r} {...cutShapeSvgProps()} />
-      <rect x={cx} y={cy - r} width={bodyW} height={bodyH} fill={DIAGRAM_CUT_FILL} stroke="none" />
-      <ellipse
-        cx={cx + bodyW}
-        cy={cy}
-        rx={r * 0.45}
-        ry={r}
-        fill="#c5cae9"
-        stroke={DIAGRAM_SR_BLUE}
-        strokeWidth={2}
-      />
-      <line x1={cx} y1={cy - r} x2={cx + bodyW} y2={cy - r} stroke={DIAGRAM_SR_BLUE} strokeWidth={2} />
-      <line x1={cx} y1={cy + r} x2={cx + bodyW} y2={cy + r} stroke={DIAGRAM_SR_BLUE} strokeWidth={2} />
-      <text x={cx + bodyW / 2} y={cy - r - 8} textAnchor="middle" className="diag-label">
-        B form {formatDim(lengthIn, unit)} → cut {formatDim(barrelAlongIn, unit)}
-      </text>
-      <text x={cx - 28} y={cy + 4} textAnchor="middle" className="diag-label" transform={`rotate(-90 ${cx - 28} ${cy})`}>
-        A ⌀ {formatDim(diameterIn, unit)}
-      </text>
-      <text x={cx + bodyW + 40} y={cy - 10} className="diag-legend">
-        end cut ⌀ {formatDim(endDiameterIn, unit)}
-      </text>
-      <text x={cx + bodyW + 40} y={cy + 8} className="diag-legend">
-        barrel circ {formatDim(barrelCircIn, unit)}
-      </text>
-    </svg>
-  )
-}
 
 export default function PillowsPage() {
   const [unit, setUnit] = useState<Unit>('in')
@@ -174,13 +52,18 @@ export default function PillowsPage() {
   const [quantity, setQuantity] = useState(1)
   const [pattern, setPattern] = useState<PatternDirection>('horizontal')
   const [pillowTypeId, setPillowTypeId] = useState('throw')
-  const [bolsterFit, setBolsterFit] = useState<BolsterFit>('regular')
+  const [fillStyle, setFillStyle] = useState<FillStyle>(DEFAULT_FILL_STYLE)
+  const [dogEarTrim, setDogEarTrim] = useState(false)
+  const [hRepeatDraft, setHRepeatDraft] = useState('0')
+  const [vRepeatDraft, setVRepeatDraft] = useState('0')
   const [bolsterPattern, setBolsterPattern] = useState<BolsterPattern>('horizontal')
   const [mobileView, setMobileView] = useState<'inputs' | 'results'>('results')
 
   const formWidthIn = Math.max(0.1, toInches(Number(widthDraft) || 0, unit))
   const formLengthIn = Math.max(0.1, toInches(Number(lengthDraft) || 0, unit))
   const fabricWidthIn = Math.max(1, toInches(Number(fabricDraft) || 0, unit))
+  const hRepeatIn = Math.max(0, toInches(Number(hRepeatDraft) || 0, unit))
+  const vRepeatIn = Math.max(0, toInches(Number(vRepeatDraft) || 0, unit))
 
   const isBolster = pillowTypeId === 'bolster'
 
@@ -192,8 +75,10 @@ export default function PillowsPage() {
         quantity,
         fabricWidthIn,
         pattern,
+        fillStyle,
+        dogEarTrim,
       }),
-    [formWidthIn, formLengthIn, quantity, fabricWidthIn, pattern],
+    [formWidthIn, formLengthIn, quantity, fabricWidthIn, pattern, fillStyle, dogEarTrim],
   )
 
   const bolsterResult = useMemo(
@@ -204,10 +89,17 @@ export default function PillowsPage() {
         quantity,
         fabricWidthIn,
         pattern: bolsterPattern,
-        fit: bolsterFit,
+        fillStyle,
       }),
-    [formWidthIn, formLengthIn, quantity, fabricWidthIn, bolsterPattern, bolsterFit],
+    [formWidthIn, formLengthIn, quantity, fabricWidthIn, bolsterPattern, fillStyle],
   )
+
+  const nestModel = useMemo(() => {
+    if (isBolster) {
+      return bolsterNestPreview(bolsterResult.cuts, bolsterResult.nest, quantity, fabricWidthIn)
+    }
+    return throwNestPreview(throwResult.pack, fabricWidthIn, { dogEar: dogEarTrim })
+  }, [isBolster, bolsterResult, throwResult.pack, quantity, fabricWidthIn, dogEarTrim])
 
   const exact = isBolster ? bolsterResult.nest.exactYards : throwResult.pack.exactYards
   const order = isBolster ? bolsterResult.nest.orderYards : throwResult.pack.orderYards
@@ -243,11 +135,11 @@ export default function PillowsPage() {
       setWidthDraft(unit === 'in' ? '8' : String(Math.round(8 * 25.4)))
       setLengthDraft(unit === 'in' ? '20' : String(Math.round(20 * 25.4)))
       setBolsterPattern('horizontal')
-      setBolsterFit('regular')
     } else {
       setWidthDraft(unit === 'in' ? '18' : String(Math.round(18 * 25.4)))
       setLengthDraft(unit === 'in' ? '18' : String(Math.round(18 * 25.4)))
       setPattern('horizontal')
+      setDogEarTrim(false)
     }
   }
 
@@ -371,11 +263,7 @@ export default function PillowsPage() {
                 onChange={(e) => setWidthDraft(e.target.value)}
               />
               <span className="text-xs leading-snug text-base-content/60">
-                {isBolster
-                  ? bolsterFit === 'regular'
-                    ? `Regular Fit: end cut = form + ${SEAM_ALLOWANCE_IN}"; finished ≈ form − ${SEAM_ALLOWANCE_IN}"`
-                    : 'Tight Fit: cut = form; finished ≈ form − 1"'
-                  : `finished cover ≈ form − ${FORM_TO_FINISHED_REDUCTION_IN}" (${SEAM_ALLOWANCE_IN}" seams; cut = form)`}
+                {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]}
               </span>
             </label>
             <label className="flex w-full flex-col gap-1.5 text-sm">
@@ -415,6 +303,45 @@ export default function PillowsPage() {
               <span className="text-xs leading-snug text-base-content/60">often 46, 54, or 60 {unitLabel}</span>
             </label>
 
+            <>
+            <fieldset className="m-0 min-w-0 border-0 p-0">
+              <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">fill style</legend>
+              <div className="join w-full" role="group" aria-label="Fill style">
+                {(['flat', 'standard', 'plump'] as const).map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    className={`btn join-item btn-sm min-h-11 flex-1 ${fillStyle === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                    aria-pressed={fillStyle === val}
+                    onClick={() => setFillStyle(val)}
+                  >
+                    {val}
+                  </button>
+                ))}
+              </div>
+              <span className="mt-1.5 text-xs leading-snug text-base-content/60">
+                {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]} UX labels
+                (Videos Expert) — not Sailrite product names. Default Standard.
+              </span>
+            </fieldset>
+
+            {!isBolster && (
+              <label className="label cursor-pointer justify-start gap-3 min-h-11 py-0">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={dogEarTrim}
+                  onChange={(e) => setDogEarTrim(e.target.checked)}
+                />
+                <span className="label-text text-sm">
+                  Dog-ear corner trim
+                  <span className="block text-xs font-normal text-base-content/60">
+                    {DOG_EAR_OPTIONAL_NOTE}
+                  </span>
+                </span>
+              </label>
+            )}
+
             {isBolster ? (
               <>
                 <fieldset className="m-0 min-w-0 border-0 p-0">
@@ -440,31 +367,6 @@ export default function PillowsPage() {
                   <span className="mt-1.5 text-xs leading-snug text-base-content/60">
                     horizontal = pattern around the pillow (circ along bolt). vertical = pattern
                     across the pillow (length along bolt).
-                  </span>
-                </fieldset>
-                <fieldset className="m-0 min-w-0 border-0 p-0">
-                  <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">fit</legend>
-                  <div className="join w-full" role="group" aria-label="Bolster fit">
-                    {(
-                      [
-                        ['regular', 'regular'],
-                        ['tight', 'tight'],
-                      ] as const
-                    ).map(([val, label]) => (
-                      <button
-                        key={val}
-                        type="button"
-                        className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterFit === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                        aria-pressed={bolsterFit === val}
-                        onClick={() => setBolsterFit(val)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="mt-1.5 text-xs leading-snug text-base-content/60">
-                    Regular adds ½″ SA (default). Tight adds none — cover ~1″ smaller. Closure
-                    overlap 2″ on circumference (tips mention 2¼″ for Velcro).
                   </span>
                 </fieldset>
               </>
@@ -497,6 +399,7 @@ export default function PillowsPage() {
                 </span>
               </fieldset>
             )}
+            </>
             </div>
             </div>
           </section>
@@ -633,18 +536,19 @@ export default function PillowsPage() {
 
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">{isBolster ? 'form vs cut' : 'form vs cut'}</h2>
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">'reference'</h2>
             {isBolster ? (
-              <BolsterDiagram
+              <BolsterReference
                 diameterIn={formWidthIn}
                 lengthIn={formLengthIn}
                 endDiameterIn={bolsterResult.cuts.endDiameterIn}
                 barrelAlongIn={bolsterResult.cuts.barrelAlongIn}
                 barrelCircIn={bolsterResult.cuts.barrelCircIn}
                 unit={unit}
+                fillStyle={fillStyle}
               />
             ) : (
-              <ThrowDiagram
+              <ThrowReference
                 formW={formWidthIn}
                 formL={formLengthIn}
                 cutW={throwResult.cutWidthIn}
@@ -652,14 +556,38 @@ export default function PillowsPage() {
                 finishedW={throwResult.finishedWidthIn}
                 finishedL={throwResult.finishedLengthIn}
                 unit={unit}
+                fillStyle={fillStyle}
+                dogEarTrim={dogEarTrim}
               />
             )}
             {!isBolster && (
               <p className="mt-2 text-xs leading-snug text-base-content/60">
                 finished ≈ {formatDim(throwResult.finishedWidthIn, unit)} ×{' '}
                 {formatDim(throwResult.finishedLengthIn, unit)} {unitLabel}
+                {dogEarTrim ? ' · corners trimmed (dog-ears)' : ''}
               </p>
             )}
+            </div>
+          </section>
+
+
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">nest preview</h2>
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                horizontal repeat
+                <input className="input input-bordered w-full" type="number" min={0} step={1} value={hRepeatDraft} onChange={(e) => setHRepeatDraft(e.target.value)} />
+              </label>
+              <label className="flex w-full flex-col gap-1.5 text-sm">
+                vertical repeat
+                <input className="input input-bordered w-full" type="number" min={0} step={1} value={vRepeatDraft} onChange={(e) => setVRepeatDraft(e.target.value)} />
+              </label>
+            </div>
+            <p className="mb-2 text-xs leading-snug text-base-content/60">
+              0 = no pattern / stripes on that axis. Grid is visualization only.
+            </p>
+            <NestPreviewSvg model={nestModel} unit={unit} hRepeatIn={hRepeatIn} vRepeatIn={vRepeatIn} />
             </div>
           </section>
 

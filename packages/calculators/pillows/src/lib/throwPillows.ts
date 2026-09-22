@@ -8,6 +8,17 @@
  * Units are inches internally.
  */
 
+import {
+  DEFAULT_FILL_STYLE,
+  throwCutFace,
+  throwFinishedFace,
+  type FillStyle,
+} from './fillStyle'
+import { DOG_EAR_CUT_LIST_NOTE, DOG_EAR_OPTIONAL_NOTE } from './dogEar'
+
+export type { FillStyle }
+export { DEFAULT_FILL_STYLE }
+
 export type Unit = 'in' | 'mm'
 export type PatternDirection = 'none' | 'horizontal' | 'vertical'
 
@@ -59,15 +70,22 @@ export function fromInches(inches: number, unit: Unit): number {
 }
 
 /**
- * Cut panel size = form size (Sailrite does not add SA to cut).
- * Documented snug: finished approx form - FORM_TO_FINISHED_REDUCTION_IN.
+ * Cut panel size from form + fill style (Videos Expert).
+ * Default Standard: cut = form (Sailrite live calculator parity).
  */
-export function cutPanelSize(formInches: number): number {
-  return formInches
+export function cutPanelSize(
+  formInches: number,
+  fill: FillStyle = DEFAULT_FILL_STYLE,
+): number {
+  return throwCutFace(formInches, fill)
 }
 
-export function finishedSize(formInches: number): number {
-  return formInches - FORM_TO_FINISHED_REDUCTION_IN
+/** Finished face = cut - 1" (1/2" SA all around). */
+export function finishedSize(
+  formInches: number,
+  fill: FillStyle = DEFAULT_FILL_STYLE,
+): number {
+  return throwFinishedFace(formInches, fill)
 }
 
 export function exactYards(usedInches: number): number {
@@ -93,6 +111,10 @@ export type ThrowPillowInput = {
   quantity: number
   fabricWidthIn: number
   pattern: PatternDirection
+  /** Flat | Standard | Plump -- default Standard (cut = form). */
+  fillStyle?: FillStyle
+  /** Knife-edge dog-ear corner trim (default off). */
+  dogEarTrim?: boolean
 }
 
 export type Orientation = {
@@ -130,6 +152,8 @@ export type PipingOptional = {
 }
 
 export type ThrowPillowResult = {
+  fillStyle: FillStyle
+  dogEarTrim: boolean
   cutWidthIn: number
   cutLengthIn: number
   finishedWidthIn: number
@@ -137,7 +161,7 @@ export type ThrowPillowResult = {
   panelsNeeded: number
   pack: PackResult
   alternatePack: PackResult | null
-  cutList: { label: string; widthIn: number; lengthIn: number; qty: number }[]
+  cutList: { label: string; widthIn: number; lengthIn: number; qty: number; note?: string }[]
   materials: string[]
   piping: PipingOptional
 }
@@ -275,10 +299,18 @@ export function packPanels(
 }
 
 export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResult {
-  const { formWidthIn, formLengthIn, quantity, fabricWidthIn, pattern } = input
+  const {
+    formWidthIn,
+    formLengthIn,
+    quantity,
+    fabricWidthIn,
+    pattern,
+    fillStyle = DEFAULT_FILL_STYLE,
+    dogEarTrim = false,
+  } = input
 
-  const cutWidthIn = cutPanelSize(formWidthIn)
-  const cutLengthIn = cutPanelSize(formLengthIn)
+  const cutWidthIn = cutPanelSize(formWidthIn, fillStyle)
+  const cutLengthIn = cutPanelSize(formLengthIn, fillStyle)
   const panelsNeeded = quantity * PANELS_PER_PILLOW
 
   const orients = orientationsForPattern(cutWidthIn, cutLengthIn, pattern)
@@ -298,29 +330,37 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
     fabricWidthIn,
   )
 
-  const cutList = [
+  const cutList: ThrowPillowResult['cutList'] = [
     {
       label: 'front / back panel',
       widthIn: cutWidthIn,
       lengthIn: cutLengthIn,
       qty: panelsNeeded,
+      ...(dogEarTrim ? { note: DOG_EAR_CUT_LIST_NOTE } : {}),
     },
   ]
 
   const materials = [
     `${best.orderYards} yd fabric (${best.exactYards.toFixed(2)} yd exact; ${best.lengthInches} in along bolt)`,
-    `${panelsNeeded} cut panels @ ${cutWidthIn} x ${cutLengthIn} in (knife-edge front + back)`,
-    `finished cover approx ${finishedSize(formWidthIn)} x ${finishedSize(formLengthIn)} in (form - ${FORM_TO_FINISHED_REDUCTION_IN}" with ${SEAM_ALLOWANCE_IN}" seams)`,
+    `${panelsNeeded} cut panels @ ${cutWidthIn} x ${cutLengthIn} in (knife-edge front + back; fill ${fillStyle})`,
+    `finished cover approx ${finishedSize(formWidthIn, fillStyle)} x ${finishedSize(formLengthIn, fillStyle)} in (cut - ${FORM_TO_FINISHED_REDUCTION_IN}" with ${SEAM_ALLOWANCE_IN}" seams)`,
     `optional prefabricated piping: ${piping.prefabricatedIn} in (${piping.prefabricatedFt} ft)`,
     `optional matching piping fabric: add ${piping.matchingFabricIn} in (${piping.matchingFabricYd} yd)`,
     `optional bias-cut piping fabric: add ${piping.biasFabricIn} in (${piping.biasFabricYd} yd)`,
   ]
 
+  if (dogEarTrim) {
+    materials.push(DOG_EAR_CUT_LIST_NOTE)
+    materials.push(DOG_EAR_OPTIONAL_NOTE)
+  }
+
   return {
+    fillStyle,
+    dogEarTrim,
     cutWidthIn,
     cutLengthIn,
-    finishedWidthIn: finishedSize(formWidthIn),
-    finishedLengthIn: finishedSize(formLengthIn),
+    finishedWidthIn: finishedSize(formWidthIn, fillStyle),
+    finishedLengthIn: finishedSize(formLengthIn, fillStyle),
     panelsNeeded,
     pack: best,
     alternatePack,

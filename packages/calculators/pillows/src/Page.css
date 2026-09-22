@@ -119,3 +119,12 @@
     overscroll-behavior: contain;
   }
 }
+
+.calc-page--pillows .pillow-nest-preview {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  display: block;
+  background: var(--color-base-200, #fafafa);
+  border-radius: 8px;
+}
