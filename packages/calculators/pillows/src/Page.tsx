@@ -283,7 +283,7 @@ export default function PillowsPage() {
           miscalculations, cut fabric, or purchased fabric from this tool.
         </p>
       </details>
-      <p className="disclaimer hidden shrink-0 border-b border-base-300 px-3 py-2 text-xs leading-snug text-base-content/60 min-[801px]:block" role="note">
+      <p className="disclaimer hidden shrink-0 border-b border-base-300 px-4 py-3 text-xs leading-snug text-base-content/60 min-[801px]:block" role="note">
         Estimate only — double-check all results thoroughly. Sailrite is not responsible for
         miscalculations, cut fabric, or purchased fabric from this tool.
       </p>
@@ -310,17 +310,18 @@ export default function PillowsPage() {
         </button>
       </nav>
 
-      <div className={`layout mobile-${mobileView} grid min-h-0 flex-1 grid-cols-1 min-[801px]:grid-cols-[minmax(280px,360px)_1fr]`}>
-        <aside className="sidebar left bg-base-100 border-r border-base-300 overflow-y-auto p-3.5" data-mobile-pane="inputs">
-          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">pillow type</h2>
-            <div className="grid gap-2" role="list">
+      <div className={`layout mobile-${mobileView} grid min-h-0 flex-1 grid-cols-1 bg-base-200 max-[800px]:bg-base-100 max-[800px]:p-0 min-[801px]:grid-cols-[minmax(280px,360px)_1fr] min-[801px]:gap-6 min-[801px]:px-4 min-[801px]:pb-4 min-[801px]:pt-4`}>
+        <aside className="sidebar left flex flex-col gap-4 overflow-y-auto max-[800px]:p-4" data-mobile-pane="inputs">
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">pillow type</h2>
+            <div className="grid gap-3" role="list">
               {PILLOW_TYPES.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   role="listitem"
-                  className={`btn btn-ghost h-auto min-h-11 w-full flex-col items-start gap-0.5 rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 text-left font-normal normal-case${t.id === activeType.id ? ' border-primary ring-1 ring-primary' : ''}${t.status === 'soon' ? ' cursor-not-allowed opacity-85 bg-base-200' : ''}`}
+                  className={`btn btn-ghost h-auto min-h-11 w-full flex-col items-start gap-0.5 rounded-lg border border-base-300 bg-base-100 p-3 text-left font-normal normal-case${t.id === activeType.id ? ' border-primary ring-1 ring-primary' : ''}${t.status === 'soon' ? ' cursor-not-allowed opacity-85 bg-base-200' : ''}`}
                   disabled={t.status === 'soon'}
                   onClick={() => t.status === 'active' && selectPillowType(t.id)}
                   title={t.status === 'soon' ? 'Coming soon' : t.blurb}
@@ -334,14 +335,16 @@ export default function PillowsPage() {
                 </button>
               ))}
             </div>
+            </div>
           </section>
 
-          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">units</h2>
-            <div className="join" role="group" aria-label="Unit of measurement">
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">units</h2>
+            <div className="join w-full" role="group" aria-label="Unit of measurement">
               <button
                 type="button"
-                className={`btn join-item btn-sm min-h-11 ${unit === 'in' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                className={`btn join-item btn-sm min-h-11 flex-1 ${unit === 'in' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 aria-pressed={unit === 'in'}
                 onClick={() => switchUnit('in')}
               >
@@ -349,20 +352,23 @@ export default function PillowsPage() {
               </button>
               <button
                 type="button"
-                className={`btn join-item btn-sm min-h-11 ${unit === 'mm' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                className={`btn join-item btn-sm min-h-11 flex-1 ${unit === 'mm' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 aria-pressed={unit === 'mm'}
                 onClick={() => switchUnit('mm')}
               >
                 mm
               </button>
             </div>
+            </div>
           </section>
 
-          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
               {isBolster ? 'bolster pillow inputs' : 'throw pillow inputs'}
             </h2>
-            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
+            <div className="flex flex-col gap-4">
+            <label className="flex w-full flex-col gap-1.5 text-sm">
               {isBolster ? 'A. diameter / width (form)' : 'A. width (form)'}
               <input
                 className="input input-bordered w-full"
@@ -372,7 +378,7 @@ export default function PillowsPage() {
                 value={widthDraft}
                 onChange={(e) => setWidthDraft(e.target.value)}
               />
-              <span className="text-xs text-base-content/60 mt-1 leading-snug">
+              <span className="text-xs leading-snug text-base-content/60">
                 {isBolster
                   ? bolsterFit === 'regular'
                     ? `Regular Fit: end cut = form + ${SEAM_ALLOWANCE_IN}"; finished ≈ form − ${SEAM_ALLOWANCE_IN}"`
@@ -380,7 +386,7 @@ export default function PillowsPage() {
                   : `finished cover ≈ form − ${FORM_TO_FINISHED_REDUCTION_IN}" (${SEAM_ALLOWANCE_IN}" seams; cut = form)`}
               </span>
             </label>
-            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
+            <label className="flex w-full flex-col gap-1.5 text-sm">
               {isBolster ? 'B. length (form)' : 'B. length (form)'}
               <input
                 className="input input-bordered w-full"
@@ -391,7 +397,7 @@ export default function PillowsPage() {
                 onChange={(e) => setLengthDraft(e.target.value)}
               />
             </label>
-            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
+            <label className="flex w-full flex-col gap-1.5 text-sm">
               quantity
               <select className="select select-bordered w-full" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
                 {Array.from({ length: MAX_QUANTITY - MIN_QUANTITY + 1 }, (_, i) => {
@@ -404,7 +410,7 @@ export default function PillowsPage() {
                 })}
               </select>
             </label>
-            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
+            <label className="flex w-full flex-col gap-1.5 text-sm">
               fabric width
               <input
                 className="input input-bordered w-full"
@@ -414,13 +420,13 @@ export default function PillowsPage() {
                 value={fabricDraft}
                 onChange={(e) => setFabricDraft(e.target.value)}
               />
-              <span className="text-xs text-base-content/60 mt-1 leading-snug">often 46, 54, or 60 {unitLabel}</span>
+              <span className="text-xs leading-snug text-base-content/60">often 46, 54, or 60 {unitLabel}</span>
             </label>
 
             {isBolster ? (
               <>
-                <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
-                  <legend>pattern direction</legend>
+                <fieldset className="m-0 min-w-0 border-0 p-0">
+                  <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">pattern direction</legend>
                   <div className="join w-full" role="group" aria-label="Bolster pattern direction">
                     {(
                       [
@@ -439,13 +445,13 @@ export default function PillowsPage() {
                       </button>
                     ))}
                   </div>
-                  <span className="text-xs text-base-content/60 mt-1 leading-snug">
+                  <span className="mt-1.5 text-xs leading-snug text-base-content/60">
                     horizontal = pattern around the pillow (circ along bolt). vertical = pattern
                     across the pillow (length along bolt).
                   </span>
                 </fieldset>
-                <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
-                  <legend>fit</legend>
+                <fieldset className="m-0 min-w-0 border-0 p-0">
+                  <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">fit</legend>
                   <div className="join w-full" role="group" aria-label="Bolster fit">
                     {(
                       [
@@ -464,15 +470,15 @@ export default function PillowsPage() {
                       </button>
                     ))}
                   </div>
-                  <span className="text-xs text-base-content/60 mt-1 leading-snug">
+                  <span className="mt-1.5 text-xs leading-snug text-base-content/60">
                     Regular adds ½″ SA (default). Tight adds none — cover ~1″ smaller. Closure
                     overlap 2″ on circumference (tips mention 2¼″ for Velcro).
                   </span>
                 </fieldset>
               </>
             ) : (
-              <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
-                <legend>pattern direction</legend>
+              <fieldset className="m-0 min-w-0 border-0 p-0">
+                <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">pattern direction</legend>
                 <div className="join w-full" role="group" aria-label="Pattern direction">
                   {(
                     [
@@ -493,19 +499,22 @@ export default function PillowsPage() {
                     </button>
                   ))}
                 </div>
-                <span className="text-xs text-base-content/60 mt-1 leading-snug">
+                <span className="mt-1.5 text-xs leading-snug text-base-content/60">
                   Sailrite default is horizontal (pattern on pillow length). vertical = pattern on
                   width. none / best pack = pick lower yardage orientation.
                 </span>
               </fieldset>
             )}
+            </div>
+            </div>
           </section>
         </aside>
 
-        <main className="results flex flex-col gap-3 overflow-y-auto p-3.5" data-mobile-pane="results">
+        <main className="results flex flex-col gap-4 overflow-y-auto max-[800px]:p-4" data-mobile-pane="results">
           <section className="card bg-base-100 border border-base-300 shadow-none results-hero">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">yardage</h2>
-            <div className="results-yards mb-3.5 flex flex-wrap gap-x-8 gap-y-5">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">yardage</h2>
+            <div className="results-yards mb-4 flex flex-wrap gap-x-8 gap-y-4">
               <div>
                 <div className="text-3xl font-extrabold tracking-tight">{exact.toFixed(2)} yd</div>
                 <div className="text-xs text-base-content/60">
@@ -522,17 +531,19 @@ export default function PillowsPage() {
               </div>
             </div>
             <a
-              className="btn btn-primary mt-2 min-h-11"
+              className="btn btn-primary min-h-11"
               href={SHOP.fabric}
               target="_blank"
               rel="noopener noreferrer"
             >
               {shopFabricYardsLabel(order)}
             </a>
+            </div>
           </section>
 
-          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">cut list</h2>
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">cut list</h2>
             <ul className="cut-list">
               {(isBolster ? bolsterResult.cutList : throwResult.cutList).map((c) => (
                 <li key={c.label}>
@@ -545,7 +556,7 @@ export default function PillowsPage() {
               ))}
             </ul>
             {isBolster ? (
-              <p className="text-xs text-base-content/60 mt-1 leading-snug">
+              <p className="mt-2 text-xs leading-snug text-base-content/60">
                 nesting: {bolsterResult.nest.barrelAcrossCount} barrel
                 {bolsterResult.nest.barrelAcrossCount === 1 ? '' : 's'} across ×{' '}
                 {bolsterResult.nest.barrelRows} row
@@ -557,7 +568,7 @@ export default function PillowsPage() {
                   : ' (ends nested beside barrels)'}
               </p>
             ) : (
-              <p className="text-xs text-base-content/60 mt-1 leading-snug">
+              <p className="mt-2 text-xs leading-snug text-base-content/60">
                 packing: {throwResult.pack.acrossCount} across × {throwResult.pack.rows} row
                 {throwResult.pack.rows === 1 ? '' : 's'} (
                 {throwResult.pack.orientation.label === 'width-across'
@@ -566,11 +577,13 @@ export default function PillowsPage() {
                 )
               </p>
             )}
+            </div>
           </section>
 
           {!isBolster && (
-            <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-              <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">piping or binding (optional)</h2>
+            <section className="card bg-base-100 border border-base-300 shadow-none">
+              <div className="card-body gap-0 p-4">
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">piping or binding (optional)</h2>
               <ul className="materials">
                 <li>
                   Prefabricated piping:{' '}
@@ -594,7 +607,7 @@ export default function PillowsPage() {
                 </li>
               </ul>
               {throwResult.pack.leftover ? (
-                <p className="text-xs text-base-content/60 mt-1 leading-snug">
+                <p className="mt-2 text-xs leading-snug text-base-content/60">
                   Fabric left over: a strip{' '}
                   <strong>
                     {formatDim(throwResult.pack.leftover.widthIn, unit)} ×{' '}
@@ -603,14 +616,16 @@ export default function PillowsPage() {
                   (usable for matching piping?).
                 </p>
               ) : (
-                <p className="text-xs text-base-content/60 mt-1 leading-snug">Fabric left over: none.</p>
+                <p className="mt-2 text-xs leading-snug text-base-content/60">Fabric left over: none.</p>
               )}
+              </div>
             </section>
           )}
 
           {isBolster && (
-            <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-              <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">piping (optional)</h2>
+            <section className="card bg-base-100 border border-base-300 shadow-none">
+              <div className="card-body gap-0 p-4">
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">piping (optional)</h2>
               <ul className="materials">
                 <li>
                   Prefabricated piping:{' '}
@@ -620,11 +635,13 @@ export default function PillowsPage() {
                   — order {bolsterResult.pipingOrderFt} ft
                 </li>
               </ul>
+              </div>
             </section>
           )}
 
-          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">{isBolster ? 'form vs cut' : 'form vs cut'}</h2>
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">{isBolster ? 'form vs cut' : 'form vs cut'}</h2>
             {isBolster ? (
               <BolsterDiagram
                 diameterIn={formWidthIn}
@@ -646,20 +663,23 @@ export default function PillowsPage() {
               />
             )}
             {!isBolster && (
-              <p className="text-xs text-base-content/60 mt-1 leading-snug">
+              <p className="mt-2 text-xs leading-snug text-base-content/60">
                 finished ≈ {formatDim(throwResult.finishedWidthIn, unit)} ×{' '}
                 {formatDim(throwResult.finishedLengthIn, unit)} {unitLabel}
               </p>
             )}
+            </div>
           </section>
 
-          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
-            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">materials summary</h2>
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">materials summary</h2>
             <ul className="materials">
               {(isBolster ? bolsterResult.materials : throwResult.materials).map((m) => (
                 <li key={m}>{m}</li>
               ))}
             </ul>
+            </div>
           </section>
         </main>
       </div>

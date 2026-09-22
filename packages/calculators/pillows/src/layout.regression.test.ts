@@ -33,9 +33,9 @@ describe('pillows layout regressions', () => {
   })
 
   it('unit toggles are Daisy join ≥44px and neutral when selected (not dual primary)', () => {
-    expect(pageTsx).toMatch(/className="join"/)
-    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 \$\{unit === 'in' \? 'btn-neutral'/)
-    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 \$\{unit === 'mm' \? 'btn-neutral'/)
+    expect(pageTsx).toMatch(/className="join(?: w-full)?"/)
+    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{unit === 'in' \? 'btn-neutral'/)
+    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{unit === 'mm' \? 'btn-neutral'/)
     expect(pageTsx).not.toMatch(/unit === 'in' \? 'btn-primary'/)
     expect(pageTsx).not.toMatch(/unit === 'mm' \? 'btn-primary'/)
   })
@@ -50,7 +50,7 @@ describe('pillows layout regressions', () => {
   })
 
   it('yardage shop CTA is sole solid primary ≥44px; header Shop outline + hidden on mobile', () => {
-    expect(pageTsx).toMatch(/btn btn-primary mt-2 min-h-11/)
+    expect(pageTsx).toMatch(/btn btn-primary min-h-11/)
     expect(pageTsx.match(/btn-primary/g)?.length).toBeGreaterThanOrEqual(1)
     // body shop is the only btn-primary in page chrome outside mobile tabs (tabs also use primary)
     expect(pageTsx).toMatch(/shopFabricYardsLabel/)
