@@ -1965,8 +1965,11 @@ export default function NestingPage() {
                 <label>
                   Name
                   <input
+                    type="text"
+                    className="input input-bordered w-full min-h-11"
                     value={selected.label}
                     onChange={(e) => renamePanel(selected.id, e.target.value)}
+                    aria-label="Panel name"
                   />
                 </label>
                 <div className="field-block">
