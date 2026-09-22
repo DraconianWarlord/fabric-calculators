@@ -989,9 +989,10 @@ export default function NestingPage() {
 
   // Inject yardage + Export PDF into suite header
   const headerStatusCtx = useHeaderStatusOptional()
+  const setHeaderStatus = headerStatusCtx?.setStatus
   useEffect(() => {
-    if (!headerStatusCtx) return
-    headerStatusCtx.setStatus(
+    if (!setHeaderStatus) return
+    setHeaderStatus(
       <>
         <div className="yards" aria-label="Yardage summary">
           <span className="yards-exact">{exact.toFixed(2)} yd</span>
@@ -1023,9 +1024,9 @@ export default function NestingPage() {
         </button>
       </>,
     )
-    return () => headerStatusCtx.setStatus(null)
+    return () => setHeaderStatus(null)
   }, [
-    headerStatusCtx,
+    setHeaderStatus,
     exact,
     order,
     panels,

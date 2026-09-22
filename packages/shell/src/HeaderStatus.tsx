@@ -2,38 +2,49 @@ import {
   createContext,
   useCallback,
   useContext,
-  useMemo,
   useState,
   type ReactNode,
 } from 'react'
 
-type HeaderStatusContextValue = {
-  status: ReactNode
-  setStatus: (node: ReactNode) => void
-}
+type SetHeaderStatus = (node: ReactNode) => void
 
-const HeaderStatusContext = createContext<HeaderStatusContextValue | null>(null)
+const HeaderStatusStateContext = createContext<ReactNode>(null)
+const HeaderSetStatusContext = createContext<SetHeaderStatus | null>(null)
 
 export function HeaderStatusProvider({ children }: { children: ReactNode }) {
   const [status, setStatusState] = useState<ReactNode>(null)
-  const setStatus = useCallback((node: ReactNode) => {
+  // Stable setter — calculators may safely depend on this in useEffect deps
+  // without re-firing when status itself changes.
+  const setStatus = useCallback<SetHeaderStatus>((node) => {
     setStatusState(node)
   }, [])
-  const value = useMemo(() => ({ status, setStatus }), [status, setStatus])
+
   return (
-    <HeaderStatusContext.Provider value={value}>{children}</HeaderStatusContext.Provider>
+    <HeaderSetStatusContext.Provider value={setStatus}>
+      <HeaderStatusStateContext.Provider value={status}>
+        {children}
+      </HeaderStatusStateContext.Provider>
+    </HeaderSetStatusContext.Provider>
   )
 }
 
 export function useHeaderStatus() {
-  const ctx = useContext(HeaderStatusContext)
-  if (!ctx) {
+  const setStatus = useContext(HeaderSetStatusContext)
+  const status = useContext(HeaderStatusStateContext)
+  if (!setStatus) {
     throw new Error('useHeaderStatus must be used within HeaderStatusProvider')
   }
-  return ctx
+  return { status, setStatus }
 }
 
-/** Optional hook — returns null setters when outside provider (tests). */
+/**
+ * Optional hook for calculator pages.
+ * Prefer depending on `setStatus` (stable) in effects — never the whole return
+ * object — or status updates will infinite-loop.
+ */
 export function useHeaderStatusOptional() {
-  return useContext(HeaderStatusContext)
+  const setStatus = useContext(HeaderSetStatusContext)
+  const status = useContext(HeaderStatusStateContext)
+  if (!setStatus) return null
+  return { status, setStatus }
 }

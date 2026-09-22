@@ -259,16 +259,17 @@ export default function PillowsPage() {
   }
 
   const headerStatusCtx = useHeaderStatusOptional()
+  const setHeaderStatus = headerStatusCtx?.setStatus
   useEffect(() => {
-    if (!headerStatusCtx) return
-    headerStatusCtx.setStatus(
+    if (!setHeaderStatus) return
+    setHeaderStatus(
       <div className="yards" aria-label="Yardage summary">
         <span className="yards-exact">{exact.toFixed(2)} yd</span>
         <span className="yards-order">Order {order} yd</span>
       </div>,
     )
-    return () => headerStatusCtx.setStatus(null)
-  }, [headerStatusCtx, exact, order])
+    return () => setHeaderStatus(null)
+  }, [setHeaderStatus, exact, order])
 
   return (
     <div className="calc-page calc-page--pillows">
