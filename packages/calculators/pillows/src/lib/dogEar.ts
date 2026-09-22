@@ -63,4 +63,4 @@ export const DOG_EAR_CUT_LIST_NOTE =
   'corners trimmed to reduce dog-ears (1/2" SA mark; trim at side÷4 each edge)'
 
 export const DOG_EAR_OPTIONAL_NOTE =
-  'Some zipper + piping methods skip dog-ear corner trimming.'
+  'Optional — some zipper+piping methods skip this.'

@@ -22,6 +22,33 @@
 .calc-page--pillows .layout {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+}
+
+/* No H-scrollbar: inputs pane + desktop left column */
+.calc-page--pillows .sidebar {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.calc-page--pillows .results {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.calc-page--pillows .sidebar .card,
+.calc-page--pillows .sidebar .card-body,
+.calc-page--pillows .sidebar label,
+.calc-page--pillows .sidebar fieldset {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.calc-page--pillows .field-help {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .calc-page--pillows .cut-list,
@@ -107,6 +134,7 @@
     height: 100%;
     max-height: none;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
@@ -115,6 +143,7 @@
     height: 100%;
     max-height: none;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }

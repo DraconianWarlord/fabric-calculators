@@ -28,15 +28,15 @@ export const BOLSTER_PATTERNING_ADD_IN: Record<FillStyle, number> = {
 }
 
 export const FILL_STYLE_HELP: Record<FillStyle, string> = {
-  flat: 'Flat: cut = form + 1" → finished cover ≈ form (looser).',
-  standard: 'Standard: cut = form → finished ≈ form − 1" (modern tutorials).',
-  plump: 'Plump: cut = form − 1" → finished ≈ form − 2" (classic undersize).',
+  flat: 'Cut = form + 1″ → finished ≈ form.',
+  standard: 'Cut = form → finished ≈ form − 1″.',
+  plump: 'Cut = form − 1″ → finished ≈ form − 2″.',
 }
 
 export const BOLSTER_FILL_HELP: Record<FillStyle, string> = {
-  flat: 'Flat: +1" to diameter & length (near-form finish with 1/2" SA).',
-  standard: 'Standard: +1" patterning add to diameter & length.',
-  plump: 'Plump: +1/2" patterning add (tighter / plumper cover).',
+  flat: '+1″ to diameter & length.',
+  standard: '+1″ patterning add (default).',
+  plump: '+½″ patterning add (tighter).',
 }
 
 export const DEFAULT_FILL_STYLE: FillStyle = 'standard'

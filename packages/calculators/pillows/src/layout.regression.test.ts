@@ -89,6 +89,27 @@ describe('pillows layout regressions', () => {
     expect(calcNav).toMatch(/min-h-11 items-center justify-between/)
   })
 
+  it('inputs pane has no H-scrollbar (overflow-x hidden + wrapping helpers)', () => {
+    expect(pageCss).toMatch(/\.sidebar\s*\{[^}]*overflow-x:\s*hidden/)
+    expect(pageTsx).toMatch(/overflow-x-hidden/)
+    expect(pageCss).toMatch(/\.field-help\s*\{[^}]*overflow-wrap:\s*break-word/)
+    expect(pageTsx).toMatch(/field-help/)
+  })
+
+  it('dog-ear uses on/off Daisy join ≥44px (not tiny toggle)', () => {
+    expect(pageTsx).toMatch(/aria-label="Dog-ear corner trim"/)
+    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{!dogEarTrim \? 'btn-neutral'/)
+    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{dogEarTrim \? 'btn-neutral'/)
+    expect(pageTsx).not.toMatch(/toggle toggle-primary/)
+  })
+
+  it('reference heading has no stray quotes; H/V repeat inputs are min-h-11', () => {
+    expect(pageTsx).toMatch(/>reference</)
+    expect(pageTsx).not.toMatch(/>'reference'</)
+    expect(pageTsx).toMatch(/horizontal repeat[\s\S]*?input input-bordered min-h-11/)
+    expect(pageTsx).toMatch(/vertical repeat[\s\S]*?input input-bordered min-h-11/)
+  })
+
   it('keeps Sailrite brand tokens (SR Blue / Alert Red)', () => {
     expect(webStyles).toMatch(/--color-primary:\s*#24285e/)
     expect(webStyles).toMatch(/--color-error:\s*#e75053/)

@@ -190,7 +190,7 @@ export default function PillowsPage() {
       </nav>
 
       <div className={`layout mobile-${mobileView} grid min-h-0 flex-1 grid-cols-1 bg-base-200 max-[800px]:bg-base-100 max-[800px]:p-0 min-[801px]:grid-cols-[minmax(280px,360px)_1fr] min-[801px]:gap-6 min-[801px]:px-4 min-[801px]:pb-4 min-[801px]:pt-4`}>
-        <aside className="sidebar left flex flex-col gap-4 overflow-y-auto max-[800px]:p-4" data-mobile-pane="inputs">
+        <aside className="sidebar left flex min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto max-[800px]:p-4" data-mobile-pane="inputs">
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
             <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">pillow type</h2>
@@ -247,24 +247,21 @@ export default function PillowsPage() {
               {isBolster ? 'bolster pillow inputs' : 'throw pillow inputs'}
             </h2>
             <div className="flex flex-col gap-4">
-            <label className="flex w-full flex-col gap-1.5 text-sm">
+            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
               {isBolster ? 'A. diameter / width (form)' : 'A. width (form)'}
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered min-h-11 w-full"
                 type="number"
                 min={1}
                 step={1}
                 value={widthDraft}
                 onChange={(e) => setWidthDraft(e.target.value)}
               />
-              <span className="text-xs leading-snug text-base-content/60">
-                {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]}
-              </span>
             </label>
-            <label className="flex w-full flex-col gap-1.5 text-sm">
+            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
               {isBolster ? 'B. length (form)' : 'B. length (form)'}
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered min-h-11 w-full"
                 type="number"
                 min={1}
                 step={1}
@@ -272,9 +269,9 @@ export default function PillowsPage() {
                 onChange={(e) => setLengthDraft(e.target.value)}
               />
             </label>
-            <label className="flex w-full flex-col gap-1.5 text-sm">
+            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
               quantity
-              <select className="select select-bordered w-full" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
+              <select className="select select-bordered min-h-11 w-full" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
                 {Array.from({ length: MAX_QUANTITY - MIN_QUANTITY + 1 }, (_, i) => {
                   const n = MIN_QUANTITY + i
                   return (
@@ -285,17 +282,17 @@ export default function PillowsPage() {
                 })}
               </select>
             </label>
-            <label className="flex w-full flex-col gap-1.5 text-sm">
+            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
               fabric width
               <input
-                className="input input-bordered w-full"
+                className="input input-bordered min-h-11 w-full"
                 type="number"
                 min={1}
                 step={1}
                 value={fabricDraft}
                 onChange={(e) => setFabricDraft(e.target.value)}
               />
-              <span className="text-xs leading-snug text-base-content/60">often 46, 54, or 60 {unitLabel}</span>
+              <span className="field-help text-xs leading-snug text-base-content/60">often 46, 54, or 60 {unitLabel}</span>
             </label>
 
             <>
@@ -314,27 +311,41 @@ export default function PillowsPage() {
                   </button>
                 ))}
               </div>
-              <span className="mt-1.5 text-xs leading-snug text-base-content/60">
-                {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]} UX labels
-                (Videos Expert) — not Sailrite product names. Default Standard.
+              <span
+                className="field-help mt-1.5 text-xs leading-snug text-base-content/60"
+                title="UX labels (Videos Expert) — not Sailrite product names. Default Standard."
+              >
+                {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]}
               </span>
             </fieldset>
 
             {!isBolster && (
-              <label className="label cursor-pointer justify-start gap-3 min-h-11 py-0">
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={dogEarTrim}
-                  onChange={(e) => setDogEarTrim(e.target.checked)}
-                />
-                <span className="label-text text-sm">
-                  Dog-ear corner trim
-                  <span className="block text-xs font-normal text-base-content/60">
-                    {DOG_EAR_OPTIONAL_NOTE}
-                  </span>
+              <fieldset className="m-0 min-w-0 border-0 p-0">
+                <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                  dog-ear corner trim
+                </legend>
+                <div className="join w-full" role="group" aria-label="Dog-ear corner trim">
+                  <button
+                    type="button"
+                    className={`btn join-item btn-sm min-h-11 flex-1 ${!dogEarTrim ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                    aria-pressed={!dogEarTrim}
+                    onClick={() => setDogEarTrim(false)}
+                  >
+                    off
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn join-item btn-sm min-h-11 flex-1 ${dogEarTrim ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                    aria-pressed={dogEarTrim}
+                    onClick={() => setDogEarTrim(true)}
+                  >
+                    on
+                  </button>
+                </div>
+                <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
+                  {DOG_EAR_OPTIONAL_NOTE}
                 </span>
-              </label>
+              </fieldset>
             )}
 
             {isBolster ? (
@@ -359,9 +370,8 @@ export default function PillowsPage() {
                       </button>
                     ))}
                   </div>
-                  <span className="mt-1.5 text-xs leading-snug text-base-content/60">
-                    horizontal = pattern around the pillow (circ along bolt). vertical = pattern
-                    across the pillow (length along bolt).
+                  <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
+                    Horizontal = around pillow; vertical = along length.
                   </span>
                 </fieldset>
               </>
@@ -388,9 +398,8 @@ export default function PillowsPage() {
                     </button>
                   ))}
                 </div>
-                <span className="mt-1.5 text-xs leading-snug text-base-content/60">
-                  Sailrite default is horizontal (pattern on pillow length). vertical = pattern on
-                  width. none / best pack = pick lower yardage orientation.
+                <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
+                  Default horizontal. None = best pack (lower yardage).
                 </span>
               </fieldset>
             )}
@@ -400,7 +409,7 @@ export default function PillowsPage() {
           </section>
         </aside>
 
-        <main className="results flex flex-col gap-4 overflow-y-auto max-[800px]:p-4" data-mobile-pane="results">
+        <main className="results flex min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto max-[800px]:p-4" data-mobile-pane="results">
           <section className="card bg-base-100 border border-base-300 shadow-none results-hero">
             <div className="card-body gap-0 p-4">
             <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">yardage</h2>
@@ -531,7 +540,7 @@ export default function PillowsPage() {
 
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">'reference'</h2>
+            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">reference</h2>
             {isBolster ? (
               <BolsterReference
                 diameterIn={formWidthIn}
@@ -570,17 +579,17 @@ export default function PillowsPage() {
             <div className="card-body gap-0 p-4">
             <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">nest preview</h2>
             <div className="mb-3 grid grid-cols-2 gap-3">
-              <label className="flex w-full flex-col gap-1.5 text-sm">
+              <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
                 horizontal repeat
-                <input className="input input-bordered w-full" type="number" min={0} step={1} value={hRepeatDraft} onChange={(e) => setHRepeatDraft(e.target.value)} />
+                <input className="input input-bordered min-h-11 w-full" type="number" min={0} step={1} value={hRepeatDraft} onChange={(e) => setHRepeatDraft(e.target.value)} />
               </label>
-              <label className="flex w-full flex-col gap-1.5 text-sm">
+              <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
                 vertical repeat
-                <input className="input input-bordered w-full" type="number" min={0} step={1} value={vRepeatDraft} onChange={(e) => setVRepeatDraft(e.target.value)} />
+                <input className="input input-bordered min-h-11 w-full" type="number" min={0} step={1} value={vRepeatDraft} onChange={(e) => setVRepeatDraft(e.target.value)} />
               </label>
             </div>
-            <p className="mb-2 text-xs leading-snug text-base-content/60">
-              0 = no pattern / stripes on that axis. Grid is visualization only.
+            <p className="field-help mb-2 text-xs leading-snug text-base-content/60">
+              0 = no pattern on that axis. Grid is visualization only.
             </p>
             <NestPreviewSvg model={nestModel} unit={unit} hRepeatIn={hRepeatIn} vRepeatIn={vRepeatIn} />
             </div>
