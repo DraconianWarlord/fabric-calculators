@@ -20,13 +20,13 @@ type SplitSuggestionAlertProps = {
 }
 
 /**
- * Warning + CTA for oversized panels. Must stack vertically: DaisyUI `alert`
+ * Error/alert-red + CTA for oversized panels. Must stack vertically: DaisyUI `alert`
  * defaults to a multi-column grid that overlays the button on the copy.
  */
 export function SplitSuggestionAlert({ message, pieceCount, onSplit }: SplitSuggestionAlertProps) {
   return (
     <div
-      className="alert alert-warning alert-stack my-2 flex flex-col items-stretch gap-2 py-2 text-sm"
+      className="alert alert-error alert-stack my-2 flex flex-col items-stretch gap-2 py-2 text-sm"
       role="alert"
     >
       <p className="w-full min-w-0 whitespace-normal break-words">{message}</p>

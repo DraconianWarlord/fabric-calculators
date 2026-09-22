@@ -49,6 +49,8 @@ describe('SplitSuggestionAlert (rendered)', () => {
     expect(btn).toBeTruthy()
 
     // Stacked — never Daisy side-by-side grid that overlays CTA on copy
+    expect(alert.className).toMatch(/alert-error/)
+    expect(alert.className).not.toMatch(/alert-warning/)
     expect(alert.className).toMatch(/alert-stack/)
     expect(alert.className).toMatch(/flex-col/)
     expect(alert.className).not.toMatch(/grid-flow-col/)
