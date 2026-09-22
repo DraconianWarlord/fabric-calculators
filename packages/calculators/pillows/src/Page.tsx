@@ -311,7 +311,7 @@ export default function PillowsPage() {
             <div className="join" role="group" aria-label="Unit of measurement">
               <button
                 type="button"
-                className={`btn join-item btn-sm ${unit === 'in' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
+                className={`btn join-item btn-sm min-h-11 ${unit === 'in' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 aria-pressed={unit === 'in'}
                 onClick={() => switchUnit('in')}
               >
@@ -319,7 +319,7 @@ export default function PillowsPage() {
               </button>
               <button
                 type="button"
-                className={`btn join-item btn-sm ${unit === 'mm' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
+                className={`btn join-item btn-sm min-h-11 ${unit === 'mm' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 aria-pressed={unit === 'mm'}
                 onClick={() => switchUnit('mm')}
               >
@@ -397,7 +397,7 @@ export default function PillowsPage() {
                       ['vertical', 'vertical'],
                     ] as const
                   ).map(([val, label]) => (
-                    <label key={val} className="label cursor-pointer justify-start gap-2 py-1">
+                    <label key={val} className="label cursor-pointer justify-start gap-2 min-h-11 py-2">
                       <input className="radio radio-sm radio-primary"
                         type="radio"
                         name="bolster-pattern"
@@ -421,7 +421,7 @@ export default function PillowsPage() {
                       ['tight', 'tight'],
                     ] as const
                   ).map(([val, label]) => (
-                    <label key={val} className="label cursor-pointer justify-start gap-2 py-1">
+                    <label key={val} className="label cursor-pointer justify-start gap-2 min-h-11 py-2">
                       <input className="radio radio-sm radio-primary"
                         type="radio"
                         name="bolster-fit"
@@ -448,7 +448,7 @@ export default function PillowsPage() {
                     ['none', 'none / best pack'],
                   ] as const
                 ).map(([val, label]) => (
-                  <label key={val} className="label cursor-pointer justify-start gap-2 py-1">
+                  <label key={val} className="label cursor-pointer justify-start gap-2 min-h-11 py-2">
                     <input className="radio radio-sm radio-primary"
                         type="radio"
                       name="pattern"
@@ -488,7 +488,7 @@ export default function PillowsPage() {
               </div>
             </div>
             <a
-              className="btn btn-primary mt-2"
+              className="btn btn-primary mt-2 min-h-11"
               href={SHOP.fabric}
               target="_blank"
               rel="noopener noreferrer"
