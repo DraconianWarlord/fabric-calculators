@@ -49,7 +49,7 @@ type ActionHintBannerProps = {
 export function ActionHintBanner({ message, onDismiss }: ActionHintBannerProps) {
   return (
     <div
-      className="alert alert-error mx-3 mt-2 mb-2 flex items-start gap-3 px-4 py-2 text-sm font-semibold"
+      className="alert alert-error mx-3 mt-2 mb-2 flex items-center gap-3 px-4 py-2 text-sm font-semibold"
       role="alert"
     >
       <p className="min-w-0 flex-1 whitespace-normal break-words">{message}</p>

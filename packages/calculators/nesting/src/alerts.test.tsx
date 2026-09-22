@@ -91,7 +91,7 @@ describe('ActionHintBanner (rendered)', () => {
 
     expect(alert.className).toMatch(/px-4/)
     expect(alert.className).toMatch(/flex/)
-    expect(alert.className).toMatch(/items-start/)
+    expect(alert.className).toMatch(/items-center/)
     expect(alert.className).toMatch(/gap-3/)
 
     const copy = alert.querySelector('p')
