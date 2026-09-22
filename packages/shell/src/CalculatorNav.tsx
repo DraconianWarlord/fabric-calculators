@@ -20,7 +20,7 @@ function MoreItem({
 }) {
   const itemClass =
     className ??
-    'flex w-full min-h-11 items-center justify-between gap-4 rounded-md px-4 py-3 text-left text-sm font-semibold text-neutral-content'
+    'flex w-full min-h-11 items-center justify-between flex-nowrap gap-4 whitespace-nowrap rounded-md px-4 py-3 text-left text-sm font-semibold text-neutral-content'
 
   if (calc.path && (calc.status === 'active' || calc.status === 'live')) {
     if (isCurrent(calc, currentPath)) {
@@ -79,7 +79,7 @@ function MoreMenu({
 }) {
   return (
     <ul
-      className={`menu absolute top-[calc(100%+0.35rem)] z-40 max-h-[min(70vh,22rem)] min-w-64 overflow-y-auto rounded-box border border-white/20 bg-neutral p-2 shadow-lg ${
+      className={`menu absolute top-[calc(100%+0.35rem)] z-40 max-h-[min(70vh,22rem)] w-max min-w-64 max-w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto rounded-box border border-white/20 bg-neutral p-2 shadow-lg ${
         align === 'end' ? 'right-0' : 'left-0'
       }`}
       role="menu"
