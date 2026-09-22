@@ -18,52 +18,78 @@ function MoreItem({
   currentPath: string
   onNavigate?: () => void
 }) {
+  const itemClass =
+    className ??
+    'flex w-full items-center justify-between gap-4 rounded-md px-4 py-3 text-left text-sm font-semibold text-neutral-content'
+
   if (calc.path && (calc.status === 'active' || calc.status === 'live')) {
     if (isCurrent(calc, currentPath)) {
       return (
-        <button type="button" className={className} disabled role="menuitem">
+        <button type="button" className={`${itemClass} cursor-default opacity-90`} disabled role="menuitem">
           <span>{calc.label}</span>
-          <span className="calc-more-live">Here</span>
+          <span className="badge badge-primary badge-sm border-0 text-primary-content">Here</span>
         </button>
       )
     }
     return (
-      <Link
-        className={className}
-        to={calc.path}
-        role="menuitem"
-        onClick={onNavigate}
-      >
+      <Link className={`${itemClass} hover:bg-white/10`} to={calc.path} role="menuitem" onClick={onNavigate}>
         <span>{calc.label}</span>
-        <span className="calc-more-live">Open</span>
+        <span className="badge badge-primary badge-sm border-0 text-primary-content">Open</span>
       </Link>
     )
   }
   if (calc.status === 'live' && calc.href) {
     return (
       <a
-        className={className}
+        className={`${itemClass} hover:bg-white/10`}
         href={calc.href}
         target="_blank"
         rel="noopener noreferrer"
         role="menuitem"
       >
         <span>{calc.label}</span>
-        <span className="calc-more-live">Open</span>
+        <span className="badge badge-primary badge-sm border-0 text-primary-content">Open</span>
       </a>
     )
   }
   return (
     <button
       type="button"
-      className={className}
+      className={`${itemClass} cursor-not-allowed opacity-80`}
       disabled
       title="Coming soon"
       role="menuitem"
     >
       <span>{calc.label}</span>
-      <span className="calc-more-soon">Coming soon</span>
+      <span className="badge badge-sm border-0 bg-base-100 text-base-content">Coming soon</span>
     </button>
+  )
+}
+
+function MoreMenu({
+  others,
+  currentPath,
+  onNavigate,
+  align = 'end',
+}: {
+  others: CalculatorMeta[]
+  currentPath: string
+  onNavigate: () => void
+  align?: 'start' | 'end'
+}) {
+  return (
+    <ul
+      className={`menu absolute top-[calc(100%+0.35rem)] z-40 max-h-[min(70vh,22rem)] min-w-64 overflow-y-auto rounded-box border border-white/20 bg-neutral p-2 shadow-lg ${
+        align === 'end' ? 'right-0' : 'left-0'
+      }`}
+      role="menu"
+    >
+      {others.map((c) => (
+        <li key={c.id} role="none">
+          <MoreItem calc={c} currentPath={currentPath} onNavigate={onNavigate} />
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -104,20 +130,22 @@ export function CalculatorNav({
   }, [moreOpen])
 
   return (
-    <nav className="calc-switch" aria-label="Calculators">
-      {current ? (
-        <span className="calc-switch-tab active" aria-current="page">
-          {current.label}
-        </span>
-      ) : (
-        <span className="calc-switch-tab active" aria-current="page">
-          Calculators
-        </span>
-      )}
-      <div className="calc-more" ref={moreRef}>
+    <nav
+      className="hidden flex-1 items-center justify-center gap-1.5 min-[801px]:flex"
+      aria-label="Calculators"
+    >
+      <span
+        className="badge badge-lg rounded-full border-0 bg-base-100 px-3 text-xs font-bold text-base-content"
+        aria-current="page"
+      >
+        {current ? current.label : 'Calculators'}
+      </span>
+      <div className="relative shrink-0" ref={moreRef}>
         <button
           type="button"
-          className={`calc-more-btn${moreOpen ? ' open' : ''}`}
+          className={`btn btn-ghost btn-sm rounded-full border border-white/25 text-neutral-content hover:bg-white/10 ${
+            moreOpen ? 'bg-white/10' : ''
+          }`}
           aria-expanded={moreOpen}
           aria-haspopup="menu"
           onClick={() => setMoreOpen((o) => !o)}
@@ -125,18 +153,12 @@ export function CalculatorNav({
           More <span aria-hidden>▾</span>
         </button>
         {moreOpen && (
-          <ul className="calc-more-menu" role="menu">
-            {others.map((c) => (
-              <li key={c.id} role="none">
-                <MoreItem
-                  calc={c}
-                  className="calc-more-item"
-                  currentPath={currentPath}
-                  onNavigate={() => setMoreOpen(false)}
-                />
-              </li>
-            ))}
-          </ul>
+          <MoreMenu
+            others={others}
+            currentPath={currentPath}
+            onNavigate={() => setMoreOpen(false)}
+            align="end"
+          />
         )}
       </div>
     </nav>
@@ -178,10 +200,12 @@ export function MobileMoreCalculators({
   }, [open])
 
   return (
-    <div className="calc-more-mobile" ref={ref}>
+    <div className="relative ml-1 shrink-0 max-[800px]:inline-flex min-[801px]:hidden" ref={ref}>
       <button
         type="button"
-        className={`calc-more-mobile-btn${open ? ' open' : ''}`}
+        className={`btn btn-ghost btn-xs min-h-7 rounded-full border border-white/30 px-2.5 text-[0.7rem] font-semibold text-neutral-content hover:bg-white/10 ${
+          open ? 'bg-white/10' : ''
+        }`}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((o) => !o)}
@@ -189,18 +213,12 @@ export function MobileMoreCalculators({
         More calculators <span aria-hidden>▾</span>
       </button>
       {open && (
-        <ul className="calc-more-menu calc-more-menu--mobile" role="menu">
-          {others.map((c) => (
-            <li key={c.id} role="none">
-              <MoreItem
-                calc={c}
-                className="calc-more-item"
-                currentPath={currentPath}
-                onNavigate={() => setOpen(false)}
-              />
-            </li>
-          ))}
-        </ul>
+        <MoreMenu
+          others={others}
+          currentPath={currentPath}
+          onNavigate={() => setOpen(false)}
+          align="end"
+        />
       )}
     </div>
   )

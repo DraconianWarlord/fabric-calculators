@@ -136,15 +136,15 @@ function Collapsible({
   badge?: string | number
 }) {
   return (
-    <section className={`collapsible${open ? ' open' : ''}`}>
-      <button type="button" className="collapse-header" onClick={onToggle} aria-expanded={open}>
-        <span className="collapse-chevron" aria-hidden>
+    <section className={`collapsible card bg-base-100 border border-base-300 shadow-none mb-2${open ? ' open' : ''}`}>
+      <button type="button" className="collapse-header flex w-full items-center gap-2 rounded-lg bg-transparent px-2.5 py-2.5 text-left hover:bg-base-200" onClick={onToggle} aria-expanded={open}>
+        <span className="collapse-chevron w-4 text-xs text-base-content/50" aria-hidden>
           {open ? '▾' : '▸'}
         </span>
-        <span className="collapse-title">{title}</span>
-        {badge !== undefined && <span className="collapse-badge">{badge}</span>}
+        <span className="collapse-title flex-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">{title}</span>
+        {badge !== undefined && <span className="badge badge-ghost badge-sm max-w-32 truncate">{badge}</span>}
       </button>
-      {open && <div className="collapse-body">{children}</div>}
+      {open && <div className="collapse-body px-3 pb-3">{children}</div>}
     </section>
   )
 }
@@ -167,7 +167,7 @@ function ColorPicker({
             type="button"
             role="option"
             aria-selected={value.toLowerCase() === c.toLowerCase()}
-            className={`color-swatch${value.toLowerCase() === c.toLowerCase() ? ' selected' : ''}`}
+            className={`color-swatch btn btn-xs h-6 min-h-6 w-6 border-2 p-0${value.toLowerCase() === c.toLowerCase() ? ' border-neutral ring-1 ring-neutral' : ' border-transparent'}`}
             style={{ background: c }}
             title={c}
             onClick={() => onChange(c)}
@@ -200,9 +200,11 @@ function SoftNumberInput({
   onBlurValue?: (v: number | '') => void
   emptyIncrement?: number
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'>) {
+  const { className, ...inputRest } = rest
   return (
     <input
-      {...rest}
+      {...inputRest}
+      className={['input', 'input-bordered', 'w-full', className].filter(Boolean).join(' ')}
       type="number"
       value={value === '' ? '' : value}
       onChange={(e) => {
@@ -216,7 +218,7 @@ function SoftNumberInput({
       }}
       onBlur={(e) => {
         onBlurValue?.(value)
-        rest.onBlur?.(e)
+        inputRest.onBlur?.(e)
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
@@ -1000,7 +1002,7 @@ export default function NestingPage() {
         </div>
         <button
           type="button"
-          className="export-pdf"
+          className="btn btn-primary btn-sm export-pdf min-h-9 border-base-100"
           title="Open nest PDF in a new tab"
           onClick={() => {
             const ok = exportNestingPdfClick({
@@ -1044,18 +1046,18 @@ export default function NestingPage() {
       
 
       {actionHint && (
-        <div className="action-hint" role="alert">
+        <div className="alert alert-error mx-3 mt-2 mb-2 py-2 text-sm font-semibold" role="alert">
           {actionHint}
-          <button type="button" className="linkish" onClick={() => setActionHint(null)}>
+          <button type="button" className="btn btn-link btn-xs h-auto min-h-0 px-0 text-primary" onClick={() => setActionHint(null)}>
             Dismiss
           </button>
         </div>
       )}
 
-      <nav className="mobile-tabs" aria-label="Main sections">
+      <nav className="mobile-tabs hidden shrink-0 gap-1.5 border-b border-base-300 bg-base-100 px-2.5 py-1.5 max-[800px]:flex" aria-label="Main sections">
         <button
           type="button"
-          className={mobileView === 'controls' ? 'active' : ''}
+          className={`btn btn-sm flex-1 ${mobileView === 'controls' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
           aria-pressed={mobileView === 'controls'}
           onClick={() => setMobileView('controls')}
         >
@@ -1063,7 +1065,7 @@ export default function NestingPage() {
         </button>
         <button
           type="button"
-          className={mobileView === 'bolt' ? 'active' : ''}
+          className={`btn btn-sm flex-1 ${mobileView === 'bolt' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
           aria-pressed={mobileView === 'bolt'}
           onClick={() => setMobileView('bolt')}
         >
@@ -1071,7 +1073,7 @@ export default function NestingPage() {
         </button>
         <button
           type="button"
-          className={mobileView === 'panels' ? 'active' : ''}
+          className={`btn btn-sm flex-1 ${mobileView === 'panels' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
           aria-pressed={mobileView === 'panels'}
           onClick={() => setMobileView('panels')}
         >
@@ -1102,7 +1104,7 @@ export default function NestingPage() {
                 }}
               />
             </label>
-            <p className="hint">
+            <p className="hint text-xs text-base-content/60 mt-1">
               Max {display(MAX_FABRIC_WIDTH_IN)} {unit}
             </p>
             <label>
@@ -1123,7 +1125,7 @@ export default function NestingPage() {
                 }}
               />
             </label>
-            <p className="hint">cut = finished + 2×SA on each side</p>
+            <p className="hint text-xs text-base-content/60 mt-1">cut = finished + 2×SA on each side</p>
             <label>
               Waste %
               <SoftNumberInput
@@ -1141,7 +1143,7 @@ export default function NestingPage() {
                 }}
               />
             </label>
-            <label className="checkbox-label">
+            <label className="checkbox-label label cursor-pointer justify-start gap-2 py-1">
               <input
                 type="checkbox"
                 checked={patterned}
@@ -1198,7 +1200,7 @@ export default function NestingPage() {
                     }}
                   />
                 </label>
-                <p className="hint">
+                <p className="hint text-xs text-base-content/60 mt-1">
                   Vertical repeat starts at the top of the bolt; horizontal repeat is centered on
                   the width. Set either axis to <strong>0</strong> for stripes (1D repeat on the
                   other axis). Nesting/snap align panel centers to the active pattern grid.
@@ -1208,14 +1210,14 @@ export default function NestingPage() {
             <div className="row">
               <button
                 type="button"
-                className={unit === 'in' ? 'active' : ''}
+                className={`btn btn-sm ${unit === 'in' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 onClick={() => setUnit('in')}
               >
                 inches
               </button>
               <button
                 type="button"
-                className={unit === 'mm' ? 'active' : ''}
+                className={`btn btn-sm ${unit === 'mm' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 onClick={() => setUnit('mm')}
               >
                 mm
@@ -1226,33 +1228,33 @@ export default function NestingPage() {
           <Collapsible title="Add Panel" open={openAdd} onToggle={() => setOpenAdd((v) => !v)}>
             <label>
               Label
-              <input value={draftLabel} onChange={(e) => setDraftLabel(e.target.value)} />
+              <input className="input input-bordered w-full" value={draftLabel} onChange={(e) => setDraftLabel(e.target.value)} />
             </label>
             <div className="row shape-toggle" role="group" aria-label="Panel shape">
               <button
                 type="button"
-                className={draftKind === 'rect' ? 'active' : ''}
+                className={`btn btn-sm flex-1 ${draftKind === 'rect' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 onClick={() => setDraftKind('rect')}
               >
                 Rectangle
               </button>
               <button
                 type="button"
-                className={draftKind === 'trap' ? 'active' : ''}
+                className={`btn btn-sm flex-1 ${draftKind === 'trap' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 onClick={() => setDraftKind('trap')}
               >
                 Trapezoid
               </button>
               <button
                 type="button"
-                className={draftKind === 'circle' ? 'active' : ''}
+                className={`btn btn-sm flex-1 ${draftKind === 'circle' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 onClick={() => setDraftKind('circle')}
               >
                 Circle
               </button>
               <button
                 type="button"
-                className={draftKind === 'irregular' ? 'active' : ''}
+                className={`btn btn-sm flex-1 ${draftKind === 'irregular' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
                 onClick={() => {
                   setDraftKind('irregular')
                   setDiagonalDirty(false)
@@ -1502,7 +1504,7 @@ export default function NestingPage() {
                     onValueChange={setDraftDiameter}
                   />
                 </label>
-                <p className="hint">Finished diameter only. Cut diameter = finished + 2×seam allowance.</p>
+                <p className="hint text-xs text-base-content/60 mt-1">Finished diameter only. Cut diameter = finished + 2×seam allowance.</p>
               </>
             ) : draftKind === 'irregular' ? (
               <>
@@ -1571,7 +1573,7 @@ export default function NestingPage() {
                     }}
                   />
                 </label>
-                <p className="hint">
+                <p className="hint text-xs text-base-content/60 mt-1">
                   Auto from sides (symmetric / forepeak / keystone). Edit to match a measured
                   cross-corner.
                   {diagonalDirty && (
@@ -1579,7 +1581,7 @@ export default function NestingPage() {
                       {' '}
                       <button
                         type="button"
-                        className="linkish"
+                        className="btn btn-link btn-xs h-auto min-h-0 px-0 text-primary"
                         onClick={() => setDiagonalDirty(false)}
                       >
                         Reset diagonal
@@ -1620,13 +1622,13 @@ export default function NestingPage() {
                     onValueChange={setDraftHeight}
                   />
                 </label>
-                <p className="hint">
+                <p className="hint text-xs text-base-content/60 mt-1">
                   Parallel top &amp; bottom across the bolt (at 0°). Equal widths act like a rectangle.
                 </p>
               </>
             )}
             {seamAllowanceIn > 0 && draftSizes && (
-              <p className="hint">
+              <p className="hint text-xs text-base-content/60 mt-1">
                 {draftKind === 'circle' && draftCircleCut() ? (
                   <>Cut ≈ ⌀ {display(draftCircleCut()!.diameter)} {unit}</>
                 ) : draftKind === 'irregular' && draftIrregularCut() ? (
@@ -1664,7 +1666,7 @@ export default function NestingPage() {
               />
             </label>
             {draftSplit && draftSizes && (
-              <div className="warn-banner" role="alert">
+              <div className="alert alert-warning my-2 py-2 text-sm" role="alert">
                 <p>
                   {formatSplitMessage(
                     draftSizes.cutW,
@@ -1678,7 +1680,7 @@ export default function NestingPage() {
                 </p>
                 <button
                   type="button"
-                  className="primary"
+                  className="btn btn-primary w-full"
                   onClick={() => addSplitFromSuggestion(draftSplit, draftLabel)}
                 >
                   Split into {draftSplit.pieceCount} panels
@@ -1693,14 +1695,14 @@ export default function NestingPage() {
                 onChange={(c) => setDraftColor(c)}
               />
               {draftColor && (
-                <button type="button" className="linkish" onClick={() => setDraftColor(null)}>
+                <button type="button" className="btn btn-link btn-xs h-auto min-h-0 px-0 text-primary" onClick={() => setDraftColor(null)}>
                   Use auto palette
                 </button>
               )}
             </div>
             <button
               type="button"
-              className="primary"
+              className="btn btn-primary w-full"
               onClick={addPanels}
               disabled={
                 Boolean(draftSplit) ||
@@ -1722,16 +1724,16 @@ export default function NestingPage() {
             </button>
             <button
               type="button"
-              className="primary auto-nest add-panel-auto-nest"
+              className="btn btn-primary w-full auto-nest add-panel-auto-nest mt-5"
               title="Cycle through ranked nest layouts"
               onClick={runAutoNest}
               disabled={panels.length === 0}
             >
               Auto-Nest
             </button>
-            {nestHint && <p className="hint nest-hint">{nestHint}</p>}
+            {nestHint && <p className="hint nest-hint text-xs font-semibold text-primary mt-1">{nestHint}</p>}
             {!nestHint && panels.length > 0 && (
-              <p className="hint">Each click cycles a different ranked layout.</p>
+              <p className="hint text-xs text-base-content/60 mt-1">Each click cycles a different ranked layout.</p>
             )}
           </Collapsible>
         </aside>
@@ -1741,14 +1743,14 @@ export default function NestingPage() {
             <div className="bolt-mobile-bar">
               <button
                 type="button"
-                className="primary auto-nest"
+                className="btn btn-primary w-full auto-nest"
                 title="Cycle through ranked nest layouts"
                 onClick={runAutoNest}
                 disabled={panels.length === 0}
               >
                 Auto-Nest
               </button>
-              {nestHint && <p className="hint nest-hint">{nestHint}</p>}
+              {nestHint && <p className="hint nest-hint text-xs font-semibold text-primary mt-1">{nestHint}</p>}
             </div>
           )}
           <svg
@@ -1926,7 +1928,7 @@ export default function NestingPage() {
                 </div>
                 {isTrap(selected) ? (
                   <>
-                    <p className="hint">Trapezoid (parallel top &amp; bottom)</p>
+                    <p className="hint text-xs text-base-content/60 mt-1">Trapezoid (parallel top &amp; bottom)</p>
                     <label>
                       Top width ({unit}){seamAllowanceIn > 0 ? ' — finished' : ''}
                       <SoftNumberInput
@@ -1993,7 +1995,7 @@ export default function NestingPage() {
                   </>
                 ) : isCircle(selected) ? (
                   <>
-                    <p className="hint">Circle</p>
+                    <p className="hint text-xs text-base-content/60 mt-1">Circle</p>
                     <label>
                       Diameter ({unit}){seamAllowanceIn > 0 ? ' — finished' : ''}
                       <SoftNumberInput
@@ -2017,7 +2019,7 @@ export default function NestingPage() {
                   </>
                 ) : isIrregular(selected) ? (
                   <>
-                    <p className="hint">Irregular quad (L / F / R / B + diagonal)</p>
+                    <p className="hint text-xs text-base-content/60 mt-1">Irregular quad (L / F / R / B + diagonal)</p>
                     <label>
                       Left ({unit}){seamAllowanceIn > 0 ? ' — finished' : ''}
                       <SoftNumberInput
@@ -2232,7 +2234,7 @@ export default function NestingPage() {
                   </button>
                   <button
                     type="button"
-                    className="danger"
+                    className="btn btn-outline btn-error btn-sm"
                     onClick={() => {
                       setPanels((prev) => prev.filter((p) => p.id !== selected.id))
                       setSelectedId(null)
@@ -2242,7 +2244,7 @@ export default function NestingPage() {
                   </button>
                 </div>
                 {selectedSplit && (
-                  <div className="warn-banner" role="alert">
+                  <div className="alert alert-warning my-2 py-2 text-sm" role="alert">
                     <p>
                       {formatSplitMessage(
                         selected.width,
@@ -2256,7 +2258,7 @@ export default function NestingPage() {
                     </p>
                     <button
                       type="button"
-                      className="primary"
+                      className="btn btn-primary w-full"
                       onClick={() =>
                         addSplitFromSuggestion(selectedSplit, selected.label, selected.id)
                       }
@@ -2265,7 +2267,7 @@ export default function NestingPage() {
                     </button>
                   </div>
                 )}
-                <p className="hint">
+                <p className="hint text-xs text-base-content/60 mt-1">
                   {isCircle(selected) ? (
                     <>
                       Cut ⌀ {display(selected.width)} {unit}
@@ -2297,7 +2299,7 @@ export default function NestingPage() {
                 </p>
               </>
             ) : (
-              <p className="hint">Select a panel on the bolt or in the list.</p>
+              <p className="hint text-xs text-base-content/60 mt-1">Select a panel on the bolt or in the list.</p>
             )}
           </Collapsible>
 
@@ -2314,7 +2316,7 @@ export default function NestingPage() {
                 return (
                   <li key={p.id}>
                     <div
-                      className={`list-item${p.id === selectedId ? ' active' : ''}`}
+                      className={`list-item btn btn-ghost h-auto min-h-10 w-full justify-start gap-2 rounded-md px-2 py-1.5 font-normal normal-case${p.id === selectedId ? ' bg-base-200 border-base-300' : ''}`}
                       onClick={() => setSelectedId(p.id)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') setSelectedId(p.id)
@@ -2343,10 +2345,10 @@ export default function NestingPage() {
                   </li>
                 )
               })}
-              {panels.length === 0 && <li className="hint">No panels yet.</li>}
+              {panels.length === 0 && <li className="hint text-xs text-base-content/60 mt-1">No panels yet.</li>}
             </ul>
             {panels.length > 0 && (
-              <button type="button" className="danger clear-all" onClick={clearAllPanels}>
+              <button type="button" className="btn btn-outline btn-error w-full clear-all mt-2" onClick={clearAllPanels}>
                 Clear all
               </button>
             )}

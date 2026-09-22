@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -10,7 +11,7 @@ const reactDomPath = path.resolve(rootDir, 'node_modules/react-dom')
 const reactRouterDomPath = path.resolve(rootDir, 'node_modules/react-router-dom')
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     dedupe: ['react', 'react-dom', 'react-router-dom'],
     alias: [

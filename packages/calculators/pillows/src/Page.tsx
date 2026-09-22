@@ -280,40 +280,38 @@ export default function PillowsPage() {
         miscalculations, cut fabric, or purchased fabric from this tool.
       </p>
 
-      <div className="layout">
-        <aside className="sidebar left">
-          <section className="card">
-            <h2 className="card-title">pillow type</h2>
-            <div className="type-grid" role="list">
+      <div className="layout grid min-h-0 flex-1 grid-cols-1 min-[801px]:grid-cols-[minmax(280px,360px)_1fr]">
+        <aside className="sidebar left bg-base-100 border-r border-base-300 overflow-y-auto p-3.5">
+          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">pillow type</h2>
+            <div className="grid gap-2" role="list">
               {PILLOW_TYPES.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   role="listitem"
-                  className={`type-card${t.id === activeType.id ? ' active' : ''}${
-                    t.status === 'soon' ? ' soon' : ''
-                  }`}
+                  className={`btn btn-ghost h-auto min-h-11 w-full flex-col items-start gap-0.5 rounded-lg border border-base-300 bg-base-100 px-3 py-2.5 text-left font-normal normal-case${t.id === activeType.id ? ' border-primary ring-1 ring-primary' : ''}${t.status === 'soon' ? ' cursor-not-allowed opacity-85 bg-base-200' : ''}`}
                   disabled={t.status === 'soon'}
                   onClick={() => t.status === 'active' && selectPillowType(t.id)}
                   title={t.status === 'soon' ? 'Coming soon' : t.blurb}
                 >
-                  <span className="type-label">{t.label}</span>
+                  <span className="font-bold text-sm">{t.label}</span>
                   {t.status === 'soon' ? (
-                    <span className="type-soon">Coming soon</span>
+                    <span className="badge badge-sm">Coming soon</span>
                   ) : (
-                    <span className="type-blurb">{t.blurb}</span>
+                    <span className="text-xs text-base-content/60">{t.blurb}</span>
                   )}
                 </button>
               ))}
             </div>
           </section>
 
-          <section className="card">
-            <h2 className="card-title">units</h2>
-            <div className="unit-toggle" role="group" aria-label="Unit of measurement">
+          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">units</h2>
+            <div className="join" role="group" aria-label="Unit of measurement">
               <button
                 type="button"
-                className={unit === 'in' ? 'active' : ''}
+                className={`btn join-item btn-sm ${unit === 'in' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
                 aria-pressed={unit === 'in'}
                 onClick={() => switchUnit('in')}
               >
@@ -321,7 +319,7 @@ export default function PillowsPage() {
               </button>
               <button
                 type="button"
-                className={unit === 'mm' ? 'active' : ''}
+                className={`btn join-item btn-sm ${unit === 'mm' ? 'btn-primary' : 'btn-ghost border-base-300'}`}
                 aria-pressed={unit === 'mm'}
                 onClick={() => switchUnit('mm')}
               >
@@ -330,20 +328,21 @@ export default function PillowsPage() {
             </div>
           </section>
 
-          <section className="card">
-            <h2 className="card-title">
+          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">
               {isBolster ? 'bolster pillow inputs' : 'throw pillow inputs'}
             </h2>
-            <label>
+            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
               {isBolster ? 'A. diameter / width (form)' : 'A. width (form)'}
               <input
+                className="input input-bordered w-full"
                 type="number"
                 min={1}
                 step={1}
                 value={widthDraft}
                 onChange={(e) => setWidthDraft(e.target.value)}
               />
-              <span className="hint">
+              <span className="text-xs text-base-content/60 mt-1 leading-snug">
                 {isBolster
                   ? bolsterFit === 'regular'
                     ? `Regular Fit: end cut = form + ${SEAM_ALLOWANCE_IN}"; finished ≈ form − ${SEAM_ALLOWANCE_IN}"`
@@ -351,9 +350,10 @@ export default function PillowsPage() {
                   : `finished cover ≈ form − ${FORM_TO_FINISHED_REDUCTION_IN}" (${SEAM_ALLOWANCE_IN}" seams; cut = form)`}
               </span>
             </label>
-            <label>
+            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
               {isBolster ? 'B. length (form)' : 'B. length (form)'}
               <input
+                className="input input-bordered w-full"
                 type="number"
                 min={1}
                 step={1}
@@ -361,9 +361,9 @@ export default function PillowsPage() {
                 onChange={(e) => setLengthDraft(e.target.value)}
               />
             </label>
-            <label>
+            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
               quantity
-              <select value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
+              <select className="select select-bordered w-full" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
                 {Array.from({ length: MAX_QUANTITY - MIN_QUANTITY + 1 }, (_, i) => {
                   const n = MIN_QUANTITY + i
                   return (
@@ -374,21 +374,22 @@ export default function PillowsPage() {
                 })}
               </select>
             </label>
-            <label>
+            <label className="mb-2.5 flex w-full flex-col gap-1 text-sm">
               fabric width
               <input
+                className="input input-bordered w-full"
                 type="number"
                 min={1}
                 step={1}
                 value={fabricDraft}
                 onChange={(e) => setFabricDraft(e.target.value)}
               />
-              <span className="hint">often 46, 54, or 60 {unitLabel}</span>
+              <span className="text-xs text-base-content/60 mt-1 leading-snug">often 46, 54, or 60 {unitLabel}</span>
             </label>
 
             {isBolster ? (
               <>
-                <fieldset className="pattern-fieldset">
+                <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
                   <legend>pattern direction</legend>
                   {(
                     [
@@ -396,8 +397,8 @@ export default function PillowsPage() {
                       ['vertical', 'vertical'],
                     ] as const
                   ).map(([val, label]) => (
-                    <label key={val} className="radio-label">
-                      <input
+                    <label key={val} className="label cursor-pointer justify-start gap-2 py-1">
+                      <input className="radio radio-sm radio-primary"
                         type="radio"
                         name="bolster-pattern"
                         value={val}
@@ -407,12 +408,12 @@ export default function PillowsPage() {
                       {label}
                     </label>
                   ))}
-                  <span className="hint">
+                  <span className="text-xs text-base-content/60 mt-1 leading-snug">
                     horizontal = pattern around the pillow (circ along bolt). vertical = pattern
                     across the pillow (length along bolt).
                   </span>
                 </fieldset>
-                <fieldset className="pattern-fieldset">
+                <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
                   <legend>fit</legend>
                   {(
                     [
@@ -420,8 +421,8 @@ export default function PillowsPage() {
                       ['tight', 'tight'],
                     ] as const
                   ).map(([val, label]) => (
-                    <label key={val} className="radio-label">
-                      <input
+                    <label key={val} className="label cursor-pointer justify-start gap-2 py-1">
+                      <input className="radio radio-sm radio-primary"
                         type="radio"
                         name="bolster-fit"
                         value={val}
@@ -431,14 +432,14 @@ export default function PillowsPage() {
                       {label}
                     </label>
                   ))}
-                  <span className="hint">
+                  <span className="text-xs text-base-content/60 mt-1 leading-snug">
                     Regular adds ½″ SA (default). Tight adds none — cover ~1″ smaller. Closure
                     overlap 2″ on circumference (tips mention 2¼″ for Velcro).
                   </span>
                 </fieldset>
               </>
             ) : (
-              <fieldset className="pattern-fieldset">
+              <fieldset className="fieldset border border-base-300 rounded-box p-3 mt-1">
                 <legend>pattern direction</legend>
                 {(
                   [
@@ -447,9 +448,9 @@ export default function PillowsPage() {
                     ['none', 'none / best pack'],
                   ] as const
                 ).map(([val, label]) => (
-                  <label key={val} className="radio-label">
-                    <input
-                      type="radio"
+                  <label key={val} className="label cursor-pointer justify-start gap-2 py-1">
+                    <input className="radio radio-sm radio-primary"
+                        type="radio"
                       name="pattern"
                       value={val}
                       checked={pattern === val}
@@ -458,7 +459,7 @@ export default function PillowsPage() {
                     {label}
                   </label>
                 ))}
-                <span className="hint">
+                <span className="text-xs text-base-content/60 mt-1 leading-snug">
                   Sailrite default is horizontal (pattern on pillow length). vertical = pattern on
                   width. none / best pack = pick lower yardage orientation.
                 </span>
@@ -467,13 +468,13 @@ export default function PillowsPage() {
           </section>
         </aside>
 
-        <main className="results" data-mobile-pane="results">
-          <section className="card results-hero">
-            <h2 className="card-title">yardage</h2>
-            <div className="results-yards">
+        <main className="results flex flex-col gap-3 overflow-y-auto p-3.5" data-mobile-pane="results">
+          <section className="card bg-base-100 border border-base-300 shadow-none results-hero">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">yardage</h2>
+            <div className="results-yards mb-3.5 flex flex-wrap gap-x-8 gap-y-5">
               <div>
-                <div className="big-exact">{exact.toFixed(2)} yd</div>
-                <div className="big-meta">
+                <div className="text-3xl font-extrabold tracking-tight">{exact.toFixed(2)} yd</div>
+                <div className="text-xs text-base-content/60">
                   {formatDim(
                     isBolster ? bolsterResult.nest.lengthInches : throwResult.pack.lengthInches,
                     unit,
@@ -482,12 +483,12 @@ export default function PillowsPage() {
                 </div>
               </div>
               <div>
-                <div className="big-order">Order {order} yd</div>
-                <div className="big-meta">rounded up to whole yards</div>
+                <div className="text-xl font-bold text-primary">Order {order} yd</div>
+                <div className="text-xs text-base-content/60">rounded up to whole yards</div>
               </div>
             </div>
             <a
-              className="shop-fabric"
+              className="btn btn-primary mt-2"
               href={SHOP.fabric}
               target="_blank"
               rel="noopener noreferrer"
@@ -496,8 +497,8 @@ export default function PillowsPage() {
             </a>
           </section>
 
-          <section className="card">
-            <h2 className="card-title">cut list</h2>
+          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">cut list</h2>
             <ul className="cut-list">
               {(isBolster ? bolsterResult.cutList : throwResult.cutList).map((c) => (
                 <li key={c.label}>
@@ -510,7 +511,7 @@ export default function PillowsPage() {
               ))}
             </ul>
             {isBolster ? (
-              <p className="hint">
+              <p className="text-xs text-base-content/60 mt-1 leading-snug">
                 nesting: {bolsterResult.nest.barrelAcrossCount} barrel
                 {bolsterResult.nest.barrelAcrossCount === 1 ? '' : 's'} across ×{' '}
                 {bolsterResult.nest.barrelRows} row
@@ -522,7 +523,7 @@ export default function PillowsPage() {
                   : ' (ends nested beside barrels)'}
               </p>
             ) : (
-              <p className="hint">
+              <p className="text-xs text-base-content/60 mt-1 leading-snug">
                 packing: {throwResult.pack.acrossCount} across × {throwResult.pack.rows} row
                 {throwResult.pack.rows === 1 ? '' : 's'} (
                 {throwResult.pack.orientation.label === 'width-across'
@@ -534,8 +535,8 @@ export default function PillowsPage() {
           </section>
 
           {!isBolster && (
-            <section className="card">
-              <h2 className="card-title">piping or binding (optional)</h2>
+            <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+              <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">piping or binding (optional)</h2>
               <ul className="materials">
                 <li>
                   Prefabricated piping:{' '}
@@ -559,7 +560,7 @@ export default function PillowsPage() {
                 </li>
               </ul>
               {throwResult.pack.leftover ? (
-                <p className="hint">
+                <p className="text-xs text-base-content/60 mt-1 leading-snug">
                   Fabric left over: a strip{' '}
                   <strong>
                     {formatDim(throwResult.pack.leftover.widthIn, unit)} ×{' '}
@@ -568,14 +569,14 @@ export default function PillowsPage() {
                   (usable for matching piping?).
                 </p>
               ) : (
-                <p className="hint">Fabric left over: none.</p>
+                <p className="text-xs text-base-content/60 mt-1 leading-snug">Fabric left over: none.</p>
               )}
             </section>
           )}
 
           {isBolster && (
-            <section className="card">
-              <h2 className="card-title">piping (optional)</h2>
+            <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+              <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">piping (optional)</h2>
               <ul className="materials">
                 <li>
                   Prefabricated piping:{' '}
@@ -588,8 +589,8 @@ export default function PillowsPage() {
             </section>
           )}
 
-          <section className="card">
-            <h2 className="card-title">{isBolster ? 'form vs cut' : 'form vs cut'}</h2>
+          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">{isBolster ? 'form vs cut' : 'form vs cut'}</h2>
             {isBolster ? (
               <BolsterDiagram
                 diameterIn={formWidthIn}
@@ -611,15 +612,15 @@ export default function PillowsPage() {
               />
             )}
             {!isBolster && (
-              <p className="hint">
+              <p className="text-xs text-base-content/60 mt-1 leading-snug">
                 finished ≈ {formatDim(throwResult.finishedWidthIn, unit)} ×{' '}
                 {formatDim(throwResult.finishedLengthIn, unit)} {unitLabel}
               </p>
             )}
           </section>
 
-          <section className="card">
-            <h2 className="card-title">materials summary</h2>
+          <section className="card bg-base-100 border border-base-300 shadow-none mb-3">
+            <h2 className="card-title text-xs font-bold uppercase tracking-wider text-base-content/60 mb-2">materials summary</h2>
             <ul className="materials">
               {(isBolster ? bolsterResult.materials : throwResult.materials).map((m) => (
                 <li key={m}>{m}</li>
