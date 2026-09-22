@@ -143,4 +143,23 @@ describe('layout regressions', () => {
     expect(diagrams).not.toMatch(/#e75053/)
   })
 
+
+  it('split warning + action hint alerts stack / pad so CTA does not overlay or clip text', () => {
+    // Warning alerts with Split CTA must use stacked layout (Daisy alert grid overlays otherwise)
+    expect(pageTsx).toMatch(/SplitSuggestionAlert/)
+    expect(pageTsx).toMatch(/ActionHintBanner/)
+    const alerts = readFileSync(resolve(srcDir, 'alerts.tsx'), 'utf8')
+    expect(alerts).toMatch(/alert-stack/)
+    expect(alerts).toMatch(/flex flex-col items-stretch/)
+    expect(alerts).toMatch(/w-full min-w-0 whitespace-normal break-words/)
+    expect(alerts).toMatch(/btn btn-primary w-full shrink-0/)
+    // Error action-hint banner: padding + min-w-0 so first chars are not clipped
+    expect(alerts).toMatch(/alert alert-error[^"]*px-4/)
+    expect(alerts).toMatch(/min-w-0 flex-1[^"]*break-words/)
+    expect(alerts).toMatch(/Dismiss/)
+    expect(alerts).toMatch(/shrink-0/)
+    expect(pageCss).toMatch(/\.alert\s*\{[^}]*overflow:\s*visible/)
+    expect(pageCss).toMatch(/\.alert-stack\s*\{[^}]*flex-direction:\s*column/)
+  })
+
 })

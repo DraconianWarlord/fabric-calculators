@@ -8,6 +8,18 @@
   overflow: hidden;
 }
 
+/* DaisyUI alert is a multi-col grid by default — keep overflow visible and stack CTAs */
+.calc-page--nesting .alert {
+  overflow: visible;
+}
+
+.calc-page--nesting .alert-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 .calc-page--nesting .layout {
   display: grid;
   grid-template-columns: 280px 1fr 300px;

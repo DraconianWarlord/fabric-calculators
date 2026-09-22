@@ -43,6 +43,7 @@ import {
 import { wrapSvgText } from './lib/wrapSvgText'
 import { exportNestingPdf } from './lib/exportPdf'
 import { panelAddBlockMessage, rotate90BlockMessage } from './lib/panelAddGate'
+import { ActionHintBanner, SplitSuggestionAlert, formatSplitMessage } from './alerts'
 import {
   useHeaderStatusOptional,
   cutShapeSvgProps,
@@ -265,18 +266,6 @@ function SoftNumberInput({
   )
 }
 
-function formatSplitMessage(
-  cutW: number,
-  cutL: number,
-  fabricWidth: number,
-  s: SplitSuggestion,
-  displayFn: (inches: number) => string,
-  unit: Unit,
-  seamAllowance: number,
-): string {
-  const saNote = seamAllowance > 0 ? ' (plus seam allowance on joins)' : ''
-  return `This cut piece (${displayFn(cutW)}×${displayFn(cutL)} ${unit}) is wider than the ${displayFn(fabricWidth)} ${unit} bolt in both orientations. Split the ${displayFn(s.overSize)} ${unit} side into ${s.pieceCount} panels of ~${displayFn(s.pieceCutApprox)} ${unit}${saNote} and nest the strips.`
-}
 
 
 function exportNestingPdfClick(opts: {
@@ -1074,12 +1063,7 @@ export default function NestingPage() {
       
 
       {actionHint && (
-        <div className="alert alert-error mx-3 mt-2 mb-2 py-2 text-sm font-semibold" role="alert">
-          {actionHint}
-          <button type="button" className="btn btn-link btn-xs h-auto min-h-0 px-0 text-primary" onClick={() => setActionHint(null)}>
-            Dismiss
-          </button>
-        </div>
+        <ActionHintBanner message={actionHint} onDismiss={() => setActionHint(null)} />
       )}
 
       <nav className="mobile-tabs hidden shrink-0 gap-1.5 border-b border-base-300 bg-base-100 px-2.5 py-1.5 max-[800px]:flex" aria-label="Main sections">
@@ -1740,26 +1724,19 @@ export default function NestingPage() {
               />
             </label>
             {draftSplit && draftSizes && (
-              <div className="alert alert-warning my-2 py-2 text-sm" role="alert">
-                <p>
-                  {formatSplitMessage(
-                    draftSizes.cutW,
-                    draftSizes.cutL,
-                    fabricWidthIn,
-                    draftSplit,
-                    display,
-                    unit,
-                    seamAllowanceIn,
-                  )}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary w-full"
-                  onClick={() => addSplitFromSuggestion(draftSplit, draftLabel)}
-                >
-                  Split into {draftSplit.pieceCount} panels
-                </button>
-              </div>
+              <SplitSuggestionAlert
+                message={formatSplitMessage(
+                  draftSizes.cutW,
+                  draftSizes.cutL,
+                  fabricWidthIn,
+                  draftSplit,
+                  display,
+                  unit,
+                  seamAllowanceIn,
+                )}
+                pieceCount={draftSplit.pieceCount}
+                onSplit={() => addSplitFromSuggestion(draftSplit, draftLabel)}
+              />
             )}
             <div className="field-block">
               <span className="field-label">Color</span>
@@ -2331,28 +2308,21 @@ export default function NestingPage() {
                   </button>
                 </div>
                 {selectedSplit && (
-                  <div className="alert alert-warning my-2 py-2 text-sm" role="alert">
-                    <p>
-                      {formatSplitMessage(
-                        selected.width,
-                        selected.length,
-                        fabricWidthIn,
-                        selectedSplit,
-                        display,
-                        unit,
-                        seamAllowanceIn,
-                      )}
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-primary w-full"
-                      onClick={() =>
-                        addSplitFromSuggestion(selectedSplit, selected.label, selected.id)
-                      }
-                    >
-                      Split into {selectedSplit.pieceCount} panels
-                    </button>
-                  </div>
+                  <SplitSuggestionAlert
+                    message={formatSplitMessage(
+                      selected.width,
+                      selected.length,
+                      fabricWidthIn,
+                      selectedSplit,
+                      display,
+                      unit,
+                      seamAllowanceIn,
+                    )}
+                    pieceCount={selectedSplit.pieceCount}
+                    onSplit={() =>
+                      addSplitFromSuggestion(selectedSplit, selected.label, selected.id)
+                    }
+                  />
                 )}
                 <p className="hint text-xs text-base-content/60 mt-1">
                   {isCircle(selected) ? (
