@@ -3,11 +3,6 @@ import {
   buildShopLinks,
   shopFabricYardsLabel,
   useHeaderStatusOptional,
-  cutShapeSvgProps,
-  finishedShapeSvgProps,
-  CutFinishedLegend,
-  DIAGRAM_SR_BLUE,
-  DIAGRAM_CUT_FILL,
 } from '@sailrite/calc-shell'
 import { PILLOW_TYPES } from './pillowTypes'
 import {
