@@ -65,11 +65,17 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/max-\[800px\]:block min-\[801px\]:hidden/)
   })
 
-  it('form-vs-cut finished outline uses primary dashed, not Alert Red', () => {
-    expect(pageTsx).toMatch(/stroke="#24285e"/)
+  it('form-vs-cut finished outline uses diagram standard B (SR Blue dashed, not Alert Red)', () => {
+    expect(pageTsx).toMatch(/cutShapeSvgProps/)
+    expect(pageTsx).toMatch(/finishedShapeSvgProps/)
+    expect(pageTsx).toMatch(/CutFinishedLegend/)
+    expect(pageTsx).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(pageTsx).not.toMatch(/stroke="#e75053"/)
     expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
     expect(pageCss).not.toMatch(/diag-label-inner[^}]*--sr-danger/)
+    const diagrams = readFileSync(resolve(shellSrc, 'diagrams/cutFinished.ts'), 'utf8')
+    expect(diagrams).toMatch(/DIAGRAM_SR_BLUE\s*=\s*'#24285e'/)
+    expect(diagrams).toMatch(/DIAGRAM_FINISHED_DASH/)
   })
 
   it('header More controls are ≥44px hit targets', () => {

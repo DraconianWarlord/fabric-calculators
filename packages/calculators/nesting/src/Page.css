@@ -271,7 +271,8 @@
 
 .calc-page--nesting .trap-dims-figure,
 .calc-page--nesting .circle-dims-figure,
-.calc-page--nesting .irregular-dims-figure {
+.calc-page--nesting .irregular-dims-figure,
+.calc-page--nesting .rect-dims-figure {
   margin: 0.5rem 0 0.65rem;
   padding: 0.5rem;
   background: #fff;
@@ -297,6 +298,13 @@
   display: block;
   width: 100%;
   min-height: 230px;
+  height: auto;
+}
+
+.calc-page--nesting .rect-dims-svg {
+  display: block;
+  width: 100%;
+  min-height: 180px;
   height: auto;
 }
 

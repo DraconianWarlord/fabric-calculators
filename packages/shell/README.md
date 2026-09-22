@@ -13,3 +13,8 @@ Shared chrome for Sailrite fabric calculators: header, calculator switcher, bran
 - Legacy CSS variables remain in `tokens.css` for any calculator custom CSS still referencing `--sr-*`
 
 See `docs/STYLING.md` and `docs/SPEC-shell.md`.
+
+## Diagrams (standard B)
+
+Cut/finished nested outlines: import `cutShapeSvgProps`, `finishedShapeSvgProps`, and `CutFinishedLegend` from `@sailrite/calc-shell`. See `docs/DIAGRAM-STYLE.md`.
+

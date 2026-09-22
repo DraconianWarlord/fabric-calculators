@@ -120,4 +120,27 @@ describe('layout regressions', () => {
     expect(calcNav).toMatch(/>Open</)
     expect(calcNav).toMatch(/>Here</)
   })
+
+  it('shape dim previews use diagram standard B (nested cut/finished, no CAD ticks)', () => {
+    expect(pageTsx).toMatch(/cutShapeSvgProps/)
+    expect(pageTsx).toMatch(/finishedShapeSvgProps/)
+    expect(pageTsx).toMatch(/CutFinishedLegend/)
+    expect(pageTsx).toMatch(/DIAGRAM_SR_BLUE/)
+    // no mono black shape stroke / exterior tick-dimension CAD style on dim figures
+    expect(pageTsx).not.toMatch(/stroke="#111"/)
+    expect(pageTsx).not.toMatch(/same tick style as trapezoid/)
+    expect(pageTsx).not.toMatch(/trap-style ticks/)
+    // rect preview present
+    expect(pageTsx).toMatch(/rect-dims-figure/)
+    expect(pageCss).toMatch(/\.rect-dims-figure/)
+  })
+
+  it('diagram tokens live in @sailrite/calc-shell', () => {
+    const diagrams = readFileSync(resolve(shellSrc, 'diagrams/cutFinished.ts'), 'utf8')
+    expect(diagrams).toMatch(/DIAGRAM_SR_BLUE\s*=\s*'#24285e'/)
+    expect(diagrams).toMatch(/DIAGRAM_CUT_FILL\s*=\s*'#e8eaf6'/)
+    expect(diagrams).toMatch(/DIAGRAM_FINISHED_DASH\s*=\s*'4 3'/)
+    expect(diagrams).not.toMatch(/#e75053/)
+  })
+
 })

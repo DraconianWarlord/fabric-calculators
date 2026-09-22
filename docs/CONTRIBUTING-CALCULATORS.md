@@ -19,7 +19,8 @@ Before Zach’s product review — and ideally right after scaffold — run both
 
 Send a live URL (or staging) + what changed. Fix majors, then re-ping UX/Brand for recheck. Same gate applies to major UI restyles of existing calcs.
 
-Spacing/styling reference: `docs/STYLING.md` and UX checklist §I.
+Spacing/styling reference: `docs/STYLING.md` and UX checklist §I / §I2.
+Diagram cut/finished standard **B**: `docs/DIAGRAM-STYLE.md` (shared helpers in `@sailrite/calc-shell`).
 
 ## Rules
 

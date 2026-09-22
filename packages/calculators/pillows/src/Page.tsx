@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { buildShopLinks, shopFabricYardsLabel, useHeaderStatusOptional } from '@sailrite/calc-shell'
+import {
+  buildShopLinks,
+  shopFabricYardsLabel,
+  useHeaderStatusOptional,
+  cutShapeSvgProps,
+  finishedShapeSvgProps,
+  CutFinishedLegend,
+  DIAGRAM_SR_BLUE,
+  DIAGRAM_CUT_FILL,
+} from '@sailrite/calc-shell'
 import { PILLOW_TYPES } from './pillowTypes'
 import {
   DEFAULT_FABRIC_WIDTH_IN,
@@ -69,10 +78,8 @@ function ThrowDiagram({
         y={pad}
         width={cw}
         height={cl}
-        fill="#e8eaf6"
-        stroke="#24285e"
-        strokeWidth={2}
         rx={2}
+        {...cutShapeSvgProps()}
       />
       <text x={pad + cw / 2} y={pad - 10} textAnchor="middle" className="diag-label">
         cut (= form) {formatDim(cutW, unit)} × {formatDim(cutL, unit)} {unit}
@@ -82,11 +89,8 @@ function ThrowDiagram({
         y={pad + (cl - finL) / 2}
         width={finW}
         height={finL}
-        fill="none"
-        stroke="#24285e"
-        strokeWidth={1.5}
-        strokeDasharray="4 3"
         rx={2}
+        {...finishedShapeSvgProps()}
       />
       <text
         x={pad + cw / 2}
@@ -96,24 +100,12 @@ function ThrowDiagram({
       >
         finished
       </text>
-      <g transform={`translate(${pad + cw + 16}, ${pad + 8})`}>
-        <line x1={0} y1={0} x2={14} y2={0} stroke="#24285e" strokeWidth={2} />
-        <text x={20} y={4} className="diag-legend">
-          cut / form {formatDim(formW, unit)}×{formatDim(formL, unit)}
-        </text>
-        <line
-          x1={0}
-          y1={18}
-          x2={14}
-          y2={18}
-          stroke="#24285e"
-          strokeWidth={1.5}
-          strokeDasharray="4 3"
-        />
-        <text x={20} y={22} className="diag-legend">
-          finished (−{FORM_TO_FINISHED_REDUCTION_IN}")
-        </text>
-      </g>
+      <CutFinishedLegend
+        x={pad + cw + 16}
+        y={pad + 8}
+        cutLabel={`cut / form ${formatDim(formW, unit)}×${formatDim(formL, unit)}`}
+        finishedLabel={`finished (−${FORM_TO_FINISHED_REDUCTION_IN}")`}
+      />
     </svg>
   )
 }
@@ -145,19 +137,19 @@ function BolsterDiagram({
       role="img"
       aria-label="Bolster form and cut diagram"
     >
-      <ellipse cx={cx} cy={cy} rx={r * 0.45} ry={r} fill="#e8eaf6" stroke="#24285e" strokeWidth={2} />
-      <rect x={cx} y={cy - r} width={bodyW} height={bodyH} fill="#e8eaf6" stroke="none" />
+      <ellipse cx={cx} cy={cy} rx={r * 0.45} ry={r} {...cutShapeSvgProps()} />
+      <rect x={cx} y={cy - r} width={bodyW} height={bodyH} fill={DIAGRAM_CUT_FILL} stroke="none" />
       <ellipse
         cx={cx + bodyW}
         cy={cy}
         rx={r * 0.45}
         ry={r}
         fill="#c5cae9"
-        stroke="#24285e"
+        stroke={DIAGRAM_SR_BLUE}
         strokeWidth={2}
       />
-      <line x1={cx} y1={cy - r} x2={cx + bodyW} y2={cy - r} stroke="#24285e" strokeWidth={2} />
-      <line x1={cx} y1={cy + r} x2={cx + bodyW} y2={cy + r} stroke="#24285e" strokeWidth={2} />
+      <line x1={cx} y1={cy - r} x2={cx + bodyW} y2={cy - r} stroke={DIAGRAM_SR_BLUE} strokeWidth={2} />
+      <line x1={cx} y1={cy + r} x2={cx + bodyW} y2={cy + r} stroke={DIAGRAM_SR_BLUE} strokeWidth={2} />
       <text x={cx + bodyW / 2} y={cy - r - 8} textAnchor="middle" className="diag-label">
         B form {formatDim(lengthIn, unit)} → cut {formatDim(barrelAlongIn, unit)}
       </text>

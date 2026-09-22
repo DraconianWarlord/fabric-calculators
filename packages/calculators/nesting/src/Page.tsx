@@ -43,7 +43,13 @@ import {
 import { wrapSvgText } from './lib/wrapSvgText'
 import { exportNestingPdf } from './lib/exportPdf'
 import { panelAddBlockMessage, rotate90BlockMessage } from './lib/panelAddGate'
-import { useHeaderStatusOptional } from '@sailrite/calc-shell'
+import {
+  useHeaderStatusOptional,
+  cutShapeSvgProps,
+  finishedShapeSvgProps,
+  CutFinishedLegend,
+  DIAGRAM_SR_BLUE,
+} from '@sailrite/calc-shell'
 import './Page.css'
 
 
@@ -1286,208 +1292,254 @@ export default function NestingPage() {
               </button>
             </div>
             {draftKind === 'circle' && (
-              <figure className="circle-dims-figure" aria-label="Circle finished diameter">
+              <figure className="circle-dims-figure" aria-label="Circle cut and finished diameter">
                 <svg
                   className="circle-dims-svg"
-                  viewBox="0 0 240 220"
+                  viewBox="0 0 260 200"
                   role="img"
                   aria-hidden="true"
                 >
-                  <title>Finished diameter</title>
-                  {/* shape */}
-                  <circle
-                    cx="120"
-                    cy="95"
-                    r="60"
-                    fill="#f5f5f5"
-                    stroke="#111"
-                    strokeWidth="2.5"
-                  />
-                  {/* diameter — outside below, same tick style as trapezoid dims */}
-                  <line x1="60" y1="178" x2="180" y2="178" stroke="#24285e" strokeWidth="2" />
-                  <line x1="60" y1="172" x2="60" y2="184" stroke="#24285e" strokeWidth="2" />
-                  <line x1="180" y1="172" x2="180" y2="184" stroke="#24285e" strokeWidth="2" />
+                  <title>Cut and finished diameter</title>
+                  {/* cut (outer) — solid SR Blue + light fill */}
+                  <circle cx="100" cy="95" r="70" {...cutShapeSvgProps()} />
+                  {/* finished (inner) — dashed SR Blue */}
+                  <circle cx="100" cy="95" r="52" {...finishedShapeSvgProps()} />
                   <text
-                    x="120"
-                    y="206"
+                    x="100"
+                    y="90"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="16"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="12"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
                   >
                     Diameter
                   </text>
+                  <text
+                    x="100"
+                    y="106"
+                    textAnchor="middle"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="10"
+                    fontFamily="system-ui,sans-serif"
+                  >
+                    finished
+                  </text>
+                  <CutFinishedLegend x={178} y={36} />
                 </svg>
               </figure>
             )}
             {draftKind === 'trap' && (
-              <figure className="trap-dims-figure" aria-label="Trapezoid finished dimensions">
+              <figure className="trap-dims-figure" aria-label="Trapezoid cut and finished dimensions">
                 <svg
                   className="trap-dims-svg"
-                  viewBox="0 0 320 235"
+                  viewBox="0 0 320 220"
                   role="img"
                   aria-hidden="true"
                 >
                   <title>Top width, bottom width, and height</title>
-                  {/* shape */}
+                  {/* cut (outer) */}
                   <polygon
-                    points="95,55 225,55 275,175 45,175"
-                    fill="#f5f5f5"
-                    stroke="#111"
-                    strokeWidth="2.5"
+                    points="90,50 230,50 280,175 40,175"
+                    {...cutShapeSvgProps()}
                   />
-                  {/* top width */}
-                  <line x1="95" y1="38" x2="225" y2="38" stroke="#24285e" strokeWidth="2" />
-                  <line x1="95" y1="32" x2="95" y2="44" stroke="#24285e" strokeWidth="2" />
-                  <line x1="225" y1="32" x2="225" y2="44" stroke="#24285e" strokeWidth="2" />
+                  {/* finished (inner) */}
+                  <polygon
+                    points="110,72 210,72 245,152 75,152"
+                    {...finishedShapeSvgProps()}
+                  />
                   <text
                     x="160"
-                    y="28"
+                    y="64"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="16"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="13"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
                   >
                     Top width
                   </text>
-                  {/* bottom width */}
-                  <line x1="45" y1="198" x2="275" y2="198" stroke="#24285e" strokeWidth="2" />
-                  <line x1="45" y1="192" x2="45" y2="204" stroke="#24285e" strokeWidth="2" />
-                  <line x1="275" y1="192" x2="275" y2="204" stroke="#24285e" strokeWidth="2" />
                   <text
                     x="160"
-                    y="222"
+                    y="172"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="16"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="13"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
                   >
                     Bottom width
                   </text>
-                  {/* height */}
-                  <line x1="292" y1="55" x2="292" y2="175" stroke="#24285e" strokeWidth="2" />
-                  <line x1="286" y1="55" x2="298" y2="55" stroke="#24285e" strokeWidth="2" />
-                  <line x1="286" y1="175" x2="298" y2="175" stroke="#24285e" strokeWidth="2" />
                   <text
-                    x="308"
-                    y="120"
+                    x="168"
+                    y="118"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="16"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="13"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
-                    transform="rotate(90 308 120)"
+                    transform="rotate(90 168 118)"
                   >
                     Height
                   </text>
+                  <CutFinishedLegend x={210} y={12} />
                 </svg>
               </figure>
             )}
             {draftKind === 'irregular' && (
-              <figure className="irregular-dims-figure" aria-label="Irregular quadrilateral finished dimensions">
+              <figure className="irregular-dims-figure" aria-label="Irregular cut and finished dimensions">
                 <svg
                   className="irregular-dims-svg"
-                  viewBox="0 0 340 260"
+                  viewBox="0 0 340 240"
                   role="img"
                   aria-hidden="true"
                 >
                   <title>Left, Bottom, Right, Top, and Diagonal</title>
-                  {/* shape — BL, BR, TR, TL */}
+                  {/* cut (outer) — BL, BR, TR, TL */}
                   <polygon
                     points="70,175 250,175 285,60 45,85"
-                    fill="#f5f5f5"
-                    stroke="#111"
-                    strokeWidth="2.5"
+                    {...cutShapeSvgProps()}
                   />
-                  {/* dashed diagonal on the panel (bottom-left → top-right) */}
+                  {/* finished (inner) */}
+                  <polygon
+                    points="88,160 232,160 258,78 68,98"
+                    {...finishedShapeSvgProps()}
+                  />
+                  {/* diagonal on finished panel */}
                   <line
-                    x1="70"
-                    y1="175"
-                    x2="285"
-                    y2="60"
-                    stroke="#24285e"
-                    strokeWidth="1.5"
-                    strokeDasharray="6 4"
+                    x1="88"
+                    y1="160"
+                    x2="258"
+                    y2="78"
+                    stroke={DIAGRAM_SR_BLUE}
+                    strokeWidth="1.25"
+                    strokeDasharray="4 3"
+                    opacity="0.85"
                   />
-                  {/* Bottom — outside, trap-style ticks */}
-                  <line x1="70" y1="200" x2="250" y2="200" stroke="#24285e" strokeWidth="2" />
-                  <line x1="70" y1="194" x2="70" y2="206" stroke="#24285e" strokeWidth="2" />
-                  <line x1="250" y1="194" x2="250" y2="206" stroke="#24285e" strokeWidth="2" />
                   <text
                     x="160"
-                    y="226"
+                    y="178"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="15"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="12"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
                   >
                     Bottom
                   </text>
-                  {/* Top — offset above slanted edge */}
-                  <line x1="38" y1="64" x2="288" y2="38" stroke="#24285e" strokeWidth="2" />
-                  <line x1="34" y1="58" x2="42" y2="70" stroke="#24285e" strokeWidth="2" />
-                  <line x1="284" y1="32" x2="292" y2="44" stroke="#24285e" strokeWidth="2" />
                   <text
-                    x="163"
-                    y="28"
+                    x="165"
+                    y="72"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="15"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="12"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
-                    transform="rotate(-6 163 28)"
+                    transform="rotate(-6 165 72)"
                   >
                     Top
                   </text>
-                  {/* Left — outside slanted edge */}
-                  <line x1="28" y1="88" x2="50" y2="178" stroke="#24285e" strokeWidth="2" />
-                  <line x1="22" y1="90" x2="34" y2="86" stroke="#24285e" strokeWidth="2" />
-                  <line x1="44" y1="180" x2="56" y2="176" stroke="#24285e" strokeWidth="2" />
                   <text
-                    x="16"
-                    y="138"
+                    x="58"
+                    y="132"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="15"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="12"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
-                    transform="rotate(-76 16 138)"
+                    transform="rotate(-76 58 132)"
                   >
                     Left
                   </text>
-                  {/* Right — outside slanted edge */}
-                  <line x1="302" y1="62" x2="268" y2="178" stroke="#24285e" strokeWidth="2" />
-                  <line x1="296" y1="58" x2="308" y2="66" stroke="#24285e" strokeWidth="2" />
-                  <line x1="262" y1="174" x2="274" y2="182" stroke="#24285e" strokeWidth="2" />
                   <text
-                    x="308"
+                    x="278"
                     y="125"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="15"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="12"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
-                    transform="rotate(72 308 125)"
+                    transform="rotate(72 278 125)"
                   >
                     Right
                   </text>
-                  {/* Diagonal label sits on the dashed line only — no tick-mark dim style */}
                   <text
-                    x="190"
-                    y="108"
+                    x="185"
+                    y="112"
                     textAnchor="middle"
-                    fill="#24285e"
-                    fontSize="14"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="11"
                     fontWeight="700"
                     fontFamily="system-ui,sans-serif"
-                    transform="rotate(-28 190 108)"
+                    transform="rotate(-28 185 112)"
                   >
                     Diagonal
                   </text>
+                  <CutFinishedLegend x={250} y={8} />
+                </svg>
+              </figure>
+            )}
+            {draftKind === 'rect' && (
+              <figure className="rect-dims-figure" aria-label="Rectangle cut and finished dimensions">
+                <svg
+                  className="rect-dims-svg"
+                  viewBox="0 0 280 200"
+                  role="img"
+                  aria-hidden="true"
+                >
+                  <title>Width and length</title>
+                  {/* cut (outer) */}
+                  <rect
+                    x="36"
+                    y="36"
+                    width="160"
+                    height="120"
+                    rx="2"
+                    {...cutShapeSvgProps()}
+                  />
+                  {/* finished (inner) */}
+                  <rect
+                    x="56"
+                    y="54"
+                    width="120"
+                    height="84"
+                    rx="2"
+                    {...finishedShapeSvgProps()}
+                  />
+                  <text
+                    x="116"
+                    y="28"
+                    textAnchor="middle"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="13"
+                    fontWeight="700"
+                    fontFamily="system-ui,sans-serif"
+                  >
+                    Width
+                  </text>
+                  <text
+                    x="22"
+                    y="100"
+                    textAnchor="middle"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="13"
+                    fontWeight="700"
+                    fontFamily="system-ui,sans-serif"
+                    transform="rotate(-90 22 100)"
+                  >
+                    Length
+                  </text>
+                  <text
+                    x="116"
+                    y="100"
+                    textAnchor="middle"
+                    fill={DIAGRAM_SR_BLUE}
+                    fontSize="11"
+                    fontFamily="system-ui,sans-serif"
+                  >
+                    finished
+                  </text>
+                  <CutFinishedLegend x={210} y={48} />
                 </svg>
               </figure>
             )}

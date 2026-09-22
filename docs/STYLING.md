@@ -72,3 +72,18 @@ Avoid tangents: don’t let borders kiss (use gap); don’t place hairline colum
 
 New calculators and major UI restyles: **Sailrite Brand** + **Sailrite UX** before Zach’s review (see `CONTRIBUTING-CALCULATORS.md`).
 
+## Diagram / dimension render (suite standard: **B**)
+
+Locked by Zach for Nesting, Pillows, and future calculators. Full spec: [`DIAGRAM-STYLE.md`](./DIAGRAM-STYLE.md).
+
+| Element | Style |
+|---------|--------|
+| **Cut** outline | Solid stroke SR Blue `#24285e`; light fill (e.g. `#e8eaf6` / primary tint) |
+| **Finished** outline | Dashed stroke SR Blue `#24285e` (never Alert Red) |
+| **Labels** | Cut / finished sizes on or beside shapes |
+| **Legend** | Cut = solid · Finished = dashed |
+
+Shared helpers: `cutShapeSvgProps`, `finishedShapeSvgProps`, `CutFinishedLegend` in `@sailrite/calc-shell` (`packages/shell/src/diagrams/`).
+
+Do **not** use exterior CAD tick-dimension style (option A) as the suite default.
+
