@@ -1,0 +1,16 @@
+{
+  "name": "@sailrite/calc-registry",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@sailrite/calc-nesting": "workspace:*",
+    "@sailrite/calc-pillows": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2"
+  }
+}

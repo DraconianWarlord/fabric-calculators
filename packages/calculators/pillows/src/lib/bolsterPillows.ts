@@ -1,0 +1,231 @@
+/**
+ * Bolster (cylinder / neck-roll) pillow yardage math.
+ *
+ * Aligned with Sailrite Fabric Calculator:
+ * https://www.fabric-calculator.com/bolster-pillows.aspx
+ * Tips: https://www.fabric-calculator.com/tips.aspx#bolsterPillows
+ *
+ * Units are inches internally.
+ */
+
+import {
+  DEFAULT_FABRIC_WIDTH_IN,
+  MAX_QUANTITY,
+  MIN_QUANTITY,
+  exactYards,
+  fromInches,
+  orderYards,
+  round2,
+  toInches,
+  type Unit,
+} from './throwPillows'
+
+export type { Unit }
+export { DEFAULT_FABRIC_WIDTH_IN, MAX_QUANTITY, MIN_QUANTITY, fromInches, toInches }
+
+export type BolsterPattern = 'horizontal' | 'vertical'
+export type BolsterFit = 'regular' | 'tight'
+
+/** Closure overlap added to barrel circumference (inches). Page note + live calc use 2". */
+export const CLOSURE_OVERLAP_IN = 2
+
+/**
+ * Tips page mentions 2-1/4" for a 1" Velcro fold each side; live calculator and the
+ * on-page note use 2". We follow live (2"). See docs/SPEC.md.
+ */
+export const CLOSURE_OVERLAP_TIPS_VELCRO_IN = 2.25
+
+/** Regular Fit: SA added to diameter and length for cut sizes. */
+export const REGULAR_SEAM_ALLOWANCE_IN = 0.5
+
+/**
+ * Tight Fit: cover finishes ~1" smaller in diameter and length; no SA added to cuts.
+ * Circumference uses (D - 1).
+ */
+export const TIGHT_FINISHED_REDUCTION_IN = 1
+
+/** Ease added per pillow to zipper length beyond barrel-along cut (inches). */
+export const ZIPPER_EASE_IN = 2
+
+/** Ease added per pillow for prefabricated end-circle piping (inches). */
+export const BOLSTER_PIPING_EASE_PER_PILLOW_IN = 8
+
+export type BolsterInput = {
+  /** A — form diameter / width (inches) */
+  diameterIn: number
+  /** B — form length (inches) */
+  lengthIn: number
+  quantity: number
+  fabricWidthIn: number
+  pattern: BolsterPattern
+  fit: BolsterFit
+}
+
+export type BolsterCuts = {
+  endDiameterIn: number
+  barrelAlongIn: number
+  barrelCircIn: number
+}
+
+export type BolsterNesting = {
+  barrelAcrossIn: number
+  barrelAlongBoltIn: number
+  barrelAcrossCount: number
+  barrelRows: number
+  barrelUsedAlongIn: number
+  endsNestedBeside: number
+  endAcrossCount: number
+  endExtraRows: number
+  endsUsedAlongIn: number
+  lengthInches: number
+  exactYards: number
+  orderYards: number
+}
+
+export type BolsterResult = {
+  cuts: BolsterCuts
+  nest: BolsterNesting
+  pipingIn: number
+  pipingFt: number
+  pipingOrderFt: number
+  zipperIn: number
+  cutList: { label: string; widthIn: number; lengthIn: number; qty: number }[]
+  materials: string[]
+}
+
+export function bolsterCuts(
+  diameterIn: number,
+  lengthIn: number,
+  fit: BolsterFit,
+): BolsterCuts {
+  if (fit === 'regular') {
+    return {
+      endDiameterIn: diameterIn + REGULAR_SEAM_ALLOWANCE_IN,
+      barrelAlongIn: lengthIn + REGULAR_SEAM_ALLOWANCE_IN,
+      barrelCircIn: Math.PI * (diameterIn - REGULAR_SEAM_ALLOWANCE_IN) + CLOSURE_OVERLAP_IN,
+    }
+  }
+  return {
+    endDiameterIn: diameterIn,
+    barrelAlongIn: lengthIn,
+    barrelCircIn: Math.PI * (diameterIn - TIGHT_FINISHED_REDUCTION_IN) + CLOSURE_OVERLAP_IN,
+  }
+}
+
+/**
+ * Nest barrels + end circles on fabric width.
+ * Horizontal: pattern around pillow -> circ along bolt, barrel-along across.
+ * Vertical: pattern across pillow -> barrel-along along bolt, circ across.
+ * End circles fill leftover width beside barrel rows when possible.
+ */
+export function nestBolster(
+  cuts: BolsterCuts,
+  quantity: number,
+  fabricWidthIn: number,
+  pattern: BolsterPattern,
+): BolsterNesting {
+  const barrelAcrossIn = pattern === 'horizontal' ? cuts.barrelAlongIn : cuts.barrelCircIn
+  const barrelAlongBoltIn = pattern === 'horizontal' ? cuts.barrelCircIn : cuts.barrelAlongIn
+
+  const barrelAcrossCount = Math.max(1, Math.floor(fabricWidthIn / barrelAcrossIn + 1e-9))
+  const barrelRows = Math.ceil(quantity / barrelAcrossCount)
+  const barrelUsedAlongIn = barrelRows * barrelAlongBoltIn
+
+  const endsNeeded = quantity * 2
+  const endD = cuts.endDiameterIn
+  const endAcrossCount = Math.max(1, Math.floor(fabricWidthIn / endD + 1e-9))
+
+  let endsPlacedBeside = 0
+  for (let row = 0; row < barrelRows; row++) {
+    const barrelsInRow =
+      row < barrelRows - 1
+        ? barrelAcrossCount
+        : quantity - (barrelRows - 1) * barrelAcrossCount
+    const free = fabricWidthIn - barrelsInRow * barrelAcrossIn
+    endsPlacedBeside += Math.max(0, Math.floor(free / endD + 1e-9))
+  }
+  endsPlacedBeside = Math.min(endsPlacedBeside, endsNeeded)
+
+  const endsRemaining = Math.max(0, endsNeeded - endsPlacedBeside)
+  const endExtraRows = endsRemaining === 0 ? 0 : Math.ceil(endsRemaining / endAcrossCount)
+  const endsUsedAlongIn = endExtraRows * endD
+
+  const lengthInches = barrelUsedAlongIn + endsUsedAlongIn
+  const exact = exactYards(lengthInches)
+
+  return {
+    barrelAcrossIn,
+    barrelAlongBoltIn,
+    barrelAcrossCount,
+    barrelRows,
+    barrelUsedAlongIn,
+    endsNestedBeside: endsPlacedBeside,
+    endAcrossCount,
+    endExtraRows,
+    endsUsedAlongIn,
+    lengthInches,
+    exactYards: exact,
+    orderYards: orderYards(exact),
+  }
+}
+
+/**
+ * Prefabricated piping around both end circles (inches).
+ * Live: round(qty * (2 * PI * endDiameter + BOLSTER_PIPING_EASE_PER_PILLOW_IN))
+ */
+export function bolsterPipingInches(endDiameterIn: number, quantity: number): number {
+  const per = 2 * Math.PI * endDiameterIn + BOLSTER_PIPING_EASE_PER_PILLOW_IN
+  return Math.round(quantity * per)
+}
+
+/** Zipper chain along barrel length (inches): qty * (barrelAlong + ZIPPER_EASE_IN). */
+export function zipperInches(barrelAlongIn: number, quantity: number): number {
+  return quantity * (barrelAlongIn + ZIPPER_EASE_IN)
+}
+
+export function calculateBolster(input: BolsterInput): BolsterResult {
+  const { diameterIn, lengthIn, quantity, fabricWidthIn, pattern, fit } = input
+  const cuts = bolsterCuts(diameterIn, lengthIn, fit)
+  const nest = nestBolster(cuts, quantity, fabricWidthIn, pattern)
+
+  const pipingIn = bolsterPipingInches(cuts.endDiameterIn, quantity)
+  const pipingFt = round2(pipingIn / 12)
+  const pipingOrderFt = Math.ceil(pipingFt - 1e-9)
+  const zipperIn = zipperInches(cuts.barrelAlongIn, quantity)
+
+  const cutList = [
+    {
+      label: 'end circle',
+      widthIn: cuts.endDiameterIn,
+      lengthIn: cuts.endDiameterIn,
+      qty: quantity * 2,
+    },
+    {
+      label: 'barrel panel',
+      widthIn: cuts.barrelAlongIn,
+      lengthIn: round2(cuts.barrelCircIn),
+      qty: quantity,
+    },
+  ]
+
+  const materials = [
+    `${nest.orderYards} yd fabric (${nest.exactYards.toFixed(2)} yd exact; ${round2(nest.lengthInches)} in along bolt)`,
+    `optional prefabricated piping: ${pipingOrderFt} ft (need ${pipingIn} in / ${pipingFt} ft)`,
+    `Seamstick 1/4" basting tape: 1 roll`,
+    `#4.5 zipper chain (coil): ${round2(zipperIn)} in`,
+    `zipper sliders (coil): ${quantity}`,
+    `thread: 1 cone`,
+    `pillow forms: ${quantity}`,
+  ]
+
+  return {
+    cuts,
+    nest,
+    pipingIn,
+    pipingFt,
+    pipingOrderFt,
+    zipperIn,
+    cutList,
+    materials,
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "sailrite-fabric-calculators",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --filter @sailrite/calc-web dev",
+    "build": "pnpm -r --filter @sailrite/calc-web build",
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2"
+  }
+}
