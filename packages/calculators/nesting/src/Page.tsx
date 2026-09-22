@@ -30,6 +30,7 @@ import {
   panelBounds,
   panelFootprint,
   panelPolygon,
+  finishedPanelOutline,
   patternEnabled,
   patternHOffset,
   placeSpot,
@@ -1912,6 +1913,55 @@ export default function NestingPage() {
                       strokeWidth={strokeWidth}
                     />
                   )}
+                  {(() => {
+                    const fin = finishedPanelOutline(p, seamAllowanceIn)
+                    if (!fin) return null
+                    const dash = '4 3'
+                    const sw = Math.max(1, strokeWidth * 0.65)
+                    if (fin.kind === 'circle') {
+                      return (
+                        <circle
+                          cx={fin.cx * pxPerIn}
+                          cy={fin.cy * pxPerIn}
+                          r={fin.r * pxPerIn}
+                          fill="none"
+                          stroke={stroke}
+                          strokeWidth={sw}
+                          strokeDasharray={dash}
+                          pointerEvents="none"
+                        />
+                      )
+                    }
+                    if (fin.kind === 'aabb') {
+                      return (
+                        <rect
+                          x={fin.x * pxPerIn}
+                          y={fin.y * pxPerIn}
+                          width={fin.w * pxPerIn}
+                          height={fin.h * pxPerIn}
+                          fill="none"
+                          stroke={stroke}
+                          strokeWidth={sw}
+                          strokeDasharray={dash}
+                          pointerEvents="none"
+                        />
+                      )
+                    }
+                    const pts = fin.points
+                      .map((pt) => `${pt.x * pxPerIn},${pt.y * pxPerIn}`)
+                      .join(' ')
+                    return (
+                      <polygon
+                        points={pts}
+                        fill="none"
+                        stroke={stroke}
+                        strokeWidth={sw}
+                        strokeDasharray={dash}
+                        strokeLinejoin="miter"
+                        pointerEvents="none"
+                      />
+                    )
+                  })()}
                   {(() => {
                     // Circles: wrap inside the inscribed square so text stays in the disc.
                     // Others: AABB (poly visual center ≈ AABB for nest labels).

@@ -591,6 +591,89 @@ export function panelDimLabel(p: Panel): string {
   return `${p.width}×${p.length}`
 }
 
+
+export type FinishedPanelOutline =
+  | { kind: 'circle'; cx: number; cy: number; r: number }
+  | { kind: 'aabb'; x: number; y: number; w: number; h: number }
+  | { kind: 'poly'; points: Point[] }
+
+/**
+ * Finished (seam-allowance) outline for bolt-canvas overlays.
+ * Cut sizes are stored on the panel; finished = cut − 2×SA on each dim.
+ * Returns null when SA is 0 or finished dims collapse.
+ */
+export function finishedPanelOutline(
+  p: Panel,
+  seamAllowanceIn: number,
+): FinishedPanelOutline | null {
+  const sa = Math.max(0, seamAllowanceIn)
+  if (sa <= 0) return null
+
+  if (isCircle(p)) {
+    const finD = p.width - 2 * sa
+    if (finD <= 0) return null
+    const c = circleCenter(p)
+    return { kind: 'circle', cx: c.x, cy: c.y, r: finD / 2 }
+  }
+
+  if (isTrap(p)) {
+    const top = (p.topWidth ?? p.width) - 2 * sa
+    const bottom = (p.bottomWidth ?? p.width) - 2 * sa
+    const length = p.length - 2 * sa
+    if (top <= 0 || bottom <= 0 || length <= 0) return null
+    const fin: Panel = {
+      ...p,
+      width: Math.max(top, bottom),
+      length,
+      topWidth: top,
+      bottomWidth: bottom,
+      x: 0,
+      y: 0,
+    }
+    const cutFp = panelFootprint(p)
+    const finFp = panelFootprint(fin)
+    const ox = p.x + (cutFp.w - finFp.w) / 2
+    const oy = p.y + (cutFp.h - finFp.h) / 2
+    return { kind: 'poly', points: panelPolygon({ ...fin, x: ox, y: oy }) }
+  }
+
+  if (isIrregular(p)) {
+    const L = (p.sideLeft ?? 0) - 2 * sa
+    const F = (p.sideFront ?? 0) - 2 * sa
+    const R = (p.sideRight ?? 0) - 2 * sa
+    const B = (p.sideBack ?? 0) - 2 * sa
+    const D = (p.diagonal ?? 0) - 2 * sa
+    if (L <= 0 || F <= 0 || R <= 0 || B <= 0 || D <= 0) return null
+    const built = irregularCutFromFinished(L, F, R, B, D, 0)
+    if (!built) return null
+    const fin: Panel = {
+      ...p,
+      kind: 'irregular',
+      width: built.width,
+      length: built.length,
+      sideLeft: built.sideLeft,
+      sideFront: built.sideFront,
+      sideRight: built.sideRight,
+      sideBack: built.sideBack,
+      diagonal: built.diagonal,
+      x: 0,
+      y: 0,
+    }
+    const cutFp = panelFootprint(p)
+    const finFp = panelFootprint(fin)
+    const ox = p.x + (cutFp.w - finFp.w) / 2
+    const oy = p.y + (cutFp.h - finFp.h) / 2
+    return { kind: 'poly', points: panelPolygon({ ...fin, x: ox, y: oy }) }
+  }
+
+  // Rectangle: canvas draws the oriented footprint AABB — inset that AABB by SA.
+  const fp = panelFootprint(p)
+  const w = fp.w - 2 * sa
+  const h = fp.h - 2 * sa
+  if (w <= 0 || h <= 0) return null
+  return { kind: 'aabb', x: p.x + sa, y: p.y + sa, w, h }
+}
+
 export function panelFootprint(p: Panel): { w: number; h: number } {
   if (isCircle(p)) {
     // Rotation-invariant: cut diameter square AABB.
