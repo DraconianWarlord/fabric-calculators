@@ -139,16 +139,16 @@ function Collapsible({
     <section className={`collapsible card bg-base-100 border border-base-300 shadow-none mb-2${open ? ' open' : ''}`}>
       <button
         type="button"
-        className="collapse-header btn btn-ghost btn-sm flex h-auto min-h-11 w-full items-center justify-start gap-1 rounded-lg px-1 py-0 font-normal normal-case"
+        className="collapse-header flex min-h-11 w-full items-center gap-1 rounded-lg bg-transparent px-1.5 py-0 text-left hover:bg-base-200"
         onClick={onToggle}
         aria-expanded={open}
       >
         <span
-          className="collapse-chevron inline-flex h-11 w-11 shrink-0 items-center justify-center text-base-content/70"
+          className="collapse-chevron btn btn-ghost btn-square btn-sm pointer-events-none no-animation h-8 min-h-8 w-8 shrink-0 p-0 text-base-content/70"
           aria-hidden
         >
           <svg
-            className={`h-5 w-5 transition-transform duration-150${open ? ' rotate-90' : ''}`}
+            className={`h-4 w-4 transition-transform duration-150${open ? ' rotate-90' : ''}`}
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -159,7 +159,7 @@ function Collapsible({
             />
           </svg>
         </span>
-        <span className="collapse-title flex-1 text-left text-xs font-semibold uppercase tracking-wider text-base-content/50">
+        <span className="collapse-title flex-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
           {title}
         </span>
         {badge !== undefined && (
@@ -1746,7 +1746,7 @@ export default function NestingPage() {
             </button>
             <button
               type="button"
-              className="btn btn-primary w-full auto-nest add-panel-auto-nest mt-5"
+              className="btn btn-outline w-full auto-nest add-panel-auto-nest mt-4"
               title="Cycle through ranked nest layouts"
               onClick={runAutoNest}
               disabled={panels.length === 0}
@@ -1765,7 +1765,7 @@ export default function NestingPage() {
             <div className="bolt-mobile-bar">
               <button
                 type="button"
-                className="btn btn-primary w-full auto-nest"
+                className="btn btn-outline w-full auto-nest"
                 title="Cycle through ranked nest layouts"
                 onClick={runAutoNest}
                 disabled={panels.length === 0}
@@ -2189,22 +2189,35 @@ export default function NestingPage() {
                 )}
                 <div className="row wrap">
                   {!isCircle(selected) && (
-                    <button type="button" onClick={() => rotateSelected90(selected.id)}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-ghost min-h-11"
+                      onClick={() => rotateSelected90(selected.id)}
+                    >
                       Rotate 90°
                     </button>
                   )}
                   {isPolyPanel(selected) && (
                     <>
-                      <button type="button" onClick={() => updatePanelSafe(selected.id, flipH)}>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost min-h-11"
+                        onClick={() => updatePanelSafe(selected.id, flipH)}
+                      >
                         Flip H
                       </button>
-                      <button type="button" onClick={() => updatePanelSafe(selected.id, flipV)}>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-ghost min-h-11"
+                        onClick={() => updatePanelSafe(selected.id, flipV)}
+                      >
                         Flip V
                       </button>
                     </>
                   )}
                   <button
                     type="button"
+                    className="btn btn-sm btn-ghost min-h-11"
                     onClick={() => {
                       const copyId = uid()
                       let best: Panel | null = null
@@ -2256,7 +2269,7 @@ export default function NestingPage() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-outline btn-error btn-sm"
+                    className="btn btn-outline btn-error btn-sm min-h-11"
                     onClick={() => {
                       setPanels((prev) => prev.filter((p) => p.id !== selected.id))
                       setSelectedId(null)

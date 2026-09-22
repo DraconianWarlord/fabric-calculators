@@ -20,7 +20,7 @@ function MoreItem({
 }) {
   const itemClass =
     className ??
-    'flex w-full items-center justify-between gap-4 rounded-md px-4 py-3 text-left text-sm font-semibold text-neutral-content'
+    'flex w-full min-h-11 items-center justify-between gap-4 rounded-md px-4 py-3 text-left text-sm font-semibold text-neutral-content'
 
   if (calc.path && (calc.status === 'active' || calc.status === 'live')) {
     if (isCurrent(calc, currentPath)) {

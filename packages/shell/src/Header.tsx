@@ -47,7 +47,7 @@ export function Header({
         {status}
         {showShop && (
           <a
-            className="btn btn-primary btn-sm hidden min-h-9 border-base-100 text-primary-content min-[801px]:inline-flex"
+            className="btn btn-outline btn-sm hidden min-h-9 border-base-100 text-neutral-content hover:bg-white/10 min-[801px]:inline-flex"
             href={shopHref}
             target="_blank"
             rel="noopener noreferrer"

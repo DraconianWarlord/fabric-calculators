@@ -46,9 +46,11 @@ describe('layout regressions', () => {
 
   it('header + calc nav use DaisyUI shell patterns; page keeps export + auto-nest hooks', () => {
     expect(headerTsx).toMatch(/navbar/)
-    expect(headerTsx).toMatch(/btn-primary/)
+    expect(headerTsx).toMatch(/Shop Sailrite/)
+    expect(headerTsx).toMatch(/btn btn-outline/)
     expect(calcNav).toMatch(/badge-primary/)
     expect(calcNav).toMatch(/Coming soon/)
+    expect(calcNav).toMatch(/min-h-11/)
     expect(pageTsx).toMatch(/export-pdf/)
     expect(pageTsx).toMatch(/add-panel-auto-nest/)
     expect(pageTsx).toMatch(/btn btn-primary/)
@@ -67,20 +69,35 @@ describe('layout regressions', () => {
   })
 
 
-  it('collapse headers use touch-friendly Daisy ghost chevron controls', () => {
-    expect(pageTsx).toMatch(/collapse-header[^"]*btn btn-ghost btn-sm/)
-    expect(pageTsx).toMatch(/collapse-chevron[^"]*h-11 w-11/)
-    expect(pageTsx).toMatch(/min-h-11/)
+  it('collapse headers are full-width 44px hit targets with btn-square chevrons', () => {
+    expect(pageTsx).toMatch(/collapse-header[^"]*min-h-11/)
+    expect(pageTsx).toMatch(/collapse-chevron[^"]*btn btn-ghost btn-square/)
+    expect(pageTsx).toMatch(/collapse-chevron[\s\S]*?h-4 w-4/)
     expect(pageTsx).toMatch(/collapse-chevron[\s\S]*?<svg/)
     expect(pageTsx).not.toMatch(/collapse-chevron[^>]*>[\s]*[\u25BE\u25B8]/)
   })
 
-  it('panels list rows use CSS grid columns (not Daisy btn fighting layout)', () => {
-    expect(pageCss).toMatch(/\.list-item\s*\{[^}]*display:\s*grid/)
-    expect(pageCss).toMatch(/grid-template-columns:\s*12px minmax\(0,\s*1fr\)/)
+  it('panels list rows are single horizontal flex rows (44px, no stacked swatch)', () => {
+    expect(pageCss).toMatch(/\.list-item\s*\{[^}]*display:\s*flex/)
+    expect(pageCss).toMatch(/\.list-item\s*\{[^}]*align-items:\s*center/)
+    expect(pageCss).toMatch(/\.list-item\s*\{[^}]*min-height:\s*2\.75rem/)
+    expect(pageCss).toMatch(/flex-direction:\s*row/)
     expect(pageTsx).toMatch(/className=\{`list-item/)
     expect(pageTsx).not.toMatch(/list-item btn btn-ghost/)
     expect(pageTsx).not.toMatch(/className="list-main"/)
+  })
+
+  it('Add to bolt is primary; Auto-Nest is outline (not both solid primary)', () => {
+    expect(pageTsx).toMatch(/btn btn-primary w-full[\s\S]*?Add to bolt/)
+    expect(pageTsx).toMatch(/btn btn-outline w-full auto-nest/)
+    expect(pageTsx).not.toMatch(/btn btn-primary w-full auto-nest/)
+    expect(pageCss).toMatch(/\.add-panel-auto-nest\s*\{[^}]*margin-top:\s*1\.25rem/)
+  })
+
+  it('Selected Rotate/Duplicate/Flip use Daisy ghost buttons (≥44px)', () => {
+    expect(pageTsx).toMatch(/btn btn-sm btn-ghost min-h-11[\s\S]*?Rotate 90/)
+    expect(pageTsx).toMatch(/btn btn-sm btn-ghost min-h-11[\s\S]*?Duplicate/)
+    expect(pageTsx).toMatch(/btn btn-sm btn-ghost min-h-11[\s\S]*?Flip H/)
   })
 
   it('mobile bolt canvas kills accidental horizontal scroll', () => {
