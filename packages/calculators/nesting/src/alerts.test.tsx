@@ -102,7 +102,37 @@ describe('ActionHintBanner (rendered)', () => {
 
     const dismiss = screen.getByRole('button', { name: /Dismiss/i })
     expect(dismiss.className).toMatch(/shrink-0/)
+
+    // ADA: never use primary-blue link on error-red (fails contrast / hue)
+    expect(dismiss.className).not.toMatch(/text-primary/)
+    expect(dismiss.className).not.toMatch(/btn-link/)
+    // White chip on error banner → dark text on white control (high contrast)
+    expect(dismiss.className).toMatch(/bg-white/)
+    expect(dismiss.className).toMatch(/text-neutral/)
+
     await user.click(dismiss)
     expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('ActionHintBanner Dismiss contrast (ADA)', () => {
+  function relativeLuminance(hex: string): number {
+    const h = hex.replace('#', '')
+    const [r, g, b] = [0, 2, 4].map((i) => {
+      const c = parseInt(h.slice(i, i + 2), 16) / 255
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+    })
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  function contrastRatio(a: string, b: string): number {
+    const [L1, L2] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x)
+    return (L1 + 0.05) / (L2 + 0.05)
+  }
+
+  it('white Dismiss control text on white bg clears WCAG AA; primary-on-error would fail AA for normal text', () => {
+    // Control: dark neutral on white button
+    expect(contrastRatio('#000000', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+    // Regression: Sailrite primary on alert red — insufficient for normal text AA
+    expect(contrastRatio('#24285e', '#e75053')).toBeLessThan(4.5)
   })
 })

@@ -55,7 +55,7 @@ export function ActionHintBanner({ message, onDismiss }: ActionHintBannerProps) 
       <p className="min-w-0 flex-1 whitespace-normal break-words">{message}</p>
       <button
         type="button"
-        className="btn btn-link btn-xs h-auto min-h-0 shrink-0 px-0 text-primary"
+        className="btn btn-sm shrink-0 border-0 bg-white text-neutral hover:bg-white/90"
         onClick={onDismiss}
       >
         Dismiss
