@@ -66,6 +66,23 @@ describe('layout regressions', () => {
     expect(chromeTsx).not.toMatch(/opacity-50.*disabled|disabled.*opacity-50/)
   })
 
+
+  it('collapse headers use touch-friendly Daisy ghost chevron controls', () => {
+    expect(pageTsx).toMatch(/collapse-header[^"]*btn btn-ghost btn-sm/)
+    expect(pageTsx).toMatch(/collapse-chevron[^"]*h-11 w-11/)
+    expect(pageTsx).toMatch(/min-h-11/)
+    expect(pageTsx).toMatch(/collapse-chevron[\s\S]*?<svg/)
+    expect(pageTsx).not.toMatch(/collapse-chevron[^>]*>[\s]*[\u25BE\u25B8]/)
+  })
+
+  it('panels list rows use CSS grid columns (not Daisy btn fighting layout)', () => {
+    expect(pageCss).toMatch(/\.list-item\s*\{[^}]*display:\s*grid/)
+    expect(pageCss).toMatch(/grid-template-columns:\s*12px minmax\(0,\s*1fr\)/)
+    expect(pageTsx).toMatch(/className=\{`list-item/)
+    expect(pageTsx).not.toMatch(/list-item btn btn-ghost/)
+    expect(pageTsx).not.toMatch(/className="list-main"/)
+  })
+
   it('mobile bolt canvas kills accidental horizontal scroll', () => {
     const mobile = pageCss.match(/@media \(max-width: 800px\)\s*\{[\s\S]*?\n\}(?=\s*\/\*|\s*@media|\s*$)/)
     expect(mobile, 'missing 800px media query').toBeTruthy()

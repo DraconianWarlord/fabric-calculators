@@ -137,12 +137,34 @@ function Collapsible({
 }) {
   return (
     <section className={`collapsible card bg-base-100 border border-base-300 shadow-none mb-2${open ? ' open' : ''}`}>
-      <button type="button" className="collapse-header flex w-full items-center gap-2 rounded-lg bg-transparent px-2.5 py-2.5 text-left hover:bg-base-200" onClick={onToggle} aria-expanded={open}>
-        <span className="collapse-chevron w-4 text-xs text-base-content/50" aria-hidden>
-          {open ? '▾' : '▸'}
+      <button
+        type="button"
+        className="collapse-header btn btn-ghost btn-sm flex h-auto min-h-11 w-full items-center justify-start gap-1 rounded-lg px-1 py-0 font-normal normal-case"
+        onClick={onToggle}
+        aria-expanded={open}
+      >
+        <span
+          className="collapse-chevron inline-flex h-11 w-11 shrink-0 items-center justify-center text-base-content/70"
+          aria-hidden
+        >
+          <svg
+            className={`h-5 w-5 transition-transform duration-150${open ? ' rotate-90' : ''}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+              clipRule="evenodd"
+            />
+          </svg>
         </span>
-        <span className="collapse-title flex-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">{title}</span>
-        {badge !== undefined && <span className="badge badge-ghost badge-sm max-w-32 truncate">{badge}</span>}
+        <span className="collapse-title flex-1 text-left text-xs font-semibold uppercase tracking-wider text-base-content/50">
+          {title}
+        </span>
+        {badge !== undefined && (
+          <span className="badge badge-ghost badge-sm mr-1 max-w-32 truncate">{badge}</span>
+        )}
       </button>
       {open && <div className="collapse-body px-3 pb-3">{children}</div>}
     </section>
@@ -2316,7 +2338,7 @@ export default function NestingPage() {
                 return (
                   <li key={p.id}>
                     <div
-                      className={`list-item btn btn-ghost h-auto min-h-10 w-full justify-start gap-2 rounded-md px-2 py-1.5 font-normal normal-case${p.id === selectedId ? ' bg-base-200 border-base-300' : ''}`}
+                      className={`list-item${p.id === selectedId ? ' active' : ''}`}
                       onClick={() => setSelectedId(p.id)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') setSelectedId(p.id)
@@ -2325,18 +2347,16 @@ export default function NestingPage() {
                       tabIndex={0}
                     >
                       <span className="swatch" style={{ background: p.color }} />
-                      <div className="list-main">
-                        <span className="list-name">{p.label}</span>
-                        <span className="list-dims">
-                          {isCircle(p)
-                            ? `⌀ ${display(p.width)} ${unit}`
-                            : isIrregular(p)
-                              ? `${display(p.sideLeft ?? 0)}×${display(p.sideFront ?? 0)}×${display(p.sideRight ?? 0)}×${display(p.sideBack ?? 0)} ⌒${display(p.diagonal ?? 0)} ${unit}`
-                              : isTrap(p)
-                                ? `${display(p.topWidth ?? p.width)}/${display(p.bottomWidth ?? p.width)} × ${display(p.length)} ${unit}`
-                                : `${display(fp.w)}×${display(fp.h)} ${unit}`}
-                        </span>
-                      </div>
+                      <span className="list-name">{p.label}</span>
+                      <span className="list-dims">
+                        {isCircle(p)
+                          ? `⌀ ${display(p.width)} ${unit}`
+                          : isIrregular(p)
+                            ? `${display(p.sideLeft ?? 0)}×${display(p.sideFront ?? 0)}×${display(p.sideRight ?? 0)}×${display(p.sideBack ?? 0)} ⌒${display(p.diagonal ?? 0)} ${unit}`
+                            : isTrap(p)
+                              ? `${display(p.topWidth ?? p.width)}/${display(p.bottomWidth ?? p.width)} × ${display(p.length)} ${unit}`
+                              : `${display(fp.w)}×${display(fp.h)} ${unit}`}
+                      </span>
                       <span className="list-flags">
                         {prob?.overlap ? 'overlap' : ''}
                         {prob?.off ? (prob?.overlap ? ' · off' : 'off-bolt') : ''}
