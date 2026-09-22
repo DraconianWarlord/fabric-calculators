@@ -10,6 +10,17 @@
 
 See `packages/calculators/_template/README.md` for the detailed 4-step process.
 
+## New calculator review gate (mandatory)
+
+Before Zach’s product review — and ideally right after scaffold — run both:
+
+1. **Sailrite Brand** — palette, DaisyUI `sailrite` theme tokens, tool-vs-storefront chrome  
+2. **Sailrite UX** — `/home/box/workspace/sailrite-ux/UX-CHECKLIST.md` (sections A–J), including desktop spacing tokens and mobile tabs/touch
+
+Send a live URL (or staging) + what changed. Fix majors, then re-ping UX/Brand for recheck. Same gate applies to major UI restyles of existing calcs.
+
+Spacing/styling reference: `docs/STYLING.md` and UX checklist §I.
+
 ## Rules
 
 | Rule | Why |

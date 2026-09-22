@@ -49,3 +49,26 @@ Tailwind must see classes in:
 - `apps/web/src/**`
 - `packages/shell/src/**`
 - `packages/calculators/*/src/**`
+
+## Desktop spacing tokens (≥801px)
+
+From Sailrite UX (Nesting + Pillows). Use consistently on new calcs:
+
+| Token | Value | Tailwind |
+|-------|-------|----------|
+| Stack gap (cards in a column) | 1rem | `gap-4` |
+| Card padding | 1rem | `p-4` / `card-body p-4` |
+| Column gutter | 1.5rem | `gap-6` |
+| Label → field / field → helper | 0.375rem | `gap-1.5` |
+| Helper → next label | 1rem | `gap-4` (section stack) |
+| Type/chooser card padding | 0.75rem | `p-3` |
+| Type/chooser gap | 0.75rem | `gap-3` |
+| Section title → content | 0.5rem | `mb-2` |
+| Touch / join min height | 2.75rem | `min-h-11` |
+
+Avoid tangents: don’t let borders kiss (use gap); don’t place hairline column dividers flush against scrollbars; don’t use Alert Red for non-error diagram accents.
+
+## Review gate
+
+New calculators and major UI restyles: **Sailrite Brand** + **Sailrite UX** before Zach’s review (see `CONTRIBUTING-CALCULATORS.md`).
+

@@ -28,3 +28,13 @@ Copy this folder to add a new Sailrite fabric calculator.
 - No cross-calculator imports (nesting must not import pillows, etc.)
 - Math lives in `lib/` with vitest coverage
 - Shell owns look (header, nav, tokens) — pages inject status via `useHeaderStatusOptional`
+
+## Review gate (required)
+
+Before calling a calculator done for Zach:
+
+1. Ask **Sailrite Brand** to check tokens / `sailrite` DaisyUI theme / tool chrome.
+2. Ask **Sailrite UX** to run `sailrite-ux/UX-CHECKLIST.md` (desktop spacing §I, DaisyUI §H, mobile).
+
+Boss usually owns that ping; collaborators should still build to those docs (`docs/STYLING.md`).
+
