@@ -382,6 +382,30 @@ export default function PillowsPage() {
                       : 'Sailrite throw tip assumes ½″ seams unless you change this.'}
                   </span>
                 </label>
+
+                {isBolster && (
+                  <fieldset className="m-0 min-w-0 border-0 p-0">
+                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                      bolster fit
+                    </legend>
+                    <div className="join w-full" role="group" aria-label="Bolster fit">
+                      {([['regular', 'regular'], ['tight', 'tight']] as const).map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterFit === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                          aria-pressed={bolsterFit === val}
+                          onClick={() => setBolsterFit(val)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
+                      regular adds ½″ seam allowance; tight cuts to form and finishes about 1″ smaller.
+                    </span>
+                  </fieldset>
+                )}
                 <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
                   Pillows
                   <select
@@ -447,10 +471,9 @@ export default function PillowsPage() {
               </h2>
               <div className="flex flex-col gap-4">
                 {isBolster ? (
-                  <>
-                    <fieldset className="m-0 min-w-0 border-0 p-0">
-                      <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
-                        pattern direction
+                  <fieldset className="m-0 min-w-0 border-0 p-0">
+                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                      pattern direction
                     </legend>
                     <div className="join w-full" role="group" aria-label="Bolster pattern direction">
                       {(
@@ -470,29 +493,7 @@ export default function PillowsPage() {
                         </button>
                       ))}
                     </div>
-                    </fieldset>
-                    <fieldset className="m-0 min-w-0 border-0 p-0">
-                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
-                      bolster fit
-                    </legend>
-                    <div className="join w-full" role="group" aria-label="Bolster fit">
-                      {([['regular', 'regular'], ['tight', 'tight']] as const).map(([val, label]) => (
-                        <button
-                          key={val}
-                          type="button"
-                          className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterFit === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                          aria-pressed={bolsterFit === val}
-                          onClick={() => setBolsterFit(val)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
-                      regular adds ½″ seam allowance; tight cuts to form and finishes about 1″ smaller.
-                    </span>
-                    </fieldset>
-                  </>
+                  </fieldset>
                 ) : (
                   <fieldset className="m-0 min-w-0 border-0 p-0">
                     <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">

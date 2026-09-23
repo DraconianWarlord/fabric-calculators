@@ -52,6 +52,25 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/setThrowFillStyle/)
   })
 
+  it('bolster fit (Regular|Tight) lives under Size near SA, not under Pattern', () => {
+    const sizeAt = pageTsx.indexOf('\n                size\n')
+    const patternAt = pageTsx.indexOf('\n                pattern\n')
+    const fitAt = pageTsx.indexOf('aria-label="Bolster fit"')
+    const saAt = pageTsx.indexOf('Seam allowance')
+    expect(sizeAt).toBeGreaterThan(0)
+    expect(patternAt).toBeGreaterThan(sizeAt)
+    expect(fitAt).toBeGreaterThan(sizeAt)
+    expect(fitAt).toBeLessThan(patternAt)
+    expect(saAt).toBeGreaterThan(sizeAt)
+    expect(fitAt).toBeGreaterThan(saAt)
+    expect(pageTsx).toMatch(/isBolster && \([\s\S]*?aria-label="Bolster fit"/)
+    expect(pageTsx).toMatch(/regular adds .* seam allowance; tight cuts to form/)
+    // Pattern card keeps direction only for bolster (no fit fieldset after pattern title before throw branch)
+    const patternSlice = pageTsx.slice(patternAt, patternAt + 1200)
+    expect(patternSlice).toMatch(/Bolster pattern direction/)
+    expect(patternSlice).not.toMatch(/aria-label="Bolster fit"/)
+  })
+
   it('bolster references are single horizontal profile silhouettes', () => {
     expect(referenceSvg).toMatch(/aria-label="Bolster reference profile view"/)
     expect(referenceSvg).toMatch(/const bodyW = compact \? 72 : 120/)
