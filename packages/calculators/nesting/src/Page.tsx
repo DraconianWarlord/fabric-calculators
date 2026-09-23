@@ -42,6 +42,7 @@ import {
   usedLengthInches,
 } from './lib/geometry'
 import { wrapSvgText } from './lib/wrapSvgText'
+import { contrastingInkOnFill } from './lib/colorContrast'
 import { exportNestingPdf } from './lib/exportPdf'
 import { panelAddBlockMessage, rotate90BlockMessage } from './lib/panelAddGate'
 import { ActionHintBanner, SplitSuggestionAlert, formatSplitMessage } from './alerts'
@@ -1918,6 +1919,8 @@ export default function NestingPage() {
                     if (!fin) return null
                     const dash = '4 3'
                     const sw = Math.max(1, strokeWidth * 0.65)
+                    // SA dashed overlay: ink contrasts panel fill (cut edge keeps `stroke`)
+                    const saStroke = contrastingInkOnFill(p.color)
                     if (fin.kind === 'circle') {
                       return (
                         <circle
@@ -1925,7 +1928,7 @@ export default function NestingPage() {
                           cy={fin.cy * pxPerIn}
                           r={fin.r * pxPerIn}
                           fill="none"
-                          stroke={stroke}
+                          stroke={saStroke}
                           strokeWidth={sw}
                           strokeDasharray={dash}
                           pointerEvents="none"
@@ -1940,7 +1943,7 @@ export default function NestingPage() {
                           width={fin.w * pxPerIn}
                           height={fin.h * pxPerIn}
                           fill="none"
-                          stroke={stroke}
+                          stroke={saStroke}
                           strokeWidth={sw}
                           strokeDasharray={dash}
                           pointerEvents="none"
@@ -1954,7 +1957,7 @@ export default function NestingPage() {
                       <polygon
                         points={pts}
                         fill="none"
-                        stroke={stroke}
+                        stroke={saStroke}
                         strokeWidth={sw}
                         strokeDasharray={dash}
                         strokeLinejoin="miter"
