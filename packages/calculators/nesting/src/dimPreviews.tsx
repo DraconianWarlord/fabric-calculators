@@ -184,7 +184,7 @@ export function IrregularDimPreview() {
           y="128"
           textAnchor="middle"
           {...LABEL}
-          transform="rotate(-78 36 128)"
+          transform="rotate(-90 36 128)"
         >
           Left
         </text>
@@ -193,7 +193,7 @@ export function IrregularDimPreview() {
           y="118"
           textAnchor="middle"
           {...LABEL}
-          transform="rotate(70 292 118)"
+          transform="rotate(90 292 118)"
         >
           Right
         </text>
