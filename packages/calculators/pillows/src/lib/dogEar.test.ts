@@ -46,5 +46,7 @@ describe('dog-ear corner trim (Sailrite side÷4 → ½″ corner mark)', () => {
     expect(r.cutList[0]?.note).toMatch(/dog-ear/i)
     expect(r.cutList[0]?.note).toMatch(/corner mark/i)
     expect(r.cutList[0]?.note).not.toMatch(/SA mark/i)
+    expect(r.cutList[0]?.note).not.toMatch(/Esvp31f65o|youtu\.be/i)
+    expect(r.cutList[0]?.note!.length).toBeLessThan(48)
   })
 })

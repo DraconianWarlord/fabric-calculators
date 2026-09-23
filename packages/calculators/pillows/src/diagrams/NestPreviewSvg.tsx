@@ -17,6 +17,14 @@ function fmt(inches: number, unit: Unit): string {
     : v.toFixed(0)
 }
 
+/**
+ * Nesting draws the bolt in pixel user-space (inches × pxPerIn) so CSS
+ * `font-size: 13px` / white stroke tick-labels stay screen-sized.
+ * Pillows previously used inch viewBox → 13 CSS-px tick styles resolved as
+ * ~13″ glyphs with huge white stroke pads (the “ghost” artifacts).
+ */
+export const NEST_PX_PER_IN = 8
+
 /** Constant screen stroke — does not fatten as nest viewBox grows with panel count. */
 const PANEL_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
@@ -55,16 +63,20 @@ export function NestPreviewSvg({
   /** Throw only — dashed SA inset on cut panels (Style B). Bolster skips. */
   seamAllowanceIn?: number
 }) {
-  const fabricW = Math.max(model.fabricWidthIn, 1)
-  const len = Math.max(model.lengthInches, 1)
-  const pad = Math.max(fabricW, len) * 0.04 + 0.5
+  const fabricWIn = Math.max(model.fabricWidthIn, 1)
+  const lenIn = Math.max(model.lengthInches, 1)
+  const padIn = Math.max(fabricWIn, lenIn) * 0.04 + 0.5
+  const px = NEST_PX_PER_IN
+  const s = (inches: number) => inches * px
+  const pad = s(padIn)
+  const fabricW = s(fabricWIn)
+  const len = s(lenIn)
   const svgW = fabricW + pad * 2
   const svgH = len + pad * 2
-  const hOff = patternHOffset(fabricW, hRepeatIn)
+  const hOffIn = patternHOffset(fabricWIn, hRepeatIn)
   const showGrid = hRepeatIn > 0 || vRepeatIn > 0
-  const sa = Math.max(0, seamAllowanceIn)
-  // Nesting Page.tsx ~1004–1008 / ~1629–1644 — majors every 36″ + labels
-  const yardMajors = yardMajorInches(len)
+  const saIn = Math.max(0, seamAllowanceIn)
+  const yardMajors = yardMajorInches(lenIn)
 
   if (model.panels.length === 0) {
     return (
@@ -74,7 +86,7 @@ export function NestPreviewSvg({
     )
   }
 
-  const boltCaption = `Bolt ${fmt(fabricW, unit)} ${unit} wide · ${fmt(len, unit)} ${unit} along`
+  const boltCaption = `Bolt ${fmt(fabricWIn, unit)} ${unit} wide · ${fmt(lenIn, unit)} ${unit} along`
   const piecesCaption =
     `${model.panels.length} piece${model.panels.length === 1 ? '' : 's'}` +
     (model.leftoverAcrossIn > 0.1
@@ -107,41 +119,44 @@ export function NestPreviewSvg({
               style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: 0.75 }}
             >
               {hRepeatIn > 0 &&
-                Array.from({ length: Math.ceil((fabricW - hOff) / hRepeatIn) + 2 }).map((_, i) => {
-                  const x = hOff + i * hRepeatIn
-                  if (x < -1e-6 || x > fabricW + 1e-6) return null
-                  return (
-                    <line key={`v${i}`} x1={pad + x} y1={pad} x2={pad + x} y2={pad + len} />
-                  )
+                Array.from({
+                  length: Math.ceil((fabricWIn - hOffIn) / hRepeatIn) + 2,
+                }).map((_, i) => {
+                  const xIn = hOffIn + i * hRepeatIn
+                  if (xIn < -1e-6 || xIn > fabricWIn + 1e-6) return null
+                  const x = pad + s(xIn)
+                  return <line key={`v${i}`} x1={x} y1={pad} x2={x} y2={pad + len} />
                 })}
               {vRepeatIn > 0 &&
-                Array.from({ length: Math.ceil(len / vRepeatIn) + 2 }).map((_, i) => {
-                  const y = i * vRepeatIn
-                  if (y > len + 1e-6) return null
+                Array.from({ length: Math.ceil(lenIn / vRepeatIn) + 2 }).map((_, i) => {
+                  const yIn = i * vRepeatIn
+                  if (yIn > lenIn + 1e-6) return null
+                  const y = pad + s(yIn)
                   return (
-                    <line key={`h${i}`} x1={pad} y1={pad + y} x2={pad + fabricW} y2={pad + y} />
+                    <line key={`h${i}`} x1={pad} y1={y} x2={pad + fabricW} y2={y} />
                   )
                 })}
             </g>
           )}
           {yardMajors.map((yIn) => {
-            if (yIn > len + 1e-6) return null
+            if (yIn > lenIn + 1e-6) return null
             const yd = yIn / 36
+            const y = pad + s(yIn)
+            // Nesting: labels at left edge in pixel space (x≈4, y inset) — not mid-bolt giants
             return (
               <g key={`y-${yIn}`}>
                 <line
                   x1={pad}
                   x2={pad + fabricW}
-                  y1={pad + yIn}
-                  y2={pad + yIn}
+                  y1={y}
+                  y2={y}
                   className="tick tick-major"
                   stroke="rgba(20, 20, 20, 0.7)"
                   style={YARD_TICK_STROKE}
                 />
                 <text
-                  x={pad + 0.15}
-                  y={pad + yIn}
-                  dy={yIn === 0 ? '1.1em' : '-0.35em'}
+                  x={pad + 4}
+                  y={yIn === 0 ? pad + 12 : Math.max(pad + 12, y - 4)}
                   className="tick-label"
                 >
                   {yd === 0 ? '0' : `${yd} yd`}
@@ -150,8 +165,10 @@ export function NestPreviewSvg({
             )
           })}
           {model.panels.map((p, i) => {
-            const x = pad + p.x
-            const y = pad + p.y
+            const x = pad + s(p.x)
+            const y = pad + s(p.y)
+            const w = s(p.w)
+            const h = s(p.h)
             const common = {
               fill: DIAGRAM_CUT_FILL,
               stroke: DIAGRAM_SR_BLUE,
@@ -164,51 +181,55 @@ export function NestPreviewSvg({
               style: SA_STROKE,
               pointerEvents: 'none' as const,
             }
-            // Throw panels only: dashed SA inset (Style B). Skip bolster barrel/end.
-            const showSa = p.kind === 'throw-panel' && sa > 0
+            const showSa = p.kind === 'throw-panel' && saIn > 0
             if (p.kind === 'end') {
               return (
                 <ellipse
                   key={i}
-                  cx={x + p.w / 2}
-                  cy={y + p.h / 2}
-                  rx={p.w / 2}
-                  ry={p.h / 2}
+                  cx={x + w / 2}
+                  cy={y + h / 2}
+                  rx={w / 2}
+                  ry={h / 2}
                   {...common}
                 />
               )
             }
             if (p.polygon) {
-              const cutPts = p.polygon.map((pt) => `${x + pt.x},${y + pt.y}`).join(' ')
-              const saPoly = showSa ? insetPolygon(p.polygon, sa) : null
+              const cutPts = p.polygon
+                .map((pt) => `${pad + s(p.x + pt.x)},${pad + s(p.y + pt.y)}`)
+                .join(' ')
+              const saPoly = showSa ? insetPolygon(p.polygon, saIn) : null
               return (
                 <g key={i}>
                   <polygon points={cutPts} {...common} />
                   {saPoly && (
                     <polygon
-                      points={saPoly.map((pt) => `${x + pt.x},${y + pt.y}`).join(' ')}
+                      points={saPoly
+                        .map((pt) => `${pad + s(p.x + pt.x)},${pad + s(p.y + pt.y)}`)
+                        .join(' ')}
                       {...saProps}
                     />
                   )}
                 </g>
               )
             }
-            const saW = p.w - 2 * sa
-            const saH = p.h - 2 * sa
+            const saPx = s(saIn)
+            const saW = w - 2 * saPx
+            const saH = h - 2 * saPx
             return (
               <g key={i}>
-                <rect x={x} y={y} width={p.w} height={p.h} {...common} />
+                <rect x={x} y={y} width={w} height={h} {...common} />
                 {showSa && saW > 0 && saH > 0 && (
-                  <rect x={x + sa} y={y + sa} width={saW} height={saH} {...saProps} />
+                  <rect x={x + saPx} y={y + saPx} width={saW} height={saH} {...saProps} />
                 )}
               </g>
             )
           })}
           {model.leftoverAcrossIn > 0.1 && (
             <rect
-              x={pad + (fabricW - model.leftoverAcrossIn)}
+              x={pad + fabricW - s(model.leftoverAcrossIn)}
               y={pad}
-              width={model.leftoverAcrossIn}
+              width={s(model.leftoverAcrossIn)}
               height={len}
               fill="none"
               stroke={DIAGRAM_SR_BLUE}

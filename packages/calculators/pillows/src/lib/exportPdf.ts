@@ -438,24 +438,39 @@ export function exportPillowsPdf(input: ExportPillowsPdfInput): string {
   const u = unit
   const tableBody = cutList.map((c) => {
     const dim = `${fmtDim(c.widthIn, u)}×${fmtDim(c.lengthIn, u)} ${u}`
-    const note = c.note ? ` — ${c.note}` : ''
-    return [c.label + note, dim, String(c.qty)]
+    // Keep Piece short; long notes used to paint past Qty (no in-cell wrap).
+    const piece = c.note ? `${c.label} (${c.note})` : c.label
+    return [piece, dim, String(c.qty)]
   })
+
+  const usableTableW = pageW - margin * 2
+  const qtyCol = 36
+  const cutCol = 78
+  const pieceCol = Math.max(120, usableTableW - cutCol - qtyCol)
 
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
     head: [['Piece', 'Cut size', 'Qty']],
     body: tableBody.length > 0 ? tableBody : [['—', '—', '—']],
-    styles: { fontSize: 8, cellPadding: 3, textColor: [30, 30, 30] },
+    styles: {
+      fontSize: 8,
+      cellPadding: 3,
+      textColor: [30, 30, 30],
+      overflow: 'linebreak',
+      cellWidth: 'wrap',
+    },
     headStyles: {
       fillColor: [42, 51, 171],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
+      overflow: 'linebreak',
     },
     alternateRowStyles: { fillColor: [245, 246, 252] },
     columnStyles: {
-      2: { halign: 'center', cellWidth: 36 },
+      0: { cellWidth: pieceCol, overflow: 'linebreak' },
+      1: { cellWidth: cutCol, overflow: 'linebreak' },
+      2: { halign: 'center', cellWidth: qtyCol },
     },
   })
 

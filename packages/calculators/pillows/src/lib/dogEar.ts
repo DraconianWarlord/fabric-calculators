@@ -75,8 +75,8 @@ export function dogEarCornerMarks(
   ]
 }
 
-export const DOG_EAR_CUT_LIST_NOTE =
-  'corners trimmed to reduce dog-ears (½″ corner mark; trim at side÷4 each edge — Sailrite throw-pillow howto / video -Esvp31f65o ~3:19; ignores SA)'
+/** Short cut-list / materials tag (no video citation — that overflows PDF Piece cells). */
+export const DOG_EAR_CUT_LIST_NOTE = 'dog-ear trim (½″ corner mark)'
 
 export const DOG_EAR_OPTIONAL_NOTE =
   'Optional — side÷4 to ½″ corner mark wedge (Sailrite; ignores SA). Some zipper+piping methods skip this.'

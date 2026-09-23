@@ -243,10 +243,13 @@ describe('pillows layout regressions', () => {
     expect(nestPreviewSvg).toMatch(/tick-label/)
     expect(nestPreviewSvg).toMatch(/rgba\(20, 20, 20, 0\.7\)/)
     expect(nestPreviewSvg).toMatch(/YARD_TICK_STROKE/)
+    // Pixel user-space so CSS 13px labels stay screen-sized (inch viewBox made giant ghosts)
+    expect(nestPreviewSvg).toMatch(/NEST_PX_PER_IN\s*=\s*8/)
+    expect(nestPreviewSvg).toMatch(/inches \* px|\* PX_PER_IN|NEST_PX_PER_IN/)
     expect(pageCss).toMatch(/\.pillow-nest-preview \.tick-label/)
     expect(pageCss).toMatch(/font-size:\s*13px/)
     expect(pageCss).toMatch(/font-weight:\s*700/)
-    // Captions stay HTML; yard marks are Nesting-style SVG labels (13px CSS, not viewBox-scaled)
+    // Captions stay HTML; yard marks are Nesting-style SVG labels (13px CSS in pixel space)
     expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
   })
 
@@ -327,6 +330,16 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/export-pdf/)
     expect(pageTsx).toMatch(/Export PDF failed/)
     expect(pageTsx).toMatch(/ActionHintBanner/)
+  })
+
+
+  it('dog-ear cut-list note stays short (no video citation overflowing PDF Piece)', () => {
+    const dogEar = readFileSync(resolve(srcDir, 'lib/dogEar.ts'), 'utf8')
+    const exportPdf = readFileSync(resolve(srcDir, 'lib/exportPdf.ts'), 'utf8')
+    expect(dogEar).toMatch(/DOG_EAR_CUT_LIST_NOTE\s*=\s*'dog-ear trim/)
+    expect(dogEar).not.toMatch(/DOG_EAR_CUT_LIST_NOTE[\s\S]*?-Esvp31f65o/)
+    expect(exportPdf).toMatch(/overflow:\s*'linebreak'/)
+    expect(exportPdf).toMatch(/cellWidth:\s*pieceCol/)
   })
 
 })
