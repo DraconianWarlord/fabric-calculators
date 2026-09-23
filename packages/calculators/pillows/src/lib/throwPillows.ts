@@ -25,13 +25,12 @@ export type PatternDirection = 'none' | 'horizontal' | 'vertical'
 export const MM_PER_IN = 25.4
 
 /**
- * Sailrite tip: cut panels use form measurements with no added seam allowance.
- * Prefabricated forms sewn with 1/2" seams yield a snug finished cover
- * (finished approx form - 1" per dimension).
+ * Default Sailrite throw tip: cut = form (Standard fill) with 1/2" seams →
+ * finished ≈ form − 1" per dimension. Explicit SA control overrides this.
  */
 export const SEAM_ALLOWANCE_IN = 0.5
 
-/** Effective finished reduction vs form when using SEAM_ALLOWANCE_IN seams. */
+/** Effective finished reduction vs form when using default SEAM_ALLOWANCE_IN seams. */
 export const FORM_TO_FINISHED_REDUCTION_IN = 2 * SEAM_ALLOWANCE_IN // 1"
 
 /** Knife-edge: front + back panels per pillow. */
@@ -76,16 +75,18 @@ export function fromInches(inches: number, unit: Unit): number {
 export function cutPanelSize(
   formInches: number,
   fill: FillStyle = DEFAULT_FILL_STYLE,
+  seamAllowanceIn: number = SEAM_ALLOWANCE_IN,
 ): number {
-  return throwCutFace(formInches, fill)
+  return throwCutFace(formInches, fill, seamAllowanceIn)
 }
 
-/** Finished face = cut - 1" (1/2" SA all around). */
+/** Finished face = cut − 2×SA. */
 export function finishedSize(
   formInches: number,
   fill: FillStyle = DEFAULT_FILL_STYLE,
+  seamAllowanceIn: number = SEAM_ALLOWANCE_IN,
 ): number {
-  return throwFinishedFace(formInches, fill)
+  return throwFinishedFace(formInches, fill, seamAllowanceIn)
 }
 
 export function exactYards(usedInches: number): number {
@@ -115,6 +116,12 @@ export type ThrowPillowInput = {
   fillStyle?: FillStyle
   /** Knife-edge dog-ear corner trim (default off). */
   dogEarTrim?: boolean
+  /** Seam allowance per side (inches). Default 0.5. Finished = cut − 2×SA. */
+  seamAllowanceIn?: number
+  /** Pattern horizontal repeat (inches). >0 expands across pitch and re-centers. */
+  hRepeatIn?: number
+  /** Pattern vertical repeat (inches). >0 expands along pitch and re-centers. */
+  vRepeatIn?: number
 }
 
 export type Orientation = {
@@ -154,6 +161,7 @@ export type PipingOptional = {
 export type ThrowPillowResult = {
   fillStyle: FillStyle
   dogEarTrim: boolean
+  seamAllowanceIn: number
   cutWidthIn: number
   cutLengthIn: number
   finishedWidthIn: number
@@ -266,19 +274,39 @@ export function leftoverStrip(
   return { widthIn, lengthIn }
 }
 
+/**
+ * Pitch for one panel cell when matching a pattern repeat.
+ * With no repeat, pitch = panel edge. With repeat, ceil to whole repeats
+ * so each panel sits in a cell large enough for pattern matching.
+ */
+export function patternCellPitch(panelDimIn: number, repeatIn: number): number {
+  if (repeatIn <= 0) return panelDimIn
+  return Math.max(panelDimIn, Math.ceil(panelDimIn / repeatIn - 1e-9) * repeatIn)
+}
+
 export function packPanels(
   orientation: Orientation,
   panelsNeeded: number,
   fabricWidthIn: number,
+  hRepeatIn = 0,
+  vRepeatIn = 0,
 ): PackResult {
-  const acrossCount = Math.max(1, Math.floor(fabricWidthIn / orientation.acrossIn + 1e-9))
+  const acrossPitch = patternCellPitch(orientation.acrossIn, hRepeatIn)
+  const alongPitch = patternCellPitch(orientation.alongIn, vRepeatIn)
+  const acrossCount = Math.max(1, Math.floor(fabricWidthIn / acrossPitch + 1e-9))
   const rows = Math.ceil(panelsNeeded / acrossCount)
-  const lengthInches = rows * orientation.alongIn
+  const lengthInches = rows * alongPitch
   const exact = exactYards(lengthInches)
   const lastRowPanels = panelsNeeded - (rows - 1) * acrossCount
-  const leftoverAcrossIn = Math.max(0, fabricWidthIn - lastRowPanels * orientation.acrossIn)
+  const leftoverAcrossIn = Math.max(0, fabricWidthIn - lastRowPanels * acrossPitch)
+  // leftoverStrip uses orientation dims; when patterned, approximate with pitches
+  const pitchOrient: Orientation = {
+    acrossIn: acrossPitch,
+    alongIn: alongPitch,
+    label: orientation.label,
+  }
   const leftover = leftoverStrip(
-    orientation,
+    pitchOrient,
     panelsNeeded,
     acrossCount,
     rows,
@@ -307,14 +335,18 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
     pattern,
     fillStyle = DEFAULT_FILL_STYLE,
     dogEarTrim = false,
+    seamAllowanceIn = SEAM_ALLOWANCE_IN,
+    hRepeatIn = 0,
+    vRepeatIn = 0,
   } = input
 
-  const cutWidthIn = cutPanelSize(formWidthIn, fillStyle)
-  const cutLengthIn = cutPanelSize(formLengthIn, fillStyle)
+  const sa = Math.max(0, seamAllowanceIn)
+  const cutWidthIn = cutPanelSize(formWidthIn, fillStyle, sa)
+  const cutLengthIn = cutPanelSize(formLengthIn, fillStyle, sa)
   const panelsNeeded = quantity * PANELS_PER_PILLOW
 
   const orients = orientationsForPattern(cutWidthIn, cutLengthIn, pattern)
-  const packs = orients.map((o) => packPanels(o, panelsNeeded, fabricWidthIn))
+  const packs = orients.map((o) => packPanels(o, panelsNeeded, fabricWidthIn, hRepeatIn, vRepeatIn))
 
   let best = packs[0]!
   for (const p of packs.slice(1)) {
@@ -343,7 +375,7 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
   const materials = [
     `${best.orderYards} yd fabric (${best.exactYards.toFixed(2)} yd exact; ${best.lengthInches} in along bolt)`,
     `${panelsNeeded} cut panels @ ${cutWidthIn} x ${cutLengthIn} in (knife-edge front + back; fill ${fillStyle})`,
-    `finished cover approx ${finishedSize(formWidthIn, fillStyle)} x ${finishedSize(formLengthIn, fillStyle)} in (cut - ${FORM_TO_FINISHED_REDUCTION_IN}" with ${SEAM_ALLOWANCE_IN}" seams)`,
+    `finished cover approx ${finishedSize(formWidthIn, fillStyle, sa)} x ${finishedSize(formLengthIn, fillStyle, sa)} in (cut - ${2 * sa}" with ${sa}" seams)`,
     `optional prefabricated piping: ${piping.prefabricatedIn} in (${piping.prefabricatedFt} ft)`,
     `optional matching piping fabric: add ${piping.matchingFabricIn} in (${piping.matchingFabricYd} yd)`,
     `optional bias-cut piping fabric: add ${piping.biasFabricIn} in (${piping.biasFabricYd} yd)`,
@@ -359,8 +391,9 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
     dogEarTrim,
     cutWidthIn,
     cutLengthIn,
-    finishedWidthIn: finishedSize(formWidthIn, fillStyle),
-    finishedLengthIn: finishedSize(formLengthIn, fillStyle),
+    finishedWidthIn: finishedSize(formWidthIn, fillStyle, sa),
+    finishedLengthIn: finishedSize(formLengthIn, fillStyle, sa),
+    seamAllowanceIn: sa,
     panelsNeeded,
     pack: best,
     alternatePack,

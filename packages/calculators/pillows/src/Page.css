@@ -1,15 +1,4 @@
-/* Pillows — Sailrite UX desktop majors (≥801px) + diagram/mobile
- *
- * Spacing (exact):
- * 1. Column card stack gap: 1rem
- * 2. Card padding: 1rem all sides
- * 3. Column gutter: 1.5rem (no hairline divider)
- * 4. Form 8px grid: label→field 0.375rem; field→helper 0.375rem; helper→next 1rem
- * 5. Pillow-type tiles: padding 0.75rem; tile gap 0.75rem
- * 6. Pattern/fit: unboxed fieldset (no legend-on-border)
- * Minors: disclaimer py 0.75rem; disclaimer→columns 1rem; body inset 1rem;
- *         section titles mb 0.5rem; units join w-full
- */
+/* Pillows — Nesting-parity suite layout (280px | 1fr | 300px); middle nest = focus */
 .calc-page--pillows {
   flex: 1;
   min-height: 0;
@@ -20,20 +9,46 @@
 }
 
 .calc-page--pillows .layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
   flex: 1;
   min-height: 0;
   min-width: 0;
 }
 
-/* No H-scrollbar: inputs pane + desktop left column */
-.calc-page--pillows .sidebar {
+.calc-page--pillows .layout > * {
   min-width: 0;
-  overflow-x: hidden;
 }
 
-.calc-page--pillows .results {
-  min-width: 0;
+.calc-page--pillows .sidebar {
+  background: var(--color-base-100, #fff);
+  padding: 0.75rem;
+  overflow-y: auto;
   overflow-x: hidden;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.calc-page--pillows .sidebar.left {
+  border-right: 1px solid var(--color-base-300, #e5e5e5);
+}
+
+.calc-page--pillows .sidebar.right {
+  border-left: 1px solid var(--color-base-300, #e5e5e5);
+}
+
+.calc-page--pillows .canvas-wrap {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--color-base-200, #fafafa);
 }
 
 .calc-page--pillows .sidebar .card,
@@ -75,11 +90,31 @@
 
 .calc-page--pillows .pillow-diagram {
   width: 100%;
-  max-width: 420px;
+  max-width: 100%;
   height: auto;
   display: block;
   background: var(--color-base-200, #fafafa);
   border-radius: 8px;
+}
+
+.calc-page--pillows .pillow-ref-compact {
+  max-width: 220px;
+}
+
+.calc-page--pillows .pillow-nest-preview {
+  width: 100%;
+  max-width: none;
+  flex: 1;
+  min-height: 200px;
+  background: #fff;
+  border: 1px solid var(--color-base-300, #e5e5e5);
+  border-radius: 8px;
+}
+
+.calc-page--pillows .pillow-thumb-svg {
+  width: 48px;
+  height: 40px;
+  display: block;
 }
 
 .calc-page--pillows .diag-label {
@@ -99,7 +134,6 @@
   font-family: Helvetica, sans-serif;
 }
 
-/* Unboxed fieldsets: kill Daisy legend-on-border if fieldset plugin sneaks in */
 .calc-page--pillows fieldset {
   border: 0;
   margin: 0;
@@ -111,6 +145,36 @@
   float: none;
   width: 100%;
   padding: 0;
+}
+
+.calc-page--pillows .ref-thumbs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.calc-page--pillows .ref-thumbs--fill {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.calc-page--pillows .ref-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 2.75rem;
+  padding: 0.35rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-base-300, #e5e5e5);
+  background: var(--color-base-100, #fff);
+  font-size: 0.7rem;
+  text-transform: capitalize;
+}
+
+.calc-page--pillows .ref-thumb[aria-current='true'] {
+  border-width: 2px;
+  border-color: var(--color-primary, #24285e);
 }
 
 @media (max-width: 800px) {
@@ -125,12 +189,13 @@
     min-height: 0;
   }
 
-  .calc-page--pillows .layout.mobile-inputs .results,
-  .calc-page--pillows .layout.mobile-results .sidebar {
+  .calc-page--pillows .layout.mobile-inputs .canvas-wrap,
+  .calc-page--pillows .layout.mobile-inputs .sidebar.right,
+  .calc-page--pillows .layout.mobile-results .sidebar.left {
     display: none;
   }
 
-  .calc-page--pillows .sidebar {
+  .calc-page--pillows .layout.mobile-inputs .sidebar.left {
     height: 100%;
     max-height: none;
     overflow-y: auto;
@@ -139,21 +204,19 @@
     overscroll-behavior: contain;
   }
 
-  .calc-page--pillows .results {
-    height: 100%;
-    max-height: none;
+  /* Results: nest (focus) then yardage — one scroll surface */
+  .calc-page--pillows .layout.mobile-results {
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
-    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
-}
 
-.calc-page--pillows .pillow-nest-preview {
-  width: 100%;
-  max-width: 520px;
-  height: auto;
-  display: block;
-  background: var(--color-base-200, #fafafa);
-  border-radius: 8px;
+  .calc-page--pillows .layout.mobile-results .canvas-wrap,
+  .calc-page--pillows .layout.mobile-results .sidebar.right {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
 }

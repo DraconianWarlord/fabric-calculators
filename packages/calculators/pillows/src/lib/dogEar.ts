@@ -1,22 +1,26 @@
 /**
  * Knife-edge dog-ear corner trim (throw only).
  *
- * Videos Expert:
+ * Videos Expert / Sailrite practice:
  * 1. Mark 1/2" in from each corner along both edges (SA reference)
  * 2. From corner along each edge measure side_length / 4
- * 3. Cut wedge through the side/4 point (both layers)
+ * 3. Cut wedge through that point (both layers)
  *
- * Example: 18" side → 4.5"; 12" side → 3".
- * Some zipper + piping methods skip dog-ear trimming.
+ * Cap: min(side÷4, DOG_EAR_TRIM_CAP_IN). Uncapped side÷4 on large
+ * knife-edge panels (e.g. 18" → 4.5") reads as a dramatic octagon in
+ * reference + nest; 2.5" keeps the same geometry family but calmer.
+ * ReferenceSvg and NestPreviewSvg MUST use dogEarPanelPolygon — one path.
  */
 
 export const DOG_EAR_SA_MARK_IN = 0.5
 export const DOG_EAR_TRIM_FRACTION = 0.25
+/** Max trim along each edge (inches) — tones down cartoon octagons. */
+export const DOG_EAR_TRIM_CAP_IN = 2.5
 
 export type Point = { x: number; y: number }
 
 export function dogEarTrimAlongEdge(sideLengthIn: number): number {
-  return sideLengthIn * DOG_EAR_TRIM_FRACTION
+  return Math.min(sideLengthIn * DOG_EAR_TRIM_FRACTION, DOG_EAR_TRIM_CAP_IN)
 }
 
 export function dogEarPanelPolygon(widthIn: number, lengthIn: number): Point[] {
@@ -60,7 +64,7 @@ export function dogEarSaMarks(
 }
 
 export const DOG_EAR_CUT_LIST_NOTE =
-  'corners trimmed to reduce dog-ears (1/2" SA mark; trim at side÷4 each edge)'
+  'corners trimmed to reduce dog-ears (1/2" SA mark; trim at min(side÷4, 2.5") each edge)'
 
 export const DOG_EAR_OPTIONAL_NOTE =
-  'Optional — some zipper+piping methods skip this.'
+  'Optional — ½″ SA marks + side÷4 wedge (capped at 2.5″). Some zipper+piping methods skip this.'

@@ -1,10 +1,12 @@
 /**
  * Panel placements for nest-on-bolt SVG preview (visualization).
  * Uses existing throw pack / bolster nest math (across × rows).
+ * When H/V repeats > 0, panels are re-centered onto pattern cell centers
+ * (same idea as Nesting snapCenterToPattern) — not paint-only.
  */
 
 import { dogEarPanelPolygon, type Point } from './dogEar'
-import type { PackResult } from './throwPillows'
+import { patternCellPitch, type PackResult } from './throwPillows'
 import type { BolsterCuts, BolsterNesting } from './bolsterPillows'
 
 export type NestPanelKind = 'throw-panel' | 'barrel' | 'end'
@@ -31,19 +33,76 @@ export function patternHOffset(fabricWidthIn: number, hRepeatIn: number): number
   return (fabricWidthIn % hRepeatIn) / 2
 }
 
+/** Snap panel top-left so its center lands on the nearest pattern cell/stripe center. */
+export function snapPanelToPatternCenter(
+  panelW: number,
+  panelH: number,
+  approxX: number,
+  approxY: number,
+  fabricWidthIn: number,
+  hRepeatIn: number,
+  vRepeatIn: number,
+): { x: number; y: number } {
+  let x = approxX
+  let y = approxY
+  const cx = approxX + panelW / 2
+  const cy = approxY + panelH / 2
+  if (hRepeatIn > 0) {
+    const hOff = patternHOffset(fabricWidthIn, hRepeatIn)
+    const i = Math.max(0, Math.round((cx - hOff) / hRepeatIn - 0.5))
+    x = hOff + (i + 0.5) * hRepeatIn - panelW / 2
+    x = Math.max(0, Math.min(x, Math.max(0, fabricWidthIn - panelW)))
+  }
+  if (vRepeatIn > 0) {
+    const j = Math.max(0, Math.round(cy / vRepeatIn - 0.5))
+    y = Math.max(0, (j + 0.5) * vRepeatIn - panelH / 2)
+  }
+  return { x, y }
+}
+
+export type ThrowNestOpts = {
+  dogEar?: boolean
+  hRepeatIn?: number
+  vRepeatIn?: number
+}
+
 export function throwNestPlacements(
   pack: PackResult,
-  opts: { dogEar?: boolean } = {},
+  fabricWidthIn: number,
+  opts: ThrowNestOpts = {},
 ): NestPanelPlacement[] {
   const { acrossIn, alongIn } = pack.orientation
+  const hR = opts.hRepeatIn ?? 0
+  const vR = opts.vRepeatIn ?? 0
+  const acrossPitch = patternCellPitch(acrossIn, hR)
+  const alongPitch = patternCellPitch(alongIn, vR)
   const panels: NestPanelPlacement[] = []
+
   for (let i = 0; i < pack.panelsNeeded; i++) {
     const row = Math.floor(i / pack.acrossCount)
     const col = i % pack.acrossCount
+    // Center panel inside its pitch cell, then snap to pattern centers when active.
+    const cellX = col * acrossPitch
+    const cellY = row * alongPitch
+    let x = cellX + (acrossPitch - acrossIn) / 2
+    let y = cellY + (alongPitch - alongIn) / 2
+    if (hR > 0 || vR > 0) {
+      const snapped = snapPanelToPatternCenter(
+        acrossIn,
+        alongIn,
+        x,
+        y,
+        fabricWidthIn,
+        hR,
+        vR,
+      )
+      x = snapped.x
+      y = snapped.y
+    }
     panels.push({
       kind: 'throw-panel',
-      x: col * acrossIn,
-      y: row * alongIn,
+      x,
+      y,
       w: acrossIn,
       h: alongIn,
       polygon: opts.dogEar ? dogEarPanelPolygon(acrossIn, alongIn) : undefined,
@@ -56,12 +115,17 @@ export function throwNestPlacements(
 export function throwNestPreview(
   pack: PackResult,
   fabricWidthIn: number,
-  opts: { dogEar?: boolean } = {},
+  opts: ThrowNestOpts = {},
 ): NestPreviewModel {
+  const panels = throwNestPlacements(pack, fabricWidthIn, opts)
+  const maxBottom =
+    panels.length === 0
+      ? pack.lengthInches
+      : Math.max(pack.lengthInches, ...panels.map((p) => p.y + p.h))
   return {
     fabricWidthIn,
-    lengthInches: pack.lengthInches,
-    panels: throwNestPlacements(pack, opts),
+    lengthInches: maxBottom,
+    panels,
     leftoverAcrossIn: pack.leftoverAcrossIn,
   }
 }
@@ -71,22 +135,40 @@ export function bolsterNestPreview(
   nest: BolsterNesting,
   quantity: number,
   fabricWidthIn: number,
+  opts: { hRepeatIn?: number; vRepeatIn?: number } = {},
 ): NestPreviewModel {
   const panels: NestPanelPlacement[] = []
   const endD = cuts.endDiameterIn
   let endsPlaced = 0
   const endsNeeded = quantity * 2
+  const hR = opts.hRepeatIn ?? 0
+  const vR = opts.vRepeatIn ?? 0
 
   for (let row = 0; row < nest.barrelRows; row++) {
     const barrelsInRow =
       row < nest.barrelRows - 1
         ? nest.barrelAcrossCount
         : quantity - (nest.barrelRows - 1) * nest.barrelAcrossCount
-    const y = row * nest.barrelAlongBoltIn
+    const y0 = row * nest.barrelAlongBoltIn
     for (let col = 0; col < barrelsInRow; col++) {
+      let x = col * nest.barrelAcrossIn
+      let y = y0
+      if (hR > 0 || vR > 0) {
+        const snapped = snapPanelToPatternCenter(
+          nest.barrelAcrossIn,
+          nest.barrelAlongBoltIn,
+          x,
+          y,
+          fabricWidthIn,
+          hR,
+          vR,
+        )
+        x = snapped.x
+        y = snapped.y
+      }
       panels.push({
         kind: 'barrel',
-        x: col * nest.barrelAcrossIn,
+        x,
         y,
         w: nest.barrelAcrossIn,
         h: nest.barrelAlongBoltIn,
@@ -97,9 +179,16 @@ export function bolsterNestPreview(
     const endsThisRow = Math.max(0, Math.floor(free / endD + 1e-9))
     const place = Math.min(endsThisRow, endsNeeded - endsPlaced)
     for (let e = 0; e < place; e++) {
+      let x = barrelsInRow * nest.barrelAcrossIn + e * endD
+      let y = y0
+      if (hR > 0 || vR > 0) {
+        const snapped = snapPanelToPatternCenter(endD, endD, x, y, fabricWidthIn, hR, vR)
+        x = snapped.x
+        y = snapped.y
+      }
       panels.push({
         kind: 'end',
-        x: barrelsInRow * nest.barrelAcrossIn + e * endD,
+        x,
         y,
         w: endD,
         h: endD,
@@ -115,10 +204,17 @@ export function bolsterNestPreview(
     for (let i = 0; i < endsRemaining; i++) {
       const row = Math.floor(i / endAcross)
       const col = i % endAcross
+      let x = col * endD
+      let y = nest.barrelUsedAlongIn + row * endD
+      if (hR > 0 || vR > 0) {
+        const snapped = snapPanelToPatternCenter(endD, endD, x, y, fabricWidthIn, hR, vR)
+        x = snapped.x
+        y = snapped.y
+      }
       panels.push({
         kind: 'end',
-        x: col * endD,
-        y: nest.barrelUsedAlongIn + row * endD,
+        x,
+        y,
         w: endD,
         h: endD,
         label: `end ${endsPlaced + i + 1}`,
@@ -126,9 +222,14 @@ export function bolsterNestPreview(
     }
   }
 
+  const maxBottom =
+    panels.length === 0
+      ? nest.lengthInches
+      : Math.max(nest.lengthInches, ...panels.map((p) => p.y + p.h))
+
   return {
     fabricWidthIn,
-    lengthInches: nest.lengthInches,
+    lengthInches: maxBottom,
     panels,
     leftoverAcrossIn: leftoverOnLastRow(panels, fabricWidthIn),
   }

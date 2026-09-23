@@ -1,4 +1,5 @@
-import { cutShapeSvgProps, DIAGRAM_SR_BLUE } from '@sailrite/calc-shell'
+import type { CSSProperties } from 'react'
+import { DIAGRAM_CUT_FILL, DIAGRAM_SR_BLUE } from '@sailrite/calc-shell'
 import { patternHOffset, type NestPreviewModel } from '../lib/nestPreview'
 import { fromInches, type Unit } from '../lib/throwPillows'
 
@@ -9,6 +10,16 @@ function fmt(inches: number, unit: Unit): string {
       ? String(v)
       : v.toFixed(2).replace(/\.?0+$/, '')
     : v.toFixed(0)
+}
+
+/** Constant screen stroke — does not fatten as nest viewBox grows with panel count. */
+const PANEL_STROKE: CSSProperties = {
+  vectorEffect: 'non-scaling-stroke',
+  strokeWidth: 1.25,
+}
+const BOLT_STROKE: CSSProperties = {
+  vectorEffect: 'non-scaling-stroke',
+  strokeWidth: 1.5,
 }
 
 export function NestPreviewSvg({
@@ -24,13 +35,20 @@ export function NestPreviewSvg({
 }) {
   const fabricW = Math.max(model.fabricWidthIn, 1)
   const len = Math.max(model.lengthInches, 1)
-  const pad = 24
-  const scale = Math.min(420 / fabricW, 280 / len, 8)
-  const svgW = fabricW * scale + pad * 2
-  const svgH = len * scale + pad * 2 + 20
-  const cut = cutShapeSvgProps()
+  const pad = Math.max(fabricW, len) * 0.04 + 0.5
+  const labelBand = Math.max(fabricW, len) * 0.08
+  const svgW = fabricW + pad * 2
+  const svgH = len + pad * 2 + labelBand
   const hOff = patternHOffset(fabricW, hRepeatIn)
   const showGrid = hRepeatIn > 0 || vRepeatIn > 0
+
+  if (model.panels.length === 0) {
+    return (
+      <p className="text-sm text-base-content/60" role="status">
+        No panels to nest — check size and quantity.
+      </p>
+    )
+  }
 
   return (
     <svg
@@ -38,47 +56,54 @@ export function NestPreviewSvg({
       viewBox={`0 0 ${svgW} ${svgH}`}
       role="img"
       aria-label="Panel nest preview on fabric bolt"
+      preserveAspectRatio="xMidYMin meet"
     >
       <rect
         x={pad}
         y={pad}
-        width={fabricW * scale}
-        height={len * scale}
+        width={fabricW}
+        height={len}
         fill="#fafafa"
         stroke={DIAGRAM_SR_BLUE}
-        strokeWidth={1.5}
+        style={BOLT_STROKE}
       />
       {showGrid && (
-        <g stroke="#c5cae9" strokeWidth={0.75} opacity={0.85}>
+        <g stroke="#c5cae9" opacity={0.85} style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: 0.75 }}>
           {hRepeatIn > 0 &&
-            Array.from({ length: Math.ceil((fabricW - hOff) / hRepeatIn) + 1 }).map((_, i) => {
+            Array.from({ length: Math.ceil((fabricW - hOff) / hRepeatIn) + 2 }).map((_, i) => {
               const x = hOff + i * hRepeatIn
               if (x < -1e-6 || x > fabricW + 1e-6) return null
               return (
-                <line key={`v${i}`} x1={pad + x * scale} y1={pad} x2={pad + x * scale} y2={pad + len * scale} />
+                <line key={`v${i}`} x1={pad + x} y1={pad} x2={pad + x} y2={pad + len} />
               )
             })}
           {vRepeatIn > 0 &&
-            Array.from({ length: Math.ceil(len / vRepeatIn) + 1 }).map((_, i) => {
+            Array.from({ length: Math.ceil(len / vRepeatIn) + 2 }).map((_, i) => {
               const y = i * vRepeatIn
+              if (y > len + 1e-6) return null
               return (
-                <line key={`h${i}`} x1={pad} y1={pad + y * scale} x2={pad + fabricW * scale} y2={pad + y * scale} />
+                <line key={`h${i}`} x1={pad} y1={pad + y} x2={pad + fabricW} y2={pad + y} />
               )
             })}
         </g>
       )}
       {model.panels.map((p, i) => {
-        const x = pad + p.x * scale
-        const y = pad + p.y * scale
+        const x = pad + p.x
+        const y = pad + p.y
+        const common = {
+          fill: DIAGRAM_CUT_FILL,
+          stroke: DIAGRAM_SR_BLUE,
+          style: PANEL_STROKE,
+        }
         if (p.kind === 'end') {
           return (
             <ellipse
               key={i}
-              cx={x + (p.w * scale) / 2}
-              cy={y + (p.h * scale) / 2}
-              rx={(p.w * scale) / 2}
-              ry={(p.h * scale) / 2}
-              {...cut}
+              cx={x + p.w / 2}
+              cy={y + p.h / 2}
+              rx={p.w / 2}
+              ry={p.h / 2}
+              {...common}
             />
           )
         }
@@ -86,30 +111,40 @@ export function NestPreviewSvg({
           return (
             <polygon
               key={i}
-              points={p.polygon.map((pt) => `${x + pt.x * scale},${y + pt.y * scale}`).join(' ')}
-              {...cut}
+              points={p.polygon.map((pt) => `${x + pt.x},${y + pt.y}`).join(' ')}
+              {...common}
             />
           )
         }
-        return <rect key={i} x={x} y={y} width={p.w * scale} height={p.h * scale} {...cut} />
+        return <rect key={i} x={x} y={y} width={p.w} height={p.h} {...common} />
       })}
       {model.leftoverAcrossIn > 0.1 && (
         <rect
-          x={pad + (fabricW - model.leftoverAcrossIn) * scale}
+          x={pad + (fabricW - model.leftoverAcrossIn)}
           y={pad}
-          width={model.leftoverAcrossIn * scale}
-          height={len * scale}
+          width={model.leftoverAcrossIn}
+          height={len}
           fill="none"
           stroke={DIAGRAM_SR_BLUE}
-          strokeWidth={1}
           strokeDasharray="3 3"
           opacity={0.5}
+          style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: 1 }}
         />
       )}
-      <text x={pad} y={pad - 8} className="diag-label">
+      <text
+        x={pad}
+        y={pad - labelBand * 0.25}
+        className="diag-label"
+        fontSize={Math.max(0.9, Math.min(fabricW, len) * 0.045)}
+      >
         bolt {fmt(fabricW, unit)} {unit} wide · {fmt(len, unit)} {unit} along
       </text>
-      <text x={pad} y={pad + len * scale + 14} className="diag-legend">
+      <text
+        x={pad}
+        y={pad + len + labelBand * 0.55}
+        className="diag-legend"
+        fontSize={Math.max(0.8, Math.min(fabricW, len) * 0.04)}
+      >
         {model.panels.length} piece{model.panels.length === 1 ? '' : 's'}
         {model.leftoverAcrossIn > 0.1
           ? ` · leftover ~${fmt(model.leftoverAcrossIn, unit)} ${unit} across`

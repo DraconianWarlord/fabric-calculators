@@ -10,6 +10,8 @@ import {
   DEFAULT_FILL_STYLE,
   MAX_QUANTITY,
   MIN_QUANTITY,
+  PANELS_PER_PILLOW,
+  SEAM_ALLOWANCE_IN,
   calculateThrowPillows,
   fromInches,
   toInches,
@@ -21,10 +23,17 @@ import {
   calculateBolster,
   type BolsterPattern,
 } from './lib/bolsterPillows'
-import { FILL_STYLE_HELP, BOLSTER_FILL_HELP } from './lib/fillStyle'
+import { BOLSTER_FILL_HELP, BOLSTER_SA_NOTE, FILL_STYLE_HELP } from './lib/fillStyle'
 import { DOG_EAR_OPTIONAL_NOTE } from './lib/dogEar'
 import { throwNestPreview, bolsterNestPreview } from './lib/nestPreview'
-import { ThrowReference, BolsterReference } from './diagrams/ReferenceSvg'
+import {
+  ThrowReference,
+  BolsterReference,
+  ThrowFormThumb,
+  BolsterFormThumb,
+  FillStyleThumb,
+  CutFinishedKey,
+} from './diagrams/ReferenceSvg'
 import { NestPreviewSvg } from './diagrams/NestPreviewSvg'
 import './Page.css'
 
@@ -38,12 +47,12 @@ function formatDim(inches: number, unit: Unit): string {
   return v.toFixed(0)
 }
 
-
 export default function PillowsPage() {
   const [unit, setUnit] = useState<Unit>('in')
   const [widthDraft, setWidthDraft] = useState('18')
   const [lengthDraft, setLengthDraft] = useState('18')
   const [fabricDraft, setFabricDraft] = useState(String(DEFAULT_FABRIC_WIDTH_IN))
+  const [seamDraft, setSeamDraft] = useState(String(SEAM_ALLOWANCE_IN))
   const [quantity, setQuantity] = useState(1)
   const [pattern, setPattern] = useState<PatternDirection>('horizontal')
   const [pillowTypeId, setPillowTypeId] = useState('throw')
@@ -57,6 +66,7 @@ export default function PillowsPage() {
   const formWidthIn = Math.max(0.1, toInches(Number(widthDraft) || 0, unit))
   const formLengthIn = Math.max(0.1, toInches(Number(lengthDraft) || 0, unit))
   const fabricWidthIn = Math.max(1, toInches(Number(fabricDraft) || 0, unit))
+  const seamAllowanceIn = Math.max(0, toInches(Number(seamDraft) || 0, unit))
   const hRepeatIn = Math.max(0, toInches(Number(hRepeatDraft) || 0, unit))
   const vRepeatIn = Math.max(0, toInches(Number(vRepeatDraft) || 0, unit))
 
@@ -72,8 +82,22 @@ export default function PillowsPage() {
         pattern,
         fillStyle,
         dogEarTrim,
+        seamAllowanceIn,
+        hRepeatIn,
+        vRepeatIn,
       }),
-    [formWidthIn, formLengthIn, quantity, fabricWidthIn, pattern, fillStyle, dogEarTrim],
+    [
+      formWidthIn,
+      formLengthIn,
+      quantity,
+      fabricWidthIn,
+      pattern,
+      fillStyle,
+      dogEarTrim,
+      seamAllowanceIn,
+      hRepeatIn,
+      vRepeatIn,
+    ],
   )
 
   const bolsterResult = useMemo(
@@ -91,36 +115,49 @@ export default function PillowsPage() {
 
   const nestModel = useMemo(() => {
     if (isBolster) {
-      return bolsterNestPreview(bolsterResult.cuts, bolsterResult.nest, quantity, fabricWidthIn)
+      return bolsterNestPreview(bolsterResult.cuts, bolsterResult.nest, quantity, fabricWidthIn, {
+        hRepeatIn,
+        vRepeatIn,
+      })
     }
-    return throwNestPreview(throwResult.pack, fabricWidthIn, { dogEar: dogEarTrim })
-  }, [isBolster, bolsterResult, throwResult.pack, quantity, fabricWidthIn, dogEarTrim])
+    return throwNestPreview(throwResult.pack, fabricWidthIn, {
+      dogEar: dogEarTrim,
+      hRepeatIn,
+      vRepeatIn,
+    })
+  }, [
+    isBolster,
+    bolsterResult,
+    throwResult.pack,
+    quantity,
+    fabricWidthIn,
+    dogEarTrim,
+    hRepeatIn,
+    vRepeatIn,
+  ])
 
   const exact = isBolster ? bolsterResult.nest.exactYards : throwResult.pack.exactYards
   const order = isBolster ? bolsterResult.nest.orderYards : throwResult.pack.orderYards
   const unitLabel = unit === 'in' ? 'in' : 'mm'
   const activeType = PILLOW_TYPES.find((t) => t.id === pillowTypeId) ?? PILLOW_TYPES[0]!
+  const panelsNeeded = isBolster
+    ? quantity /* barrel + ends called out in cut list */
+    : quantity * PANELS_PER_PILLOW
 
   function switchUnit(next: Unit) {
     if (next === unit) return
-    const w = Number(widthDraft)
-    const l = Number(lengthDraft)
-    const f = Number(fabricDraft)
-    if (Number.isFinite(w) && w > 0) {
-      setWidthDraft(
-        String(Number(fromInches(toInches(w, unit), next).toFixed(next === 'in' ? 3 : 0))),
-      )
+    const convert = (draft: string, setter: (v: string) => void) => {
+      const n = Number(draft)
+      if (Number.isFinite(n) && n >= 0) {
+        setter(String(Number(fromInches(toInches(n, unit), next).toFixed(next === 'in' ? 3 : 0))))
+      }
     }
-    if (Number.isFinite(l) && l > 0) {
-      setLengthDraft(
-        String(Number(fromInches(toInches(l, unit), next).toFixed(next === 'in' ? 3 : 0))),
-      )
-    }
-    if (Number.isFinite(f) && f > 0) {
-      setFabricDraft(
-        String(Number(fromInches(toInches(f, unit), next).toFixed(next === 'in' ? 3 : 0))),
-      )
-    }
+    convert(widthDraft, setWidthDraft)
+    convert(lengthDraft, setLengthDraft)
+    convert(fabricDraft, setFabricDraft)
+    convert(seamDraft, setSeamDraft)
+    convert(hRepeatDraft, setHRepeatDraft)
+    convert(vRepeatDraft, setVRepeatDraft)
     setUnit(next)
   }
 
@@ -153,20 +190,6 @@ export default function PillowsPage() {
 
   return (
     <div className="calc-page calc-page--pillows">
-      <details className="disclaimer-mobile shrink-0 border-b border-base-300 bg-base-100 px-3 max-[800px]:block min-[801px]:hidden">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center text-xs font-semibold text-base-content/70 [&::-webkit-details-marker]:hidden">
-          Estimate disclaimer
-        </summary>
-        <p className="pb-2 text-xs leading-snug text-base-content/60" role="note">
-          Estimate only — double-check all results thoroughly. Sailrite is not responsible for
-          miscalculations, cut fabric, or purchased fabric from this tool.
-        </p>
-      </details>
-      <p className="disclaimer hidden shrink-0 border-b border-base-300 px-4 py-3 text-xs leading-snug text-base-content/60 min-[801px]:block" role="note">
-        Estimate only — double-check all results thoroughly. Sailrite is not responsible for
-        miscalculations, cut fabric, or purchased fabric from this tool.
-      </p>
-
       <nav
         className="mobile-tabs hidden shrink-0 gap-1.5 border-b border-base-300 bg-base-100 px-2.5 py-1.5 max-[800px]:flex"
         aria-label="Main sections"
@@ -189,115 +212,42 @@ export default function PillowsPage() {
         </button>
       </nav>
 
-      <div className={`layout mobile-${mobileView} grid min-h-0 flex-1 grid-cols-1 bg-base-200 max-[800px]:bg-base-100 max-[800px]:p-0 min-[801px]:grid-cols-[minmax(280px,360px)_1fr] min-[801px]:gap-6 min-[801px]:px-4 min-[801px]:pb-4 min-[801px]:pt-4`}>
-        <aside className="sidebar left flex min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto max-[800px]:p-4" data-mobile-pane="inputs">
+      <div className={`layout mobile-${mobileView}`}>
+        {/* LEFT — controls (+ compact reference strip) */}
+        <aside className="sidebar left" data-mobile-pane="inputs">
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">pillow type</h2>
-            <div className="grid gap-3" role="list">
-              {PILLOW_TYPES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="listitem"
-                  className={`btn btn-ghost h-auto min-h-11 w-full flex-col items-start gap-0.5 rounded-lg border border-base-300 bg-base-100 p-3 text-left font-normal normal-case${t.id === activeType.id ? ' border-primary ring-1 ring-primary' : ''}${t.status === 'soon' ? ' cursor-not-allowed opacity-85 bg-base-200' : ''}`}
-                  disabled={t.status === 'soon'}
-                  onClick={() => t.status === 'active' && selectPillowType(t.id)}
-                  title={t.status === 'soon' ? 'Coming soon' : t.blurb}
-                >
-                  <span className="font-bold text-sm">{t.label}</span>
-                  {t.status === 'soon' ? (
-                    <span className="badge badge-sm">Coming soon</span>
-                  ) : (
-                    <span className="text-xs text-base-content/60">{t.blurb}</span>
-                  )}
-                </button>
-              ))}
-            </div>
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                form
+              </h2>
+              <div className="grid gap-3" role="list">
+                {PILLOW_TYPES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="listitem"
+                    className={`btn btn-ghost h-auto min-h-11 w-full flex-col items-start gap-0.5 rounded-lg border border-base-300 bg-base-100 p-3 text-left font-normal normal-case${t.id === activeType.id ? ' border-primary ring-1 ring-primary' : ''}${t.status === 'soon' ? ' cursor-not-allowed opacity-85 bg-base-200' : ''}`}
+                    disabled={t.status === 'soon'}
+                    onClick={() => t.status === 'active' && selectPillowType(t.id)}
+                    title={t.status === 'soon' ? 'Coming soon' : t.blurb}
+                  >
+                    <span className="font-bold text-sm">{t.label}</span>
+                    {t.status === 'soon' ? (
+                      <span className="badge badge-sm">Coming soon</span>
+                    ) : (
+                      <span className="text-xs text-base-content/60">{t.blurb}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">units</h2>
-            <div className="join w-full" role="group" aria-label="Unit of measurement">
-              <button
-                type="button"
-                className={`btn join-item btn-sm min-h-11 flex-1 ${unit === 'in' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                aria-pressed={unit === 'in'}
-                onClick={() => switchUnit('in')}
-              >
-                inches
-              </button>
-              <button
-                type="button"
-                className={`btn join-item btn-sm min-h-11 flex-1 ${unit === 'mm' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                aria-pressed={unit === 'mm'}
-                onClick={() => switchUnit('mm')}
-              >
-                mm
-              </button>
-            </div>
-            </div>
-          </section>
-
-          <section className="card bg-base-100 border border-base-300 shadow-none">
-            <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
-              {isBolster ? 'bolster pillow inputs' : 'throw pillow inputs'}
-            </h2>
-            <div className="flex flex-col gap-4">
-            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
-              {isBolster ? 'A. diameter / width (form)' : 'A. width (form)'}
-              <input
-                className="input input-bordered min-h-11 w-full"
-                type="number"
-                min={1}
-                step={1}
-                value={widthDraft}
-                onChange={(e) => setWidthDraft(e.target.value)}
-              />
-            </label>
-            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
-              {isBolster ? 'B. length (form)' : 'B. length (form)'}
-              <input
-                className="input input-bordered min-h-11 w-full"
-                type="number"
-                min={1}
-                step={1}
-                value={lengthDraft}
-                onChange={(e) => setLengthDraft(e.target.value)}
-              />
-            </label>
-            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
-              quantity
-              <select className="select select-bordered min-h-11 w-full" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}>
-                {Array.from({ length: MAX_QUANTITY - MIN_QUANTITY + 1 }, (_, i) => {
-                  const n = MIN_QUANTITY + i
-                  return (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  )
-                })}
-              </select>
-            </label>
-            <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
-              fabric width
-              <input
-                className="input input-bordered min-h-11 w-full"
-                type="number"
-                min={1}
-                step={1}
-                value={fabricDraft}
-                onChange={(e) => setFabricDraft(e.target.value)}
-              />
-              <span className="field-help text-xs leading-snug text-base-content/60">often 46, 54, or 60 {unitLabel}</span>
-            </label>
-
-            <>
-            <fieldset className="m-0 min-w-0 border-0 p-0">
-              <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">fill style</legend>
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                fill
+              </h2>
               <div className="join w-full" role="group" aria-label="Fill style">
                 {(['flat', 'standard', 'plump'] as const).map((val) => (
                   <button
@@ -311,19 +261,190 @@ export default function PillowsPage() {
                   </button>
                 ))}
               </div>
-              <span
-                className="field-help mt-1.5 text-xs leading-snug text-base-content/60"
-                title="UX labels (Videos Expert) — not Sailrite product names. Default Standard."
-              >
+              <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
                 {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]}
               </span>
-            </fieldset>
+            </div>
+          </section>
 
-            {!isBolster && (
-              <fieldset className="m-0 min-w-0 border-0 p-0">
-                <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
-                  dog-ear corner trim
-                </legend>
+          {/* Compact Form×Fill reference strip (secondary — not hero) */}
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-3 p-4">
+              <h2 className="card-title mb-0 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                reference
+              </h2>
+              <div className="ref-thumbs" role="group" aria-label="Pillow form">
+                <button
+                  type="button"
+                  className="ref-thumb"
+                  aria-current={pillowTypeId === 'throw' ? 'true' : undefined}
+                  onClick={() => selectPillowType('throw')}
+                >
+                  <ThrowFormThumb selected={pillowTypeId === 'throw'} />
+                  Throw
+                </button>
+                <button
+                  type="button"
+                  className="ref-thumb"
+                  aria-current={pillowTypeId === 'bolster' ? 'true' : undefined}
+                  onClick={() => selectPillowType('bolster')}
+                >
+                  <BolsterFormThumb selected={pillowTypeId === 'bolster'} />
+                  Bolster
+                </button>
+              </div>
+              <div className="ref-thumbs ref-thumbs--fill" role="group" aria-label="Fill comparison">
+                {(['flat', 'standard', 'plump'] as const).map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    className="ref-thumb"
+                    aria-current={fillStyle === val ? 'true' : undefined}
+                    onClick={() => setFillStyle(val)}
+                  >
+                    <FillStyleThumb fill={val} selected={fillStyle === val} />
+                    {val}
+                  </button>
+                ))}
+              </div>
+              {isBolster ? (
+                <BolsterReference
+                  diameterIn={formWidthIn}
+                  lengthIn={formLengthIn}
+                  endDiameterIn={bolsterResult.cuts.endDiameterIn}
+                  barrelAlongIn={bolsterResult.cuts.barrelAlongIn}
+                  barrelCircIn={bolsterResult.cuts.barrelCircIn}
+                  unit={unit}
+                  fillStyle={fillStyle}
+                  compact
+                />
+              ) : (
+                <ThrowReference
+                  formW={formWidthIn}
+                  formL={formLengthIn}
+                  cutW={throwResult.cutWidthIn}
+                  cutL={throwResult.cutLengthIn}
+                  finishedW={throwResult.finishedWidthIn}
+                  finishedL={throwResult.finishedLengthIn}
+                  unit={unit}
+                  fillStyle={fillStyle}
+                  dogEarTrim={dogEarTrim}
+                  compact
+                />
+              )}
+              <CutFinishedKey />
+            </div>
+          </section>
+
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                size
+              </h2>
+              <div className="flex flex-col gap-4">
+                <div className="join w-full" role="group" aria-label="Unit of measurement">
+                  <button
+                    type="button"
+                    className={`btn join-item btn-sm min-h-11 flex-1 ${unit === 'in' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                    aria-pressed={unit === 'in'}
+                    onClick={() => switchUnit('in')}
+                  >
+                    inches
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn join-item btn-sm min-h-11 flex-1 ${unit === 'mm' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                    aria-pressed={unit === 'mm'}
+                    onClick={() => switchUnit('mm')}
+                  >
+                    mm
+                  </button>
+                </div>
+                <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                  {isBolster ? 'A. diameter / width (form)' : 'A. width (form)'}
+                  <input
+                    className="input input-bordered min-h-11 w-full"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={widthDraft}
+                    onChange={(e) => setWidthDraft(e.target.value)}
+                  />
+                </label>
+                <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                  {isBolster ? 'B. length (form)' : 'B. length (form)'}
+                  <input
+                    className="input input-bordered min-h-11 w-full"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={lengthDraft}
+                    onChange={(e) => setLengthDraft(e.target.value)}
+                  />
+                </label>
+                <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                  fabric width
+                  <input
+                    className="input input-bordered min-h-11 w-full"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={fabricDraft}
+                    onChange={(e) => setFabricDraft(e.target.value)}
+                  />
+                  <span className="field-help text-xs leading-snug text-base-content/60">
+                    often 46, 54, or 60 {unitLabel}
+                  </span>
+                </label>
+                <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                  Seam allowance ({unitLabel})
+                  <input
+                    className="input input-bordered min-h-11 w-full"
+                    type="number"
+                    min={0}
+                    step={0.25}
+                    value={seamDraft}
+                    onChange={(e) => setSeamDraft(e.target.value)}
+                  />
+                  <span className="field-help text-xs leading-snug text-base-content/60">
+                    {isBolster
+                      ? BOLSTER_SA_NOTE
+                      : 'Sailrite throw tip assumes ½″ seams unless you change this.'}
+                  </span>
+                </label>
+                <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                  Pillows
+                  <select
+                    className="select select-bordered min-h-11 w-full"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    aria-label="Pillows"
+                  >
+                    {Array.from({ length: MAX_QUANTITY - MIN_QUANTITY + 1 }, (_, i) => {
+                      const n = MIN_QUANTITY + i
+                      return (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      )
+                    })}
+                  </select>
+                  <span className="field-help text-xs leading-snug text-base-content/60">
+                    {isBolster
+                      ? '→ 1 barrel + 2 end circles per pillow'
+                      : `→ ${quantity * PANELS_PER_PILLOW} panels (2 per pillow)`}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          {!isBolster && (
+            <section className="card bg-base-100 border border-base-300 shadow-none">
+              <div className="card-body gap-0 p-4">
+                <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                  dog-ear
+                </h2>
                 <div className="join w-full" role="group" aria-label="Dog-ear corner trim">
                   <button
                     type="button"
@@ -345,178 +466,226 @@ export default function PillowsPage() {
                 <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
                   {DOG_EAR_OPTIONAL_NOTE}
                 </span>
-              </fieldset>
-            )}
+              </div>
+            </section>
+          )}
 
-            {isBolster ? (
-              <>
-                <fieldset className="m-0 min-w-0 border-0 p-0">
-                  <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">pattern direction</legend>
-                  <div className="join w-full" role="group" aria-label="Bolster pattern direction">
-                    {(
-                      [
-                        ['horizontal', 'horizontal'],
-                        ['vertical', 'vertical'],
-                      ] as const
-                    ).map(([val, label]) => (
-                      <button
-                        key={val}
-                        type="button"
-                        className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterPattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                        aria-pressed={bolsterPattern === val}
-                        onClick={() => setBolsterPattern(val)}
-                      >
-                        {label}
-                      </button>
-                    ))}
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-0 p-4">
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                pattern
+              </h2>
+              <div className="flex flex-col gap-4">
+                {isBolster ? (
+                  <fieldset className="m-0 min-w-0 border-0 p-0">
+                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                      pattern direction
+                    </legend>
+                    <div className="join w-full" role="group" aria-label="Bolster pattern direction">
+                      {(
+                        [
+                          ['horizontal', 'horizontal'],
+                          ['vertical', 'vertical'],
+                        ] as const
+                      ).map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterPattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                          aria-pressed={bolsterPattern === val}
+                          onClick={() => setBolsterPattern(val)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                ) : (
+                  <fieldset className="m-0 min-w-0 border-0 p-0">
+                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                      pattern direction
+                    </legend>
+                    <div className="join w-full" role="group" aria-label="Pattern direction">
+                      {(
+                        [
+                          ['horizontal', 'horizontal'],
+                          ['vertical', 'vertical'],
+                          ['none', 'none'],
+                        ] as const
+                      ).map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className={`btn join-item btn-sm min-h-11 flex-1 ${pattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                          aria-pressed={pattern === val}
+                          onClick={() => setPattern(val)}
+                          title={val === 'none' ? 'none / best pack' : label}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
+                <details className="collapse collapse-arrow border border-base-300 bg-base-100">
+                  <summary className="collapse-title min-h-11 py-2 text-sm font-medium">
+                    Pattern repeats
+                  </summary>
+                  <div className="collapse-content">
+                    <div className="mb-3 grid grid-cols-2 gap-3">
+                      <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                        horizontal repeat
+                        <input
+                          className="input input-bordered min-h-11 w-full"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={hRepeatDraft}
+                          onChange={(e) => setHRepeatDraft(e.target.value)}
+                        />
+                      </label>
+                      <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
+                        vertical repeat
+                        <input
+                          className="input input-bordered min-h-11 w-full"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={vRepeatDraft}
+                          onChange={(e) => setVRepeatDraft(e.target.value)}
+                        />
+                      </label>
+                    </div>
+                    <p className="field-help text-xs leading-snug text-base-content/60">
+                      0 = off. Changing H/V re-nests and centers pattern on each panel.
+                    </p>
                   </div>
-                  <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
-                    Horizontal = around pillow; vertical = along length.
-                  </span>
-                </fieldset>
-              </>
-            ) : (
-              <fieldset className="m-0 min-w-0 border-0 p-0">
-                <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">pattern direction</legend>
-                <div className="join w-full" role="group" aria-label="Pattern direction">
-                  {(
-                    [
-                      ['horizontal', 'horizontal'],
-                      ['vertical', 'vertical'],
-                      ['none', 'none'],
-                    ] as const
-                  ).map(([val, label]) => (
-                    <button
-                      key={val}
-                      type="button"
-                      className={`btn join-item btn-sm min-h-11 flex-1 ${pattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                      aria-pressed={pattern === val}
-                      onClick={() => setPattern(val)}
-                      title={val === 'none' ? 'none / best pack' : label}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
-                  Default horizontal. None = best pack (lower yardage).
-                </span>
-              </fieldset>
-            )}
-            </>
-            </div>
+                </details>
+              </div>
             </div>
           </section>
         </aside>
 
-        <main className="results flex min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto max-[800px]:p-4" data-mobile-pane="results">
+        {/* MIDDLE — nest preview = focus (Nesting bolt parity) */}
+        <main className="canvas-wrap" data-mobile-pane="results">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-base-content/60">
+            nest preview
+          </h2>
+          <NestPreviewSvg
+            model={nestModel}
+            unit={unit}
+            hRepeatIn={hRepeatIn}
+            vRepeatIn={vRepeatIn}
+          />
+        </main>
+
+        {/* RIGHT — results / yardage */}
+        <aside className="sidebar right" data-mobile-pane="results-side">
           <section className="card bg-base-100 border border-base-300 shadow-none results-hero">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">yardage</h2>
-            <div className="results-yards mb-4 flex flex-wrap gap-x-8 gap-y-4">
-              <div>
-                <div className="text-3xl font-extrabold tracking-tight">{exact.toFixed(2)} yd</div>
-                <div className="text-xs text-base-content/60">
-                  {formatDim(
-                    isBolster ? bolsterResult.nest.lengthInches : throwResult.pack.lengthInches,
-                    unit,
-                  )}{' '}
-                  {unitLabel} along bolt
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                yardage
+              </h2>
+              <div className="results-yards mb-3 flex flex-wrap gap-x-6 gap-y-3">
+                <div>
+                  <div className="text-3xl font-extrabold tracking-tight">{exact.toFixed(2)} yd</div>
+                  <div className="text-xs text-base-content/60">
+                    {formatDim(
+                      isBolster ? bolsterResult.nest.lengthInches : throwResult.pack.lengthInches,
+                      unit,
+                    )}{' '}
+                    {unitLabel} along bolt
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-primary">Order {order} yd</div>
+                  <div className="text-xs text-base-content/60">rounded up to whole yards</div>
                 </div>
               </div>
-              <div>
-                <div className="text-xl font-bold text-primary">Order {order} yd</div>
-                <div className="text-xs text-base-content/60">rounded up to whole yards</div>
-              </div>
-            </div>
-            <a
-              className="btn btn-primary min-h-11"
-              href={SHOP.fabric}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {shopFabricYardsLabel(order)}
-            </a>
+              <p className="mb-3 text-sm text-base-content/80">
+                {isBolster
+                  ? `${quantity} pillow${quantity === 1 ? '' : 's'} → ${quantity} barrel${quantity === 1 ? '' : 's'} + ${quantity * 2} ends`
+                  : `${quantity} pillow${quantity === 1 ? '' : 's'} → ${panelsNeeded} panels (throw)`}
+              </p>
+              <a
+                className="btn btn-primary min-h-11"
+                href={SHOP.fabric}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {shopFabricYardsLabel(order)}
+              </a>
             </div>
           </section>
 
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">cut list</h2>
-            <ul className="cut-list">
-              {(isBolster ? bolsterResult.cutList : throwResult.cutList).map((c) => (
-                <li key={c.label}>
-                  <strong>
-                    {c.qty}× {formatDim(c.widthIn, unit)} × {formatDim(c.lengthIn, unit)}{' '}
-                    {unitLabel}
-                  </strong>
-                  <span>{c.label}</span>
-                </li>
-              ))}
-            </ul>
-            {isBolster ? (
-              <p className="mt-2 text-xs leading-snug text-base-content/60">
-                nesting: {bolsterResult.nest.barrelAcrossCount} barrel
-                {bolsterResult.nest.barrelAcrossCount === 1 ? '' : 's'} across ×{' '}
-                {bolsterResult.nest.barrelRows} row
-                {bolsterResult.nest.barrelRows === 1 ? '' : 's'}
-                {bolsterResult.nest.endExtraRows > 0
-                  ? ` + ${bolsterResult.nest.endExtraRows} end-circle row${
-                      bolsterResult.nest.endExtraRows === 1 ? '' : 's'
-                    }`
-                  : ' (ends nested beside barrels)'}
-              </p>
-            ) : (
-              <p className="mt-2 text-xs leading-snug text-base-content/60">
-                packing: {throwResult.pack.acrossCount} across × {throwResult.pack.rows} row
-                {throwResult.pack.rows === 1 ? '' : 's'} (
-                {throwResult.pack.orientation.label === 'width-across'
-                  ? 'width across bolt'
-                  : 'length across bolt'}
-                )
-              </p>
-            )}
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                cut list
+              </h2>
+              <ul className="cut-list">
+                {(isBolster ? bolsterResult.cutList : throwResult.cutList).map((c) => (
+                  <li key={c.label}>
+                    <strong>
+                      {c.qty}× {formatDim(c.widthIn, unit)} × {formatDim(c.lengthIn, unit)}{' '}
+                      {unitLabel}
+                    </strong>
+                    <span>{c.label}{'note' in c && c.note ? ` — ${c.note}` : ''}</span>
+                  </li>
+                ))}
+              </ul>
+              {isBolster ? (
+                <p className="mt-2 text-xs leading-snug text-base-content/60">
+                  nesting: {bolsterResult.nest.barrelAcrossCount} barrel
+                  {bolsterResult.nest.barrelAcrossCount === 1 ? '' : 's'} across ×{' '}
+                  {bolsterResult.nest.barrelRows} row
+                  {bolsterResult.nest.barrelRows === 1 ? '' : 's'}
+                  {bolsterResult.nest.endExtraRows > 0
+                    ? ` + ${bolsterResult.nest.endExtraRows} end-circle row${
+                        bolsterResult.nest.endExtraRows === 1 ? '' : 's'
+                      }`
+                    : ' (ends nested beside barrels)'}
+                </p>
+              ) : (
+                <p className="mt-2 text-xs leading-snug text-base-content/60">
+                  packing: {throwResult.pack.acrossCount} across × {throwResult.pack.rows} row
+                  {throwResult.pack.rows === 1 ? '' : 's'} (
+                  {throwResult.pack.orientation.label === 'width-across'
+                    ? 'width across bolt'
+                    : 'length across bolt'}
+                  )
+                </p>
+              )}
             </div>
           </section>
 
           {!isBolster && (
             <section className="card bg-base-100 border border-base-300 shadow-none">
               <div className="card-body gap-0 p-4">
-              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">piping or binding (optional)</h2>
-              <ul className="materials">
-                <li>
-                  Prefabricated piping:{' '}
-                  <strong>
-                    {throwResult.piping.prefabricatedIn} in / {throwResult.piping.prefabricatedFt}{' '}
-                    ft
-                  </strong>
-                </li>
-                <li>
-                  Matching (straight) piping fabric add-on:{' '}
-                  <strong>
-                    {throwResult.piping.matchingFabricIn} in /{' '}
-                    {throwResult.piping.matchingFabricYd} yd
-                  </strong>
-                </li>
-                <li>
-                  Bias-cut piping fabric add-on:{' '}
-                  <strong>
-                    {throwResult.piping.biasFabricIn} in / {throwResult.piping.biasFabricYd} yd
-                  </strong>
-                </li>
-              </ul>
-              {throwResult.pack.leftover ? (
-                <p className="mt-2 text-xs leading-snug text-base-content/60">
-                  Fabric left over: a strip{' '}
-                  <strong>
-                    {formatDim(throwResult.pack.leftover.widthIn, unit)} ×{' '}
-                    {formatDim(throwResult.pack.leftover.lengthIn, unit)} {unitLabel}
-                  </strong>{' '}
-                  (usable for matching piping?).
-                </p>
-              ) : (
-                <p className="mt-2 text-xs leading-snug text-base-content/60">Fabric left over: none.</p>
-              )}
+                <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                  piping or binding (optional)
+                </h2>
+                <ul className="materials">
+                  <li>
+                    Prefabricated piping:{' '}
+                    <strong>
+                      {throwResult.piping.prefabricatedIn} in / {throwResult.piping.prefabricatedFt} ft
+                    </strong>
+                  </li>
+                  <li>
+                    Matching (straight) piping fabric add-on:{' '}
+                    <strong>
+                      {throwResult.piping.matchingFabricIn} in /{' '}
+                      {throwResult.piping.matchingFabricYd} yd
+                    </strong>
+                  </li>
+                  <li>
+                    Bias-cut piping fabric add-on:{' '}
+                    <strong>
+                      {throwResult.piping.biasFabricIn} in / {throwResult.piping.biasFabricYd} yd
+                    </strong>
+                  </li>
+                </ul>
               </div>
             </section>
           )}
@@ -524,88 +693,35 @@ export default function PillowsPage() {
           {isBolster && (
             <section className="card bg-base-100 border border-base-300 shadow-none">
               <div className="card-body gap-0 p-4">
-              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">piping (optional)</h2>
-              <ul className="materials">
-                <li>
-                  Prefabricated piping:{' '}
-                  <strong>
-                    {bolsterResult.pipingIn} in / {bolsterResult.pipingFt} ft
-                  </strong>{' '}
-                  — order {bolsterResult.pipingOrderFt} ft
-                </li>
-              </ul>
+                <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                  piping (optional)
+                </h2>
+                <ul className="materials">
+                  <li>
+                    Prefabricated piping:{' '}
+                    <strong>
+                      {bolsterResult.pipingIn} in / {bolsterResult.pipingFt} ft
+                    </strong>{' '}
+                    — order {bolsterResult.pipingOrderFt} ft
+                  </li>
+                </ul>
               </div>
             </section>
           )}
 
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">reference</h2>
-            {isBolster ? (
-              <BolsterReference
-                diameterIn={formWidthIn}
-                lengthIn={formLengthIn}
-                endDiameterIn={bolsterResult.cuts.endDiameterIn}
-                barrelAlongIn={bolsterResult.cuts.barrelAlongIn}
-                barrelCircIn={bolsterResult.cuts.barrelCircIn}
-                unit={unit}
-                fillStyle={fillStyle}
-              />
-            ) : (
-              <ThrowReference
-                formW={formWidthIn}
-                formL={formLengthIn}
-                cutW={throwResult.cutWidthIn}
-                cutL={throwResult.cutLengthIn}
-                finishedW={throwResult.finishedWidthIn}
-                finishedL={throwResult.finishedLengthIn}
-                unit={unit}
-                fillStyle={fillStyle}
-                dogEarTrim={dogEarTrim}
-              />
-            )}
-            {!isBolster && (
-              <p className="mt-2 text-xs leading-snug text-base-content/60">
-                finished ≈ {formatDim(throwResult.finishedWidthIn, unit)} ×{' '}
-                {formatDim(throwResult.finishedLengthIn, unit)} {unitLabel}
-                {dogEarTrim ? ' · corners trimmed (dog-ears)' : ''}
-              </p>
-            )}
+              <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                materials summary
+              </h2>
+              <ul className="materials">
+                {(isBolster ? bolsterResult.materials : throwResult.materials).map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
             </div>
           </section>
-
-
-          <section className="card bg-base-100 border border-base-300 shadow-none">
-            <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">nest preview</h2>
-            <div className="mb-3 grid grid-cols-2 gap-3">
-              <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
-                horizontal repeat
-                <input className="input input-bordered min-h-11 w-full" type="number" min={0} step={1} value={hRepeatDraft} onChange={(e) => setHRepeatDraft(e.target.value)} />
-              </label>
-              <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm">
-                vertical repeat
-                <input className="input input-bordered min-h-11 w-full" type="number" min={0} step={1} value={vRepeatDraft} onChange={(e) => setVRepeatDraft(e.target.value)} />
-              </label>
-            </div>
-            <p className="field-help mb-2 text-xs leading-snug text-base-content/60">
-              0 = no pattern on that axis. Grid is visualization only.
-            </p>
-            <NestPreviewSvg model={nestModel} unit={unit} hRepeatIn={hRepeatIn} vRepeatIn={vRepeatIn} />
-            </div>
-          </section>
-
-          <section className="card bg-base-100 border border-base-300 shadow-none">
-            <div className="card-body gap-0 p-4">
-            <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">materials summary</h2>
-            <ul className="materials">
-              {(isBolster ? bolsterResult.materials : throwResult.materials).map((m) => (
-                <li key={m}>{m}</li>
-              ))}
-            </ul>
-            </div>
-          </section>
-        </main>
+        </aside>
       </div>
     </div>
   )

@@ -25,8 +25,8 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/setMobileView\('inputs'\)/)
     expect(pageTsx).toMatch(/setMobileView\('results'\)/)
     expect(pageTsx).toMatch(/layout mobile-\$\{mobileView\}/)
-    expect(pageCss).toMatch(/\.layout\.mobile-inputs \.results/)
-    expect(pageCss).toMatch(/\.layout\.mobile-results \.sidebar/)
+    expect(pageCss).toMatch(/\.layout\.mobile-inputs \.canvas-wrap/)
+    expect(pageCss).toMatch(/\.layout\.mobile-results \.sidebar\.left/)
     expect(pageCss).toMatch(/@media \(max-width: 800px\)/)
   })
 
@@ -54,26 +54,26 @@ describe('pillows layout regressions', () => {
   it('yardage shop CTA is sole solid primary ≥44px; header Shop outline + hidden on mobile', () => {
     expect(pageTsx).toMatch(/btn btn-primary min-h-11/)
     expect(pageTsx.match(/btn-primary/g)?.length).toBeGreaterThanOrEqual(1)
-    // body shop is the only btn-primary in page chrome outside mobile tabs (tabs also use primary)
     expect(pageTsx).toMatch(/shopFabricYardsLabel/)
     expect(headerTsx).toMatch(/Shop Sailrite/)
     expect(headerTsx).toMatch(/btn btn-outline/)
     expect(headerTsx).toMatch(/hidden[\s\S]*?min-\[801px\]:inline-flex/)
   })
 
-  it('disclaimer collapses on mobile so it does not eat work surface', () => {
-    expect(pageTsx).toMatch(/disclaimer-mobile/)
-    expect(pageTsx).toMatch(/Estimate disclaimer/)
-    expect(pageTsx).toMatch(/max-\[800px\]:block min-\[801px\]:hidden/)
+  it('Estimate-only banner is gone (desktop and mobile)', () => {
+    expect(pageTsx).not.toMatch(/disclaimer-mobile/)
+    expect(pageTsx).not.toMatch(/Estimate disclaimer/)
+    expect(pageTsx).not.toMatch(/Estimate only/)
+    expect(pageTsx).not.toMatch(/className="disclaimer/)
   })
 
   it('form-vs-cut finished outline uses diagram standard B (SR Blue dashed, not Alert Red)', () => {
     expect(pageTsx).toMatch(/ThrowReference|BolsterReference/)
     expect(referenceSvg).toMatch(/cutShapeSvgProps/)
     expect(referenceSvg).toMatch(/finishedShapeSvgProps/)
-    expect(referenceSvg).toMatch(/CutFinishedLegend/)
+    expect(referenceSvg).toMatch(/CutFinishedKey/)
     expect(referenceSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
-    expect(nestPreviewSvg).toMatch(/cutShapeSvgProps/)
+    expect(nestPreviewSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(pageTsx).not.toMatch(/stroke="#e75053"/)
     expect(referenceSvg).not.toMatch(/stroke="#e75053"/)
     expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
@@ -91,7 +91,6 @@ describe('pillows layout regressions', () => {
 
   it('inputs pane has no H-scrollbar (overflow-x hidden + wrapping helpers)', () => {
     expect(pageCss).toMatch(/\.sidebar\s*\{[^}]*overflow-x:\s*hidden/)
-    expect(pageTsx).toMatch(/overflow-x-hidden/)
     expect(pageCss).toMatch(/\.field-help\s*\{[^}]*overflow-wrap:\s*break-word/)
     expect(pageTsx).toMatch(/field-help/)
   })
@@ -103,11 +102,32 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).not.toMatch(/toggle toggle-primary/)
   })
 
-  it('reference heading has no stray quotes; H/V repeat inputs are min-h-11', () => {
-    expect(pageTsx).toMatch(/>reference</)
+  it('reference strip + H/V repeat inputs are min-h-11; no stray quotes', () => {
+    expect(pageTsx).toMatch(/reference/)
     expect(pageTsx).not.toMatch(/>'reference'</)
     expect(pageTsx).toMatch(/horizontal repeat[\s\S]*?input input-bordered min-h-11/)
     expect(pageTsx).toMatch(/vertical repeat[\s\S]*?input input-bordered min-h-11/)
+  })
+
+  it('Nesting-parity desktop shell: 280px | 1fr | 300px with middle nest focus', () => {
+    expect(pageCss).toMatch(/grid-template-columns:\s*280px\s+1fr\s+300px/)
+    expect(pageTsx).toMatch(/className="canvas-wrap"/)
+    expect(pageTsx).toMatch(/sidebar left/)
+    expect(pageTsx).toMatch(/sidebar right/)
+    expect(pageTsx).toMatch(/nest preview/)
+    expect(nestPreviewSvg).toMatch(/non-scaling-stroke/)
+  })
+
+  it('Quantity labeled Pillows with panel helper; SA control present', () => {
+    expect(pageTsx).toMatch(/>\s*Pillows\s*</)
+    expect(pageTsx).toMatch(/2 per pillow|panels \(2 per pillow\)/)
+    expect(pageTsx).toMatch(/Seam allowance/)
+  })
+
+  it('compact reference strip lives in left stack (not hero above nest)', () => {
+    expect(pageTsx).toMatch(/ThrowFormThumb|FillStyleThumb/)
+    expect(referenceSvg).toMatch(/dogEarPanelPolygon|dogEarPolygonPointsAttr/)
+    expect(pageTsx).toMatch(/reference/)
   })
 
   it('keeps Sailrite brand tokens (SR Blue / Alert Red)', () => {

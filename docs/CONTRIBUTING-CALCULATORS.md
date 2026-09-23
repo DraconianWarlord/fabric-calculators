@@ -21,6 +21,7 @@ Send a live URL (or staging) + what changed. Fix majors, then re-ping UX/Brand f
 
 Spacing/styling reference: `docs/STYLING.md` and UX checklist §I / §I2.
 Diagram cut/finished standard **B**: `docs/DIAGRAM-STYLE.md` (shared helpers in `@sailrite/calc-shell`).
+Suite page layout (Nesting parity — middle render focus): `docs/STYLING.md` § Suite page layout.
 
 ## Rules
 
@@ -29,6 +30,7 @@ Diagram cut/finished standard **B**: `docs/DIAGRAM-STYLE.md` (shared helpers in 
 | **No cross-calc imports** | Nesting must not import pillows (or vice versa). Share only via `@sailrite/calc-shell` or tiny pure helpers you own. |
 | **Math in `lib/`** | Keep formulas unit-testable without React. Page.tsx is UI + wiring. |
 | **Shell owns look** | Header, calculator nav, design tokens, and Shop CTA live in `@sailrite/calc-shell`. Do not re-implement the black suite header in a Page. |
+| **Nesting page layout** | Desktop: left controls · **middle render focus** · right results (`280px 1fr 300px`). Mobile: single-pane tabs. Match Nesting unless Zach overrides for that calc. See `docs/STYLING.md`. |
 | **Status slot** | Yardage / Export PDF belong in the header status area via `useHeaderStatusOptional().setStatus(...)`. |
 | **Brand** | Sailrite Blue `#24285e`, B/W chrome, alert `#e75053`. Do not rewrite Brand/UX rules. |
 | **Meta** | Export `{ id, label, path, status, href? }` from `meta.ts`. In-suite calcs use `status: 'active'` and a `path`. External-only tools use `status: 'live'` + `href`. Roadmap items use `soon`. |

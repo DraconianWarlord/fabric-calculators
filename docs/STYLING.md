@@ -50,6 +50,26 @@ Tailwind must see classes in:
 - `packages/shell/src/**`
 - `packages/calculators/*/src/**`
 
+## Suite page layout (Nesting parity — locked)
+
+Locked by Zach (2026-09-23): **every calculator follows the Nesting app layout** unless Zach says otherwise for that calc.
+
+Desktop (≥801px) — three columns, middle is the focus:
+
+| Column | Role | Nesting reference |
+|--------|------|-------------------|
+| **Left** (~280px) | Controls / inputs card stack | `.sidebar.left` |
+| **Middle** (`1fr`) | Primary render / work surface — the focus | `.canvas-wrap` / bolt |
+| **Right** (~300px) | Results, yardage, list / secondary actions | `.sidebar.right` |
+
+CSS shape (per-calc scoped): `grid-template-columns: 280px 1fr 300px` with column gutter matching spacing tokens. Do **not** invent alternate IA (e.g. dual right-column stacks that bury the middle render, or reference-above-preview as the hero).
+
+Mobile (≤800px): tabbed panes — Nesting uses **Controls | Bolt | Panels**; other calcs may use **Inputs | Results** (or equivalent) so there is **one** scroll surface. No dual competing scroll panes. Default tab = the middle work surface when that helps.
+
+Secondary visuals (comparison thumbs, dim keys, reference diagrams) stay secondary — compact in the left stack or under controls — never steal the middle focus.
+
+Reference implementation: `packages/calculators/nesting/src/Page.tsx` + `Page.css` (`.layout`, `.canvas-wrap`, mobile pane classes).
+
 ## Desktop spacing tokens (≥801px)
 
 From Sailrite UX (Nesting + Pillows). Use consistently on new calcs:
