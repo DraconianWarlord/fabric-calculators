@@ -23,10 +23,9 @@ const BOLT_STROKE: CSSProperties = {
 }
 
 /**
- * Nest preview: SVG is panels/grid only. Bolt + piece captions live in HTML
- * under the SVG inside the nest card body (DimPreviewFrame pattern) so text
- * never scales with viewBox / panel count / bolt length — and cannot be
- * clipped between canvas-wrap and the Yardage sidebar on mobile.
+ * Nest preview: SVG/stage only + captions as sibling children of the card body.
+ * Captions must NOT sit inside a flex-grow wrapper — on mobile Results that
+ * lets the stage eat the card and clip/shove Bolt + pieces text.
  */
 export function NestPreviewSvg({
   model,
@@ -49,7 +48,7 @@ export function NestPreviewSvg({
 
   if (model.panels.length === 0) {
     return (
-      <p className="text-sm text-base-content/60" role="status">
+      <p className="text-sm text-base-content" role="status">
         No panels to nest — check size and quantity.
       </p>
     )
@@ -63,7 +62,7 @@ export function NestPreviewSvg({
       : '')
 
   return (
-    <figure className="pillow-nest-frame">
+    <>
       <div className="pillow-nest-stage">
         <svg
           className="pillow-diagram pillow-nest-preview"
@@ -151,10 +150,10 @@ export function NestPreviewSvg({
           )}
         </svg>
       </div>
-      <figcaption className="pillow-nest-captions">
-        <p className="text-xs text-base-content/70">{boltCaption}</p>
-        <p className="text-sm text-base-content/80">{piecesCaption}</p>
-      </figcaption>
-    </figure>
+      <div className="pillow-nest-captions">
+        <p className="text-xs text-base-content">{boltCaption}</p>
+        <p className="text-sm text-base-content">{piecesCaption}</p>
+      </div>
+    </>
   )
 }

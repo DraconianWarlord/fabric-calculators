@@ -139,25 +139,35 @@ describe('pillows layout regressions', () => {
   })
 
   it('nest captions are HTML outside SVG (no viewBox-scaled text labels)', () => {
-    expect(nestPreviewSvg).toMatch(/pillow-nest-frame/)
+    expect(nestPreviewSvg).not.toMatch(/pillow-nest-frame/)
+    expect(nestPreviewSvg).toMatch(/pillow-nest-stage/)
     expect(nestPreviewSvg).toMatch(/pillow-nest-captions/)
     expect(nestPreviewSvg).toMatch(/text-xs/)
+    expect(nestPreviewSvg).toMatch(/text-sm/)
+    expect(nestPreviewSvg).toMatch(/text-base-content/)
+    expect(nestPreviewSvg).not.toMatch(/text-base-content\/7/)
     expect(nestPreviewSvg).not.toMatch(/<text[\s\S]*bolt/i)
     expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
   })
 
-  it('captions live inside nest Daisy card under SVG (not clip-prone canvas/sidebar sibling)', () => {
+  it('captions are card-body siblings of stage (not trapped in flex-grow figure)', () => {
     expect(pageTsx).toMatch(/pillow-nest-card/)
     expect(pageTsx).toMatch(
       /card bg-base-100 border border-base-300 shadow-none pillow-nest-card[\s\S]*?nest preview[\s\S]*?NestPreviewSvg/,
     )
+    // Fragment: stage then captions as siblings — no wrapping flex:1 frame
     expect(nestPreviewSvg).toMatch(
-      /pillow-nest-stage[\s\S]*?<\/svg>[\s\S]*?pillow-nest-captions/,
+      /pillow-nest-stage[\s\S]*?<\/svg>[\s\S]*?<\/div>[\s\S]*?pillow-nest-captions/,
     )
+    expect(nestPreviewSvg).not.toMatch(/<figure/)
     expect(pageCss).toMatch(/\.pillow-nest-card/)
     expect(pageCss).toMatch(
-      /\.pillow-nest-captions\s*\{[\s\S]*?display:\s*block/,
+      /\.pillow-nest-captions\s*\{[\s\S]*?flex:\s*0\s+0\s+auto/,
     )
+    expect(pageCss).toMatch(
+      /\.pillow-nest-captions\s*\{[\s\S]*?flex-shrink:\s*0/,
+    )
+    expect(pageCss).not.toMatch(/pillow-nest-frame/)
   })
 
   it('mobile Results keeps nest card + captions content-sized with gap-3 before Yardage', () => {
@@ -169,7 +179,16 @@ describe('pillows layout regressions', () => {
       /\.layout\.mobile-results \.pillow-nest-card[\s\S]*?flex:\s*0\s+0\s+auto/,
     )
     expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.pillow-nest-card > \.card-body[\s\S]*?flex:\s*0\s+0\s+auto/,
+    )
+    expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.pillow-nest-stage[\s\S]*?flex:\s*0\s+0\s+auto/,
+    )
+    expect(pageCss).toMatch(
       /\.layout\.mobile-results \.pillow-nest-captions[\s\S]*?overflow:\s*visible/,
+    )
+    expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.pillow-nest-card[\s\S]*?min-height:\s*auto/,
     )
     expect(pageCss).toMatch(/\.layout\.mobile-results\s*\{[\s\S]*?gap:\s*0\.75rem/)
     expect(pageCss).not.toMatch(

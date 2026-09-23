@@ -108,7 +108,7 @@
   scroll-margin-bottom: 1.5rem;
 }
 
-/* Nest Daisy card: heading + SVG + captions in one card body */
+/* Nest Daisy card: h2 + stage + captions are direct card-body children */
 .calc-page--pillows .pillow-nest-card {
   flex: 1;
   min-height: 0;
@@ -124,54 +124,52 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: visible;
-}
-
-.calc-page--pillows .pillow-nest-frame {
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
-  flex: 1;
-  min-height: 200px;
-  min-width: 0;
   overflow: visible;
 }
 
-/* SVG stage only — no own card border (parent Daisy card owns the frame) */
+/* Desktop: stage may grow; height still follows SVG aspect (no forced min) */
 .calc-page--pillows .pillow-nest-stage {
-  flex: 1;
-  min-height: 160px;
+  flex: 1 1 auto;
+  flex-shrink: 1;
+  min-height: 0;
   min-width: 0;
+  width: 100%;
   background: var(--color-base-200, #fafafa);
   border: none;
   border-radius: 8px;
   overflow: visible;
-  display: flex;
+  display: block;
 }
 
 .calc-page--pillows .pillow-nest-preview {
   width: 100%;
   max-width: none;
-  flex: 1;
-  min-height: 160px;
+  height: auto;
+  display: block;
+  flex: none;
+  min-height: 0;
   background: transparent;
   border: none;
   border-radius: 0;
 }
 
-/* Captions stay in normal flow under SVG inside nest card body */
+/* Captions always in normal flow under SVG — never flex-grow / shrink away */
 .calc-page--pillows .pillow-nest-captions {
   flex: 0 0 auto;
   flex-shrink: 0;
   display: block;
-  padding: 0.35rem 0 0;
+  padding: 0;
+  margin: 0;
   overflow: visible;
+  color: var(--color-base-content, #1f2937);
 }
 
 .calc-page--pillows .pillow-nest-captions p {
   display: block;
   margin: 0;
   margin-bottom: 0.15rem;
+  color: inherit;
 }
 
 .calc-page--pillows .pillow-nest-captions p:last-child {
@@ -284,7 +282,7 @@
     overscroll-behavior: contain;
   }
 
-  /* Content-size nest card + Yardage; never shrink/clip captions */
+  /* Content-size nest card + Yardage; kill flex:1 / min-height:0 that ate captions */
   .calc-page--pillows .layout.mobile-results .canvas-wrap,
   .calc-page--pillows .layout.mobile-results .sidebar.right,
   .calc-page--pillows .layout.mobile-results .pillow-nest-card {
@@ -292,26 +290,32 @@
     max-height: none;
     overflow: visible;
     flex: 0 0 auto;
-    min-height: min-content;
+    min-height: auto;
   }
 
   .calc-page--pillows .layout.mobile-results .canvas-wrap {
     padding-bottom: 0; /* layout gap-3 owns space before Yardage */
+    min-height: auto;
   }
 
   .calc-page--pillows .layout.mobile-results .pillow-nest-card > .card-body,
-  .calc-page--pillows .layout.mobile-results .pillow-nest-frame,
   .calc-page--pillows .layout.mobile-results .pillow-nest-stage,
-  .calc-page--pillows .layout.mobile-results .pillow-nest-captions {
+  .calc-page--pillows .layout.mobile-results .pillow-nest-captions,
+  .calc-page--pillows .layout.mobile-results .pillow-nest-preview {
     flex: 0 0 auto;
-    min-height: 0;
+    min-height: auto;
     overflow: visible;
+  }
+
+  .calc-page--pillows .layout.mobile-results .pillow-nest-stage {
+    display: block;
+    height: auto;
   }
 
   .calc-page--pillows .layout.mobile-results .pillow-nest-captions {
     display: block;
     position: static;
-    padding-top: 0.35rem;
-    padding-bottom: 0;
+    flex-shrink: 0;
+    padding: 0;
   }
 }
