@@ -9,6 +9,7 @@ import {
   dogEarCornerMarks,
   dogEarTrimAlongEdge,
 } from '../lib/dogEar'
+import { throwSeamAllowanceOutline } from '../lib/insetPolygon'
 import type { FillStyle } from '../lib/fillStyle'
 import { fromInches, type Unit } from '../lib/throwPillows'
 
@@ -29,26 +30,35 @@ export function ThrowReference(props: {
   cutL: number
   finishedW: number
   finishedL: number
+  seamAllowanceIn: number
   unit: Unit
   fillStyle: FillStyle
   dogEarTrim: boolean
   compact?: boolean
 }) {
-  const { formW, formL, cutW, cutL, finishedW, finishedL, unit, fillStyle, dogEarTrim } = props
+  const {
+    formW,
+    formL,
+    cutW,
+    cutL,
+    finishedW,
+    finishedL,
+    seamAllowanceIn,
+    unit,
+    fillStyle,
+    dogEarTrim,
+  } = props
   const compact = props.compact ?? true
   const max = Math.max(cutW, cutL, finishedW, finishedL, 1)
   const scale = (compact ? 88 : 140) / max
   const cw = cutW * scale
   const cl = cutL * scale
-  const fw = Math.max(4, finishedW * scale)
-  const fl = Math.max(4, finishedL * scale)
   const pad = compact ? 16 : 28
   const svgW = cw + pad * 2 + (compact ? 8 : 130)
   const svgH = cl + pad * 2 + (dogEarTrim ? 18 : 6)
   const cut = cutShapeSvgProps()
   const fin = finishedShapeSvgProps()
-  const fx = pad + (cw - fw) / 2
-  const fy = pad + (cl - fl) / 2
+  const saOutline = throwSeamAllowanceOutline(cutW, cutL, seamAllowanceIn, dogEarTrim)
   return (
     <svg
       className="pillow-diagram pillow-ref-compact"
@@ -64,10 +74,23 @@ export function ThrowReference(props: {
       <text x={pad + cw / 2} y={pad - 4} textAnchor="middle" className="diag-label">
         cut {fmt(cutW, unit)}×{fmt(cutL, unit)} ({fillStyle})
       </text>
-      {dogEarTrim ? (
-        <polygon points={dogEarPolygonPointsAttr(finishedW, finishedL, scale, fx, fy)} {...fin} />
-      ) : (
-        <rect x={fx} y={fy} width={fw} height={fl} rx={2} {...fin} />
+      {saOutline?.kind === 'poly' && (
+        <polygon
+          points={saOutline.points
+            .map((p) => `${pad + p.x * scale},${pad + p.y * scale}`)
+            .join(' ')}
+          {...fin}
+        />
+      )}
+      {saOutline?.kind === 'rect' && (
+        <rect
+          x={pad + saOutline.x * scale}
+          y={pad + saOutline.y * scale}
+          width={Math.max(4, saOutline.w * scale)}
+          height={Math.max(4, saOutline.h * scale)}
+          rx={2}
+          {...fin}
+        />
       )}
       {dogEarTrim &&
         dogEarCornerMarks(cutW, cutL).map((m) => (

@@ -296,6 +296,7 @@ export default function PillowsPage() {
                   cutL={throwResult.cutLengthIn}
                   finishedW={throwResult.finishedWidthIn}
                   finishedL={throwResult.finishedLengthIn}
+                  seamAllowanceIn={seamAllowanceIn}
                   unit={unit}
                   fillStyle={throwFillStyle}
                   dogEarTrim={dogEarTrim}
@@ -573,6 +574,7 @@ export default function PillowsPage() {
                 unit={unit}
                 hRepeatIn={hRepeatIn}
                 vRepeatIn={vRepeatIn}
+                seamAllowanceIn={isBolster ? 0 : seamAllowanceIn}
               />
             </div>
           </section>

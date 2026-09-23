@@ -1,5 +1,10 @@
 import type { CSSProperties } from 'react'
-import { DIAGRAM_CUT_FILL, DIAGRAM_SR_BLUE } from '@sailrite/calc-shell'
+import {
+  DIAGRAM_CUT_FILL,
+  DIAGRAM_FINISHED_DASH,
+  DIAGRAM_SR_BLUE,
+} from '@sailrite/calc-shell'
+import { insetPolygon } from '../lib/insetPolygon'
 import { patternHOffset, type NestPreviewModel } from '../lib/nestPreview'
 import { fromInches, type Unit } from '../lib/throwPillows'
 
@@ -17,6 +22,10 @@ const PANEL_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
   strokeWidth: 1.25,
 }
+const SA_STROKE: CSSProperties = {
+  vectorEffect: 'non-scaling-stroke',
+  strokeWidth: 1,
+}
 const BOLT_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
   strokeWidth: 1.5,
@@ -32,11 +41,14 @@ export function NestPreviewSvg({
   unit,
   hRepeatIn = 0,
   vRepeatIn = 0,
+  seamAllowanceIn = 0,
 }: {
   model: NestPreviewModel
   unit: Unit
   hRepeatIn?: number
   vRepeatIn?: number
+  /** Throw only — dashed SA inset on cut panels (Style B). Bolster skips. */
+  seamAllowanceIn?: number
 }) {
   const fabricW = Math.max(model.fabricWidthIn, 1)
   const len = Math.max(model.lengthInches, 1)
@@ -45,6 +57,7 @@ export function NestPreviewSvg({
   const svgH = len + pad * 2
   const hOff = patternHOffset(fabricW, hRepeatIn)
   const showGrid = hRepeatIn > 0 || vRepeatIn > 0
+  const sa = Math.max(0, seamAllowanceIn)
 
   if (model.panels.length === 0) {
     return (
@@ -112,6 +125,15 @@ export function NestPreviewSvg({
               stroke: DIAGRAM_SR_BLUE,
               style: PANEL_STROKE,
             }
+            const saProps = {
+              fill: 'none' as const,
+              stroke: DIAGRAM_SR_BLUE,
+              strokeDasharray: DIAGRAM_FINISHED_DASH,
+              style: SA_STROKE,
+              pointerEvents: 'none' as const,
+            }
+            // Throw panels only: dashed SA inset (Style B). Skip bolster barrel/end.
+            const showSa = p.kind === 'throw-panel' && sa > 0
             if (p.kind === 'end') {
               return (
                 <ellipse
@@ -125,15 +147,30 @@ export function NestPreviewSvg({
               )
             }
             if (p.polygon) {
+              const cutPts = p.polygon.map((pt) => `${x + pt.x},${y + pt.y}`).join(' ')
+              const saPoly = showSa ? insetPolygon(p.polygon, sa) : null
               return (
-                <polygon
-                  key={i}
-                  points={p.polygon.map((pt) => `${x + pt.x},${y + pt.y}`).join(' ')}
-                  {...common}
-                />
+                <g key={i}>
+                  <polygon points={cutPts} {...common} />
+                  {saPoly && (
+                    <polygon
+                      points={saPoly.map((pt) => `${x + pt.x},${y + pt.y}`).join(' ')}
+                      {...saProps}
+                    />
+                  )}
+                </g>
               )
             }
-            return <rect key={i} x={x} y={y} width={p.w} height={p.h} {...common} />
+            const saW = p.w - 2 * sa
+            const saH = p.h - 2 * sa
+            return (
+              <g key={i}>
+                <rect x={x} y={y} width={p.w} height={p.h} {...common} />
+                {showSa && saW > 0 && saH > 0 && (
+                  <rect x={x + sa} y={y + sa} width={saW} height={saH} {...saProps} />
+                )}
+              </g>
+            )
           })}
           {model.leftoverAcrossIn > 0.1 && (
             <rect
