@@ -993,8 +993,16 @@ function aabbBlfCandidates(
   }
 }
 
-/** Hard cap on poly nest (x,y) evaluations — prevents UI freezes. */
-const POLY_SPOT_CANDIDATE_CAP = 1200
+/**
+ * Cap poly (x,y) SAT evaluations by how many panels are already placed.
+ * Large packs explode candidate counts; tighten the cap so Auto-Nest stays interactive.
+ */
+function polySpotCandidateCap(existingCount: number): number {
+  // Mild trim only — aggressive caps cascade into much longer used length.
+  if (existingCount >= 10) return 700
+  if (existingCount >= 7) return 1000
+  return 1200
+}
 
 /**
  * Denser nest candidates for trap/irregular as explicit (x,y) pairs.
@@ -1041,6 +1049,8 @@ function polyNestCandidates(
   }
 
   const localPoly = panelPolygon({ ...panel, x: 0, y: 0 })
+  // Edge-against-edge is expensive; skip only once many polys are already placed.
+  const doEdgeAgainstEdge = existing.length < 11
 
   for (const other of existing) {
     const otherPoly =
@@ -1064,6 +1074,7 @@ function polyNestCandidates(
     }
 
     // Edge-against-edge (near-parallel), gap along normal.
+    if (!doEdgeAgainstEdge) continue
     if (!isPolyPanel(other) && !isCircle(other)) continue
     for (let i = 0; i < otherPoly.length; i++) {
       const e0 = otherPoly[i]
@@ -1328,8 +1339,9 @@ export function findBestSpotForPanel(
     (c) => c.x >= -1e-9 && c.y >= -1e-9 && c.x + w <= fabricWidth + 1e-6,
   )
   unique.sort((a, b) => a.y - b.y || a.x - b.x)
-  if (unique.length > POLY_SPOT_CANDIDATE_CAP) {
-    unique = unique.slice(0, POLY_SPOT_CANDIDATE_CAP)
+  const spotCap = polySpotCandidateCap(existing.length)
+  if (unique.length > spotCap) {
+    unique = unique.slice(0, spotCap)
   }
 
   let best: { x: number; y: number } | null = null
@@ -1831,8 +1843,45 @@ function layoutKey(panels: Panel[]): string {
 }
 
 /**
+ * Scale Auto-Nest search when many trap/irregular panels are present.
+ * Rect/circle-only nests keep the full SORT×ORIENT + shuffle budget.
+ */
+function polyAutoNestBudget(polyCount: number): {
+  sorts: SortFn[]
+  choosers: OrientChooser[]
+  shuffleN: number
+  candidateCap: number
+} {
+  if (polyCount <= 6) {
+    return {
+      sorts: SORT_ORDERS,
+      choosers: ORIENT_CHOOSERS,
+      shuffleN: 4,
+      candidateCap: CANDIDATE_CAP,
+    }
+  }
+  if (polyCount <= 9) {
+    // Always include area-desc + chooseMinUsed; trim near-duplicate sorts/orients.
+    return {
+      sorts: [SORT_ORDERS[0], SORT_ORDERS[1], SORT_ORDERS[3]],
+      choosers: [chooseMinUsed, chooseMaxAcross],
+      shuffleN: 2,
+      candidateCap: 4,
+    }
+  }
+  // Largest-first BLF + chooseMinUsed; a few shuffles help near-identical sets.
+  return {
+    sorts: [SORT_ORDERS[0], SORT_ORDERS[3]],
+    choosers: [chooseMinUsed],
+    shuffleN: 3,
+    candidateCap: 3,
+  }
+}
+
+/**
  * Generate unique ranked nest layouts (used length ascending).
- * Dedupes near-identical packs; caps at 6 most-efficient for UX cycling.
+ * Dedupes near-identical packs; caps at 6 most-efficient for UX cycling
+ * (fewer for large poly sets).
  * When at least one of hRepeat/vRepeat is > 0, placements snap to pattern (2D or 1D stripes).
  */
 export function autoNestCandidates(
@@ -1850,17 +1899,25 @@ export function autoNestCandidates(
     raw.push(clonePanels(panels))
   }
 
-  for (const sortFn of SORT_ORDERS) {
+  const hasPoly = panels.some(isPolyPanel)
+  const polyCount = panels.filter(isPolyPanel).length
+  const budget = hasPoly
+    ? polyAutoNestBudget(polyCount)
+    : {
+        sorts: SORT_ORDERS,
+        choosers: ORIENT_CHOOSERS,
+        shuffleN: 24,
+        candidateCap: CANDIDATE_CAP,
+      }
+
+  for (const sortFn of budget.sorts) {
     const ordered = sortFn(panels)
-    for (const choose of ORIENT_CHOOSERS) {
+    for (const choose of budget.choosers) {
       raw.push(packOrdered(ordered, fabricWidth, gap, choose, hRepeat, vRepeat))
     }
   }
 
-  // Fewer shuffles when trap/irregular present — each pack is much heavier.
-  const hasPoly = panels.some(isPolyPanel)
-  const shuffleN = hasPoly ? 4 : 24
-  for (let seed = 1; seed <= shuffleN; seed++) {
+  for (let seed = 1; seed <= budget.shuffleN; seed++) {
     const shuffled = seededShuffle(panels, seed)
     raw.push(packOrdered(shuffled, fabricWidth, gap, chooseMinUsed, hRepeat, vRepeat))
   }
@@ -1878,7 +1935,7 @@ export function autoNestCandidates(
 
   unique.sort((a, b) => a.used - b.used || layoutKey(a.panels).localeCompare(layoutKey(b.panels)))
 
-  return unique.slice(0, CANDIDATE_CAP).map((u) => u.panels)
+  return unique.slice(0, budget.candidateCap).map((u) => u.panels)
 }
 
 /**
