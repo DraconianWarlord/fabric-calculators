@@ -6,6 +6,9 @@ import { describe, expect, it } from 'vitest'
 const srcDir = dirname(fileURLToPath(import.meta.url))
 const pageTsx = readFileSync(resolve(srcDir, 'Page.tsx'), 'utf8')
 const pageCss = readFileSync(resolve(srcDir, 'Page.css'), 'utf8')
+const dimPreviewsTsx = readFileSync(resolve(srcDir, 'dimPreviews.tsx'), 'utf8')
+const dimFrameTsx = readFileSync(resolve(srcDir, 'DimPreviewFrame.tsx'), 'utf8')
+const dimSources = `${pageTsx}\n${dimPreviewsTsx}\n${dimFrameTsx}`
 const shellSrc = resolve(srcDir, '../../../shell/src')
 const calcNav = readFileSync(resolve(shellSrc, 'CalculatorNav.tsx'), 'utf8')
 const tokensCss = readFileSync(resolve(shellSrc, 'tokens.css'), 'utf8')
@@ -122,16 +125,33 @@ describe('layout regressions', () => {
   })
 
   it('shape dim previews use diagram standard B (nested cut/finished, no CAD ticks)', () => {
-    expect(pageTsx).toMatch(/cutShapeSvgProps/)
-    expect(pageTsx).toMatch(/finishedShapeSvgProps/)
-    expect(pageTsx).toMatch(/CutFinishedLegend/)
-    expect(pageTsx).toMatch(/DIAGRAM_SR_BLUE/)
+    expect(dimPreviewsTsx).toMatch(/cutShapeSvgProps/)
+    expect(dimPreviewsTsx).toMatch(/finishedShapeSvgProps/)
+    expect(dimFrameTsx).toMatch(/DIAGRAM_SR_BLUE/)
+    // Key is HTML below the stage — not CutFinishedLegend inside the drawing svg
+    expect(dimFrameTsx).toMatch(/Cut \(solid\)/)
+    expect(dimFrameTsx).toMatch(/Finished \(dashed\)/)
+    expect(dimFrameTsx).toMatch(/dim-preview-key/)
+    expect(dimPreviewsTsx).not.toMatch(/CutFinishedLegend/)
+    expect(pageTsx).not.toMatch(/CutFinishedLegend/)
+    // Shared 320×240 viewBox for all four shapes
+    expect(dimFrameTsx).toMatch(/DIM_PREVIEW_VIEWBOX\s*=\s*'0 0 320 240'/)
+    expect(dimPreviewsTsx).toMatch(/DIM_PREVIEW_VIEWBOX/)
+    expect(dimSources).not.toMatch(/viewBox="0 0 260 200"/)
+    expect(dimSources).not.toMatch(/viewBox="0 0 320 220"/)
+    expect(dimSources).not.toMatch(/viewBox="0 0 340 240"/)
+    expect(dimSources).not.toMatch(/viewBox="0 0 280 200"/)
+    // Stage sizing: max-width 20rem / aspect-ratio 4:3
+    expect(pageCss).toMatch(/\.dim-preview-frame[^{]*\{[^}]*max-width:\s*20rem/)
+    expect(pageCss).toMatch(/\.dim-preview-stage[^{]*\{[^}]*aspect-ratio:\s*4\s*\/\s*3/)
+    expect(pageCss).toMatch(/\.dim-preview-frame[^{]*\{[^}]*gap:\s*0\.75rem/)
     // no mono black shape stroke / exterior tick-dimension CAD style on dim figures
-    expect(pageTsx).not.toMatch(/stroke="#111"/)
-    expect(pageTsx).not.toMatch(/same tick style as trapezoid/)
-    expect(pageTsx).not.toMatch(/trap-style ticks/)
-    // rect preview present
-    expect(pageTsx).toMatch(/rect-dims-figure/)
+    expect(dimSources).not.toMatch(/stroke="#111"/)
+    expect(dimSources).not.toMatch(/same tick style as trapezoid/)
+    expect(dimSources).not.toMatch(/trap-style ticks/)
+    // rect preview present via shared frame
+    expect(dimPreviewsTsx).toMatch(/rect-dims-figure/)
+    expect(pageTsx).toMatch(/RectDimPreview/)
     expect(pageCss).toMatch(/\.rect-dims-figure/)
   })
 
