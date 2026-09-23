@@ -994,14 +994,18 @@ function aabbBlfCandidates(
 }
 
 /**
- * Cap poly (x,y) SAT evaluations by how many panels are already placed.
- * Large packs explode candidate counts; tighten the cap so Auto-Nest stays interactive.
+ * Cap dense poly-pair SAT evaluations by how many panels are already placed.
+ * AABB BLF is always evaluated fully first; this only limits the denser poly search.
  */
 function polySpotCandidateCap(existingCount: number): number {
-  // Mild trim only — aggressive caps cascade into much longer used length.
-  if (existingCount >= 10) return 700
-  if (existingCount >= 7) return 1000
+  if (existingCount >= 10) return 400
+  if (existingCount >= 7) return 800
   return 1200
+}
+
+/** Prefer reliable AABB BLF once many polys are already placed (avoids end-stack). */
+function preferAabbBlfForPoly(existingCount: number): boolean {
+  return existingCount >= 10
 }
 
 /**
@@ -1049,8 +1053,11 @@ function polyNestCandidates(
   }
 
   const localPoly = panelPolygon({ ...panel, x: 0, y: 0 })
-  // Edge-against-edge is expensive; skip only once many polys are already placed.
-  const doEdgeAgainstEdge = existing.length < 11
+  // Edge-against-edge is expensive at scale: coarsen (stride) rather than fully disable.
+  const edgeStride = existing.length >= 11 ? 2 : 1
+  // When many are placed, only pair against recent panels (AABB BLF covers the rest).
+  const edgeOthers =
+    existing.length >= 11 ? existing.slice(-8) : existing.length >= 8 ? existing.slice(-12) : existing
 
   for (const other of existing) {
     const otherPoly =
@@ -1072,11 +1079,13 @@ function polyNestCandidates(
         pushPair(ev.x - lv.x, ev.y - lv.y)
       }
     }
+  }
 
-    // Edge-against-edge (near-parallel), gap along normal.
-    if (!doEdgeAgainstEdge) continue
+  for (const other of edgeOthers) {
     if (!isPolyPanel(other) && !isCircle(other)) continue
-    for (let i = 0; i < otherPoly.length; i++) {
+    const otherPoly = panelPolygon(other)
+    // Edge-against-edge (near-parallel), gap along normal — coarsened via stride.
+    for (let i = 0; i < otherPoly.length; i += edgeStride) {
       const e0 = otherPoly[i]
       const e1 = otherPoly[(i + 1) % otherPoly.length]
       const edx = e1.x - e0.x
@@ -1089,7 +1098,7 @@ function polyNestCandidates(
         { x: -euy, y: eux },
         { x: euy, y: -eux },
       ]
-      for (let j = 0; j < localPoly.length; j++) {
+      for (let j = 0; j < localPoly.length; j += edgeStride) {
         const n0 = localPoly[j]
         const n1 = localPoly[(j + 1) % localPoly.length]
         const ndx = n1.x - n0.x
@@ -1319,41 +1328,17 @@ export function findBestSpotForPanel(
   const h = fp.h
   const w = fp.w
 
-  const candidatePoints: { x: number; y: number }[] = []
-
-  if (isCircle(panel)) {
-    const c = circleNestCandidates(w, fabricWidth, existing, gap)
-    for (const y of c.ys) for (const x of c.xs) candidatePoints.push({ x, y })
-  } else if (isPolyPanel(panel)) {
-    const c = polyNestCandidates(panel, fabricWidth, existing, gap)
-    // Small AABB BLF grid only (xs/ys are corner-based, not stepped).
-    for (const y of c.ys) for (const x of c.xs) candidatePoints.push({ x, y })
-    for (const pt of c.pairs) candidatePoints.push(pt)
-  } else {
-    const c = aabbBlfCandidates(w, fabricWidth, existing, gap)
-    for (const y of c.ys) for (const x of c.xs) candidatePoints.push({ x, y })
-  }
-
-  // Prefer lower-y first; cap evaluations so Auto-Nest never freezes the UI.
-  let unique = dedupePoints(candidatePoints).filter(
-    (c) => c.x >= -1e-9 && c.y >= -1e-9 && c.x + w <= fabricWidth + 1e-6,
-  )
-  unique.sort((a, b) => a.y - b.y || a.x - b.x)
-  const spotCap = polySpotCandidateCap(existing.length)
-  if (unique.length > spotCap) {
-    unique = unique.slice(0, spotCap)
-  }
-
   let best: { x: number; y: number } | null = null
   let bestYh = Infinity
   let bestY = Infinity
   let bestX = Infinity
 
-  for (const { x, y } of unique) {
+  const consider = (x: number, y: number) => {
+    if (x < -1e-9 || y < -1e-9 || x + w > fabricWidth + 1e-6) return
     // Prune: nothing at this y (or below) can beat current best used-length.
-    if (y + h >= bestYh - 1e-9 && y > bestY + 1e-9) continue
+    if (y + h >= bestYh - 1e-9 && y > bestY + 1e-9) return
     const probe = makeProbeFromPanel(panel, x, y)
-    if (offBolt(probe, fabricWidth) || overlapsAny(probe, existing)) continue
+    if (offBolt(probe, fabricWidth) || overlapsAny(probe, existing)) return
     const yh = y + h
     if (scoreBetter(yh, y, x, bestYh, bestY, bestX)) {
       best = { x, y }
@@ -1363,7 +1348,38 @@ export function findBestSpotForPanel(
     }
   }
 
+  if (isCircle(panel)) {
+    const c = circleNestCandidates(w, fabricWidth, existing, gap)
+    for (const y of c.ys) for (const x of c.xs) consider(x, y)
+  } else if (isPolyPanel(panel)) {
+    // 1) Reliable AABB BLF footprint grid first (SAT-validated). Never skip —
+    // under-fed poly-pair search alone end-stacks large irregular packs.
+    const aabb = aabbBlfCandidates(w, fabricWidth, existing, gap)
+    const aabbPts = dedupePoints(
+      aabb.ys.flatMap((y) => aabb.xs.map((x) => ({ x, y }))),
+    ).filter((c) => c.x >= -1e-9 && c.y >= -1e-9 && c.x + w <= fabricWidth + 1e-6)
+    aabbPts.sort((a, b) => a.y - b.y || a.x - b.x)
+    for (const { x, y } of aabbPts) consider(x, y)
+
+    // 2) Denser poly pairs while the pack is still small. At high counts, AABB
+    // BLF already yields multi-across; skip the expensive under-fed SAT search.
+    if (!preferAabbBlfForPoly(existing.length)) {
+      const c = polyNestCandidates(panel, fabricWidth, existing, gap)
+      let pairs = dedupePoints(c.pairs).filter(
+        (pt) => pt.x >= -1e-9 && pt.y >= -1e-9 && pt.x + w <= fabricWidth + 1e-6,
+      )
+      pairs.sort((a, b) => a.y - b.y || a.x - b.x)
+      const spotCap = polySpotCandidateCap(existing.length)
+      if (pairs.length > spotCap) pairs = pairs.slice(0, spotCap)
+      for (const { x, y } of pairs) consider(x, y)
+    }
+  } else {
+    const c = aabbBlfCandidates(w, fabricWidth, existing, gap)
+    for (const y of c.ys) for (const x of c.xs) consider(x, y)
+  }
+
   if (best) return best
+  // 3) End-of-bolt fallback (always on-bolt, past current used length).
   const y = existing.length ? usedLengthInches(existing) + gap : 0
   return { x: 0, y }
 }
@@ -1571,7 +1587,8 @@ export function findOpenSpot(
   return findBestSpot(width, length, fabricWidth, existing, gap)
 }
 
-function isValidPacking(panels: Panel[], fabricWidth: number): boolean {
+/** True when every panel is on-bolt and no pair overlaps (self skipped by id). */
+export function isValidPacking(panels: Panel[], fabricWidth: number): boolean {
   for (const p of panels) {
     if (offBolt(p, fabricWidth)) return false
     if (overlapsAny(p, panels)) return false
@@ -1869,12 +1886,13 @@ function polyAutoNestBudget(polyCount: number): {
       candidateCap: 4,
     }
   }
-  // Largest-first BLF + chooseMinUsed; a few shuffles help near-identical sets.
+  // n≥10: keep area-desc + length-desc × chooseMinUsed at minimum.
+  // AABB-first spotting carries quality; don't shrink budget so hard it collapses.
   return {
     sorts: [SORT_ORDERS[0], SORT_ORDERS[3]],
-    choosers: [chooseMinUsed],
-    shuffleN: 3,
-    candidateCap: 3,
+    choosers: [chooseMinUsed, chooseMaxAcross],
+    shuffleN: 2,
+    candidateCap: 4,
   }
 }
 

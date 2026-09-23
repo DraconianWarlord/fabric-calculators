@@ -905,7 +905,10 @@ export default function NestingPage() {
         })
       })
       const candidates = autoNestCandidates(panels, fabricWidthIn, 0.25, effectiveH, effectiveV)
-      if (candidates.length === 0) return
+      if (candidates.length === 0) {
+        setNestHint('Auto-Nest found no valid layout — try adjusting panel sizes or bolt width.')
+        return
+      }
       const idx = nestCycleIndex % candidates.length
       const layout = candidates[idx]
       setPanels((prev) => applyNestLayoutById(prev, layout))
