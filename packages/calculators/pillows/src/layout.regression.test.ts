@@ -146,6 +146,23 @@ describe('pillows layout regressions', () => {
     expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
   })
 
+  it('mobile Results keeps nest figcaption in stack (no shrink/overlap under Yardage)', () => {
+    expect(pageCss).toMatch(/\.layout\.mobile-results/)
+    expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.canvas-wrap[\s\S]*?flex:\s*0\s+0\s+auto/,
+    )
+    expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.canvas-wrap[\s\S]*?min-height:\s*min-content/,
+    )
+    expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.pillow-nest-frame\s*\{[\s\S]*?flex:\s*0\s+0\s+auto/,
+    )
+    expect(pageCss).toMatch(
+      /\.layout\.mobile-results \.pillow-nest-captions\s*\{[\s\S]*?padding-bottom/,
+    )
+    expect(pageCss).toMatch(/\.layout\.mobile-results\s*\{[\s\S]*?gap:\s*0\.75rem/)
+  })
+
   it('left stack reference is after pattern (secondary) with scroll padding', () => {
     const refAt = pageTsx.lastIndexOf('reference')
     const patternAt = pageTsx.lastIndexOf('\n                pattern\n')

@@ -249,15 +249,34 @@
   .calc-page--pillows .layout.mobile-results {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
 
+  /* Content-size nest + captions; do not flex-shrink under following cards */
   .calc-page--pillows .layout.mobile-results .canvas-wrap,
   .calc-page--pillows .layout.mobile-results .sidebar.right {
     height: auto;
     max-height: none;
     overflow: visible;
+    flex: 0 0 auto;
+    min-height: min-content;
+  }
+
+  .calc-page--pillows .layout.mobile-results .pillow-nest-frame {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .calc-page--pillows .layout.mobile-results .pillow-nest-stage {
+    flex: 0 0 auto;
+  }
+
+  .calc-page--pillows .layout.mobile-results .pillow-nest-captions {
+    position: relative;
+    z-index: 1;
+    padding-bottom: 0.25rem;
   }
 }
