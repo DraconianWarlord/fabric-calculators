@@ -88,7 +88,7 @@ export function RectDimPreview() {
   )
 }
 
-/** Circle — ⌀ under/through; centered */
+/** Circle — diameter label below the cut */
 export function CircleDimPreview() {
   const cx = 160
   const cy = 108
@@ -102,9 +102,6 @@ export function CircleDimPreview() {
       <DimSvg title="Cut and finished diameter">
         <circle cx={cx} cy={cy} r={cutR} {...cutShapeSvgProps()} />
         <circle cx={cx} cy={cy} r={finR} {...finishedShapeSvgProps()} />
-        <text x={cx} y={cy + 4} textAnchor="middle" {...LABEL}>
-          ⌀
-        </text>
         <text x={cx} y={cy + cutR + 18} textAnchor="middle" {...LABEL_MUTED}>
           Diameter
         </text>
