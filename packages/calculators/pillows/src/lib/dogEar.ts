@@ -1,29 +1,29 @@
 /**
  * Knife-edge dog-ear corner trim (throw only).
  *
- * Videos Expert / Sailrite practice:
- * 1. Mark 1/2" in from each corner along both edges (SA reference)
- * 2. From corner along each edge measure side_length / 4
- * 3. Cut wedge through that point (both layers)
+ * Sailrite “How to Sew a Throw Pillow” (howto + video youtu.be/-Esvp31f65o ~3:19):
+ * 1. Mark ½″ from the corner along each edge (SA reference)
+ * 2. Trim distance = overall width ÷ 4 (e.g. 18″ → 4½″) — NO 2.5″ cap
+ * 3. Strike a diagonal wedge that intersects the ½″ mark / opposite edge;
+ *    same on both sides of the corner; cut the wedge (both layers / all corners)
  *
- * Cap: min(side÷4, DOG_EAR_TRIM_CAP_IN). Uncapped side÷4 on large
- * knife-edge panels (e.g. 18" → 4.5") reads as a dramatic octagon in
- * reference + nest; 2.5" keeps the same geometry family but calmer.
+ * Preview geometry: measure uncapped side÷4 along each edge from the corner →
+ * octagon (same magnitude family as the Sailrite wedge; not a square chop).
  * ReferenceSvg and NestPreviewSvg MUST use dogEarPanelPolygon — one path.
  */
 
 export const DOG_EAR_SA_MARK_IN = 0.5
 export const DOG_EAR_TRIM_FRACTION = 0.25
-/** Max trim along each edge (inches) — tones down cartoon octagons. */
-export const DOG_EAR_TRIM_CAP_IN = 2.5
 
 export type Point = { x: number; y: number }
 
+/** Trim distance along each edge from the corner: side ÷ 4. */
 export function dogEarTrimAlongEdge(sideLengthIn: number): number {
-  return Math.min(sideLengthIn * DOG_EAR_TRIM_FRACTION, DOG_EAR_TRIM_CAP_IN)
+  return sideLengthIn * DOG_EAR_TRIM_FRACTION
 }
 
 export function dogEarPanelPolygon(widthIn: number, lengthIn: number): Point[] {
+  // Clamp so trim stays strictly under half the side (degenerate edge guard).
   const tw = Math.min(dogEarTrimAlongEdge(widthIn), Math.max(0, widthIn / 2 - 1e-6))
   const tl = Math.min(dogEarTrimAlongEdge(lengthIn), Math.max(0, lengthIn / 2 - 1e-6))
   return [
@@ -64,7 +64,7 @@ export function dogEarSaMarks(
 }
 
 export const DOG_EAR_CUT_LIST_NOTE =
-  'corners trimmed to reduce dog-ears (1/2" SA mark; trim at min(side÷4, 2.5") each edge)'
+  'corners trimmed to reduce dog-ears (1/2" SA mark; trim at side÷4 each edge — Sailrite throw-pillow howto / video -Esvp31f65o ~3:19)'
 
 export const DOG_EAR_OPTIONAL_NOTE =
-  'Optional — ½″ SA marks + side÷4 wedge (capped at 2.5″). Some zipper+piping methods skip this.'
+  'Optional — ½″ SA marks + side÷4 wedge (Sailrite). Some zipper+piping methods skip this.'

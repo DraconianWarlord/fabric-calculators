@@ -78,7 +78,7 @@ export function ThrowReference(props: {
         ))}
       {dogEarTrim && (
         <text x={pad} y={pad + cl + 12} className="diag-legend">
-          dog-ear min(side÷4, 2.5″) · e.g. {fmt(dogEarTrimAlongEdge(cutW), unit)} on{' '}
+          dog-ear side÷4 · e.g. {fmt(dogEarTrimAlongEdge(cutW), unit)} on{' '}
           {fmt(cutW, unit)}
         </text>
       )}
