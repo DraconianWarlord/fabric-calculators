@@ -139,13 +139,15 @@
   background: var(--color-base-200, #fafafa);
   border: none;
   border-radius: 8px;
-  overflow: visible;
+  overflow: auto; /* Nesting canvas scrolls; don't CSS-stretch the bolt SVG */
   display: block;
 }
 
 .calc-page--pillows .pillow-nest-preview {
-  width: 100%;
-  max-width: none;
+  /* Nesting .bolt: explicit width/height attrs keep user-space ≈ CSS px for tick labels.
+     Do NOT stretch to full pane width — that re-scales 13px labels into mid-bolt giants. */
+  width: auto;
+  max-width: 100%;
   height: auto;
   display: block;
   flex: none;

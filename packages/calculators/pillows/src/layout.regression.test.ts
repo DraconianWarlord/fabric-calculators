@@ -243,13 +243,20 @@ describe('pillows layout regressions', () => {
     expect(nestPreviewSvg).toMatch(/tick-label/)
     expect(nestPreviewSvg).toMatch(/rgba\(20, 20, 20, 0\.7\)/)
     expect(nestPreviewSvg).toMatch(/YARD_TICK_STROKE/)
-    // Pixel user-space so CSS 13px labels stay screen-sized (inch viewBox made giant ghosts)
-    expect(nestPreviewSvg).toMatch(/NEST_PX_PER_IN\s*=\s*8/)
-    expect(nestPreviewSvg).toMatch(/inches \* px|\* PX_PER_IN|NEST_PX_PER_IN/)
+    // Nesting-parity: ResizeObserver fit-width so user-space ≈ CSS px (13px labels stay small)
+    expect(nestPreviewSvg).toMatch(/ResizeObserver/)
+    expect(nestPreviewSvg).toMatch(/computeNestPxPerIn/)
+    expect(nestPreviewSvg).toMatch(/width=\{svgW\}/)
+    expect(nestPreviewSvg).toMatch(/height=\{svgH\}/)
     expect(pageCss).toMatch(/\.pillow-nest-preview \.tick-label/)
     expect(pageCss).toMatch(/font-size:\s*13px/)
     expect(pageCss).toMatch(/font-weight:\s*700/)
-    // Captions stay HTML; yard marks are Nesting-style SVG labels (13px CSS in pixel space)
+    // Must not CSS-stretch the bolt (that re-scales 13px tick labels into mid-bolt giants)
+    const nestPreviewRule = pageCss.match(
+      /\.pillow-nest-preview\s*\{[^}]*\}/,
+    )?.[0] ?? ''
+    expect(nestPreviewRule).toMatch(/(?:^|\n)\s*width:\s*auto\s*;/)
+    expect(nestPreviewRule).not.toMatch(/(?:^|\n)\s*width:\s*100%\s*;/)
     expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
   })
 

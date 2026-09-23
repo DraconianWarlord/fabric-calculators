@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   DIAGRAM_CUT_FILL,
   DIAGRAM_FINISHED_DASH,
@@ -17,15 +17,23 @@ function fmt(inches: number, unit: Unit): string {
     : v.toFixed(0)
 }
 
-/**
- * Nesting draws the bolt in pixel user-space (inches × pxPerIn) so CSS
- * `font-size: 13px` / white stroke tick-labels stay screen-sized.
- * Pillows previously used inch viewBox → 13 CSS-px tick styles resolved as
- * ~13″ glyphs with huge white stroke pads (the “ghost” artifacts).
- */
-export const NEST_PX_PER_IN = 8
+/** Minimum px per fabric inch so a tiny pane still draws (Nesting PX_PER_IN_MIN). */
+const PX_PER_IN_MIN = 1
+/** Fixed pad (user px) around bolt — Nesting has none; we keep a small gutter. */
+const PAD_PX = 8
 
-/** Constant screen stroke — does not fatten as nest viewBox grows with panel count. */
+/**
+ * Nesting: pxPerIn = availableWidthPx / fabricWidthIn so SVG user-space ≈ CSS
+ * pixels (explicit width/height, not width:100%). Then CSS font-size:13px tick
+ * labels stay ~13 screen px. A fixed NEST_PX_PER_IN + width:100% scaled the
+ * whole SVG and blew labels into giant mid-bolt “2 yd” ghosts.
+ */
+function computeNestPxPerIn(availableWidthPx: number, fabricWidthIn: number): number {
+  const usable = Math.max(40, availableWidthPx - PAD_PX * 2)
+  return Math.max(PX_PER_IN_MIN, usable / Math.max(fabricWidthIn, 1e-6))
+}
+
+/** Constant screen stroke when SVG is near 1:1; kept for crispness if slightly scaled. */
 const PANEL_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
   strokeWidth: 1.25,
@@ -38,7 +46,6 @@ const BOLT_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
   strokeWidth: 1.5,
 }
-/** Nesting .tick-major — non-scaling so lines stay crisp as nest grows. */
 const YARD_TICK_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
   strokeWidth: 1.75,
@@ -46,8 +53,6 @@ const YARD_TICK_STROKE: CSSProperties = {
 
 /**
  * Nest preview: SVG/stage only + captions as sibling children of the card body.
- * Captions must NOT sit inside a flex-grow wrapper — on mobile Results that
- * lets the stage eat the card and clip/shove Bolt + pieces text.
  */
 export function NestPreviewSvg({
   model,
@@ -63,12 +68,26 @@ export function NestPreviewSvg({
   /** Throw only — dashed SA inset on cut panels (Style B). Bolster skips. */
   seamAllowanceIn?: number
 }) {
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [pxPerIn, setPxPerIn] = useState(PX_PER_IN_MIN)
+
   const fabricWIn = Math.max(model.fabricWidthIn, 1)
   const lenIn = Math.max(model.lengthInches, 1)
-  const padIn = Math.max(fabricWIn, lenIn) * 0.04 + 0.5
-  const px = NEST_PX_PER_IN
-  const s = (inches: number) => inches * px
-  const pad = s(padIn)
+
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const update = () => {
+      setPxPerIn(computeNestPxPerIn(el.clientWidth, fabricWIn))
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fabricWIn])
+
+  const s = (inches: number) => inches * pxPerIn
+  const pad = PAD_PX
   const fabricW = s(fabricWIn)
   const len = s(lenIn)
   const svgW = fabricW + pad * 2
@@ -95,13 +114,14 @@ export function NestPreviewSvg({
 
   return (
     <>
-      <div className="pillow-nest-stage">
+      <div className="pillow-nest-stage" ref={stageRef}>
         <svg
           className="pillow-diagram pillow-nest-preview"
+          width={svgW}
+          height={svgH}
           viewBox={`0 0 ${svgW} ${svgH}`}
           role="img"
           aria-label="Panel nest preview on fabric bolt"
-          preserveAspectRatio="xMidYMin meet"
         >
           <rect
             x={pad}
@@ -142,7 +162,7 @@ export function NestPreviewSvg({
             if (yIn > lenIn + 1e-6) return null
             const yd = yIn / 36
             const y = pad + s(yIn)
-            // Nesting: labels at left edge in pixel space (x≈4, y inset) — not mid-bolt giants
+            // Nesting: left-edge labels in 1:1 user≈CSS px space
             return (
               <g key={`y-${yIn}`}>
                 <line
@@ -247,3 +267,6 @@ export function NestPreviewSvg({
     </>
   )
 }
+
+/** @deprecated kept for tests that asserted the old constant — prefer ResizeObserver fit. */
+export const NEST_PX_PER_IN = 8
