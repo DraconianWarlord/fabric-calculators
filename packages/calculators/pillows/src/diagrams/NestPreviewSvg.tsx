@@ -24,8 +24,9 @@ const BOLT_STROKE: CSSProperties = {
 
 /**
  * Nest preview: SVG is panels/grid only. Bolt + piece captions live in HTML
- * siblings (DimPreviewFrame pattern) so text never scales with viewBox /
- * panel count / bolt length.
+ * under the SVG inside the nest card body (DimPreviewFrame pattern) so text
+ * never scales with viewBox / panel count / bolt length — and cannot be
+ * clipped between canvas-wrap and the Yardage sidebar on mobile.
  */
 export function NestPreviewSvg({
   model,

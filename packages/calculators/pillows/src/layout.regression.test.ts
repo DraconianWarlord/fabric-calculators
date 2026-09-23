@@ -146,21 +146,35 @@ describe('pillows layout regressions', () => {
     expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
   })
 
-  it('mobile Results keeps nest figcaption in stack (no shrink/overlap under Yardage)', () => {
+  it('captions live inside nest Daisy card under SVG (not clip-prone canvas/sidebar sibling)', () => {
+    expect(pageTsx).toMatch(/pillow-nest-card/)
+    expect(pageTsx).toMatch(
+      /card bg-base-100 border border-base-300 shadow-none pillow-nest-card[\s\S]*?nest preview[\s\S]*?NestPreviewSvg/,
+    )
+    expect(nestPreviewSvg).toMatch(
+      /pillow-nest-stage[\s\S]*?<\/svg>[\s\S]*?pillow-nest-captions/,
+    )
+    expect(pageCss).toMatch(/\.pillow-nest-card/)
+    expect(pageCss).toMatch(
+      /\.pillow-nest-captions\s*\{[\s\S]*?display:\s*block/,
+    )
+  })
+
+  it('mobile Results keeps nest card + captions content-sized with gap-3 before Yardage', () => {
     expect(pageCss).toMatch(/\.layout\.mobile-results/)
     expect(pageCss).toMatch(
       /\.layout\.mobile-results \.canvas-wrap[\s\S]*?flex:\s*0\s+0\s+auto/,
     )
     expect(pageCss).toMatch(
-      /\.layout\.mobile-results \.canvas-wrap[\s\S]*?min-height:\s*min-content/,
+      /\.layout\.mobile-results \.pillow-nest-card[\s\S]*?flex:\s*0\s+0\s+auto/,
     )
     expect(pageCss).toMatch(
-      /\.layout\.mobile-results \.pillow-nest-frame\s*\{[\s\S]*?flex:\s*0\s+0\s+auto/,
-    )
-    expect(pageCss).toMatch(
-      /\.layout\.mobile-results \.pillow-nest-captions\s*\{[\s\S]*?padding-bottom/,
+      /\.layout\.mobile-results \.pillow-nest-captions[\s\S]*?overflow:\s*visible/,
     )
     expect(pageCss).toMatch(/\.layout\.mobile-results\s*\{[\s\S]*?gap:\s*0\.75rem/)
+    expect(pageCss).not.toMatch(
+      /\.layout\.mobile-results \.pillow-nest-captions[\s\S]*?overflow:\s*hidden/,
+    )
   })
 
   it('left stack reference is after pattern (secondary) with scroll padding', () => {

@@ -569,15 +569,19 @@ export default function PillowsPage() {
 
         {/* MIDDLE — nest preview = focus (Nesting bolt parity) */}
         <main className="canvas-wrap" data-mobile-pane="results">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-base-content/60">
-            nest preview
-          </h2>
-          <NestPreviewSvg
-            model={nestModel}
-            unit={unit}
-            hRepeatIn={hRepeatIn}
-            vRepeatIn={vRepeatIn}
-          />
+          <section className="card bg-base-100 border border-base-300 shadow-none pillow-nest-card">
+            <div className="card-body gap-2 p-4">
+              <h2 className="card-title mb-0 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                nest preview
+              </h2>
+              <NestPreviewSvg
+                model={nestModel}
+                unit={unit}
+                hRepeatIn={hRepeatIn}
+                vRepeatIn={vRepeatIn}
+              />
+            </div>
+          </section>
         </main>
 
         {/* RIGHT — results / yardage */}
