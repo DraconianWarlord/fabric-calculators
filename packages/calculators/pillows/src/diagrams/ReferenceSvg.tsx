@@ -4,12 +4,6 @@ import {
   DIAGRAM_SR_BLUE,
   DIAGRAM_CUT_FILL,
 } from '@sailrite/calc-shell'
-import {
-  dogEarPolygonPointsAttr,
-  dogEarCornerMarks,
-  dogEarTrimAlongEdge,
-} from '../lib/dogEar'
-import { throwSeamAllowanceOutline } from '../lib/insetPolygon'
 import type { FillStyle } from '../lib/fillStyle'
 import { fromInches, type Unit } from '../lib/throwPillows'
 
@@ -22,7 +16,45 @@ function fmt(inches: number, unit: Unit): string {
     : v.toFixed(0)
 }
 
-/** Form×Fill cut/finished silhouette for left-stack reference (secondary, not hero). */
+/**
+ * Relative loft (thickness) for side-view teaching — Flat < Standard < Plump.
+ * Unitless ratios vs face span so thumbs and large Reference share the same feel.
+ */
+function throwLoftRatio(fill: FillStyle): number {
+  if (fill === 'flat') return 0.28
+  if (fill === 'plump') return 0.58
+  return 0.42
+}
+
+/** Slight face-span squeeze when plump (cover smaller → taller bun). */
+function throwSpanRatio(fill: FillStyle): number {
+  if (fill === 'flat') return 1.05
+  if (fill === 'plump') return 0.9
+  return 1
+}
+
+/**
+ * Knife-edge throw side silhouette (thickness / loft view).
+ * Pointed left/right tips; vertical half-height encodes plumpness.
+ */
+function knifeEdgeSidePath(
+  cx: number,
+  cy: number,
+  halfSpan: number,
+  halfLoft: number,
+): string {
+  const tip = Math.max(0.5, halfSpan)
+  const loft = Math.max(0.5, halfLoft)
+  // Cubic lens: left tip → top bulge → right tip → bottom bulge → left tip
+  return [
+    `M ${cx - tip} ${cy}`,
+    `C ${cx - tip * 0.35} ${cy - loft} ${cx + tip * 0.35} ${cy - loft} ${cx + tip} ${cy}`,
+    `C ${cx + tip * 0.35} ${cy + loft} ${cx - tip * 0.35} ${cy + loft} ${cx - tip} ${cy}`,
+    'Z',
+  ].join(' ')
+}
+
+/** Form×Fill cut/finished silhouette for left-stack reference — side / loft view. */
 export function ThrowReference(props: {
   formW: number
   formL: number
@@ -30,88 +62,68 @@ export function ThrowReference(props: {
   cutL: number
   finishedW: number
   finishedL: number
-  seamAllowanceIn: number
+  /** Kept for call-site stability; loft view does not draw fabric-plate SA. */
+  seamAllowanceIn?: number
   unit: Unit
   fillStyle: FillStyle
-  dogEarTrim: boolean
+  /** Ignored — dog-ear 12-gon lives on nest cut panels only. */
+  dogEarTrim?: boolean
   compact?: boolean
 }) {
-  const {
-    formW,
-    formL,
-    cutW,
-    cutL,
-    finishedW,
-    finishedL,
-    seamAllowanceIn,
-    unit,
-    fillStyle,
-    dogEarTrim,
-  } = props
+  const { formW, formL, cutW, cutL, finishedW, finishedL, unit, fillStyle } = props
   const compact = props.compact ?? true
-  const max = Math.max(cutW, cutL, finishedW, finishedL, 1)
-  const scale = (compact ? 88 : 140) / max
-  const cw = cutW * scale
-  const cl = cutL * scale
-  const pad = compact ? 16 : 28
-  const svgW = cw + pad * 2 + (compact ? 8 : 130)
-  const svgH = cl + pad * 2 + (dogEarTrim ? 18 : 6)
+  const loftR = throwLoftRatio(fillStyle)
+  const spanR = throwSpanRatio(fillStyle)
+
+  // Side / loft stage — proportions from fill style (not face-on fabric plate).
+  const stageW = compact ? 120 : 200
+  const stageH = compact ? 72 : 120
+  const padX = compact ? 10 : 20
+  const padY = compact ? 14 : 22
+  const maxHalfSpan = (stageW - padX * 2) / 2
+  const maxHalfLoft = (stageH - padY * 2) / 2
+  // Fit plump loft + flat span into the stage
+  const halfSpan = Math.min(maxHalfSpan, maxHalfLoft / loftR) * spanR
+  const halfLoft = halfSpan * (loftR / spanR)
+
+  // Flat cover larger → finished closer to outer; plump cover tighter → more inset
+  const finScale = fillStyle === 'flat' ? 0.92 : fillStyle === 'plump' ? 0.78 : 0.85
+  const finHalfSpan = Math.max(2, halfSpan * finScale)
+  const finHalfLoft = Math.max(2, halfLoft * finScale)
+
+  const cx = stageW / 2
+  const cy = padY + maxHalfLoft
+  const svgW = stageW + (compact ? 0 : 8)
+  const svgH = stageH + (compact ? 4 : 28)
   const cut = cutShapeSvgProps()
   const fin = finishedShapeSvgProps()
-  const saOutline = throwSeamAllowanceOutline(cutW, cutL, seamAllowanceIn, dogEarTrim)
+  const groundY = Math.min(svgH - (compact ? 6 : 24), cy + halfLoft + 6)
+
   return (
     <svg
       className="pillow-diagram pillow-ref-compact"
       viewBox={`0 0 ${svgW} ${svgH}`}
       role="img"
-      aria-label={`Throw reference ${fillStyle}`}
+      aria-label={`Throw reference thickness view ${fillStyle}`}
     >
-      {dogEarTrim ? (
-        <polygon points={dogEarPolygonPointsAttr(cutW, cutL, scale, pad, pad)} {...cut} />
-      ) : (
-        <rect x={pad} y={pad} width={cw} height={cl} rx={2} {...cut} />
-      )}
-      <text x={pad + cw / 2} y={pad - 4} textAnchor="middle" className="diag-label">
-        cut {fmt(cutW, unit)}×{fmt(cutL, unit)} ({fillStyle})
+      <line
+        x1={cx - halfSpan - 4}
+        y1={groundY}
+        x2={cx + halfSpan + 4}
+        y2={groundY}
+        stroke={DIAGRAM_SR_BLUE}
+        strokeWidth={1}
+        opacity={0.25}
+      />
+      <path d={knifeEdgeSidePath(cx, cy, halfSpan, halfLoft)} {...cut} />
+      <path d={knifeEdgeSidePath(cx, cy, finHalfSpan, finHalfLoft)} {...fin} />
+      <text x={cx} y={Math.max(10, padY - 2)} textAnchor="middle" className="diag-label">
+        side / loft · {fillStyle}
       </text>
-      {saOutline?.kind === 'poly' && (
-        <polygon
-          points={saOutline.points
-            .map((p) => `${pad + p.x * scale},${pad + p.y * scale}`)
-            .join(' ')}
-          {...fin}
-        />
-      )}
-      {saOutline?.kind === 'rect' && (
-        <rect
-          x={pad + saOutline.x * scale}
-          y={pad + saOutline.y * scale}
-          width={Math.max(4, saOutline.w * scale)}
-          height={Math.max(4, saOutline.h * scale)}
-          rx={2}
-          {...fin}
-        />
-      )}
-      {dogEarTrim &&
-        dogEarCornerMarks(cutW, cutL).map((m) => (
-          <circle
-            key={m.corner}
-            cx={pad + m.p.x * scale}
-            cy={pad + m.p.y * scale}
-            r={1.2}
-            fill={DIAGRAM_SR_BLUE}
-          />
-        ))}
-      {dogEarTrim && (
-        <text x={pad} y={pad + cl + 12} className="diag-legend">
-          dog-ear: side÷4 to ½″ corner mark (ignores SA) · e.g.{' '}
-          {fmt(dogEarTrimAlongEdge(cutW), unit)} on {fmt(cutW, unit)}
-        </text>
-      )}
       {!compact && (
-        <text x={pad + cw + 16} y={pad + 14} className="diag-legend">
-          form {fmt(formW, unit)}×{fmt(formL, unit)} · fin {fmt(finishedW, unit)}×
-          {fmt(finishedL, unit)}
+        <text x={cx} y={svgH - 8} textAnchor="middle" className="diag-legend">
+          form {fmt(formW, unit)}×{fmt(formL, unit)} · cut {fmt(cutW, unit)}×
+          {fmt(cutL, unit)} · fin {fmt(finishedW, unit)}×{fmt(finishedL, unit)}
         </text>
       )}
     </svg>
@@ -172,7 +184,7 @@ export function BolsterReference(props: {
   )
 }
 
-/** Tiny Throw product silhouette for form thumb. */
+/** Tiny Throw product silhouette for form thumb (face plate — identity, not loft). */
 export function ThrowFormThumb({ selected }: { selected?: boolean }) {
   const cut = cutShapeSvgProps()
   const fin = finishedShapeSvgProps()
@@ -198,7 +210,7 @@ export function BolsterFormThumb({ selected }: { selected?: boolean }) {
   )
 }
 
-/** Flat / Standard / Plump comparison thumb — cut solid, finished dashed. */
+/** Flat / Standard / Plump comparison thumb — side / loft view (cut solid, finished dashed). */
 export function FillStyleThumb({
   fill,
   selected,
@@ -206,39 +218,30 @@ export function FillStyleThumb({
   fill: FillStyle
   selected?: boolean
 }) {
-  // Relative sizes teaching cut vs form (unitless): form=20 box
-  const form = 20
-  const cut =
-    fill === 'flat' ? form + 4 : fill === 'plump' ? form - 4 : form
-  const fin = cut - 4
-  const stage = 28
-  const ox = (stage - cut) / 2
-  const oy = (stage - cut) / 2
-  const fx = (stage - fin) / 2
-  const fy = (stage - fin) / 2
+  const loftR = throwLoftRatio(fill)
+  const spanR = throwSpanRatio(fill)
+  const halfSpan = 16 * spanR
+  const halfLoft = 16 * loftR
+  const cx = 24
+  const cy = 20
+  const finScale = fill === 'flat' ? 0.88 : fill === 'plump' ? 0.76 : 0.82
   const sw = selected ? 2 : 1.25
+  const cut = cutShapeSvgProps()
+  const fin = finishedShapeSvgProps()
   return (
     <svg viewBox="0 0 48 40" className="pillow-thumb-svg" aria-hidden="true">
-      <rect
-        x={10 + ox}
-        y={6 + oy}
-        width={cut}
-        height={cut}
-        rx={1}
-        fill={DIAGRAM_CUT_FILL}
-        stroke={DIAGRAM_SR_BLUE}
+      <path
+        d={knifeEdgeSidePath(cx, cy, halfSpan, halfLoft)}
+        fill={cut.fill}
+        stroke={cut.stroke}
         strokeWidth={sw}
       />
-      <rect
-        x={10 + fx}
-        y={6 + fy}
-        width={fin}
-        height={fin}
-        rx={1}
-        fill="none"
-        stroke={DIAGRAM_SR_BLUE}
+      <path
+        d={knifeEdgeSidePath(cx, cy, halfSpan * finScale, halfLoft * finScale)}
+        fill={fin.fill}
+        stroke={fin.stroke}
         strokeWidth={1}
-        strokeDasharray="3 2"
+        strokeDasharray={fin.strokeDasharray}
       />
     </svg>
   )

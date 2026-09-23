@@ -9,7 +9,8 @@
  * 4. Repeat all corners. Dog-ear math ignores seamAllowanceIn entirely.
  *
  * Preview geometry: 12-gon — per corner: edge mark → ½″ inset → other edge mark.
- * ReferenceSvg and NestPreviewSvg MUST use dogEarPanelPolygon — one path.
+ * Nest cut panels (nestPreview → NestPreviewSvg) MUST use dogEarPanelPolygon — one path.
+ * Throw fill Reference is side/loft (not a fabric plate) and does not draw dog-ear.
  */
 
 /** ½″ construction mark inset from the corner (not seam allowance). */

@@ -121,7 +121,8 @@ describe('pillows layout regressions', () => {
     expect(nestPreviewSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_FINISHED_DASH|strokeDasharray/)
     expect(nestPreviewSvg).toMatch(/insetPolygon|seamAllowanceIn/)
-    expect(referenceSvg).toMatch(/throwSeamAllowanceOutline|seamAllowanceIn/)
+    // Nest cut panels keep dashed SA inset; throw Reference is side/loft (no face-on SA plate)
+    expect(nestPreviewSvg).toMatch(/throwSeamAllowanceOutline|seamAllowanceIn|insetPolygon/)
     expect(pageTsx).not.toMatch(/stroke="#e75053"/)
     expect(referenceSvg).not.toMatch(/stroke="#e75053"/)
     expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
@@ -174,10 +175,22 @@ describe('pillows layout regressions', () => {
 
   it('reference chooser lives in left stack (not hero above nest)', () => {
     expect(pageTsx).toMatch(/ThrowFormThumb|FillStyleThumb/)
-    expect(referenceSvg).toMatch(/dogEarPanelPolygon|dogEarPolygonPointsAttr/)
     expect(pageTsx).toMatch(/reference/)
     expect(pageTsx).toMatch(/sidebar left[\s\S]*?reference[\s\S]*?size/)
     expect(pageTsx).not.toMatch(/canvas-wrap[\s\S]*?ThrowFormThumb/)
+  })
+
+  it('throw fill Reference + FillStyleThumb are side/thickness loft views (not face-on)', () => {
+    expect(referenceSvg).toMatch(/Throw reference thickness view/)
+    expect(referenceSvg).toMatch(/side \/ loft/)
+    expect(referenceSvg).toMatch(/function throwLoftRatio/)
+    expect(referenceSvg).toMatch(/function knifeEdgeSidePath/)
+    expect(referenceSvg).toMatch(/export function FillStyleThumb[\s\S]*?knifeEdgeSidePath/)
+    expect(referenceSvg).toMatch(/export function ThrowReference[\s\S]*?knifeEdgeSidePath/)
+    // Dog-ear 12-gon stays on nest fabric plates, not the loft reference
+    expect(referenceSvg).not.toMatch(/dogEarPolygonPointsAttr|dogEarPanelPolygon/)
+    const nestLib = readFileSync(resolve(srcDir, 'lib/nestPreview.ts'), 'utf8')
+    expect(nestLib).toMatch(/dogEarPanelPolygon/)
   })
 
   it('keeps Sailrite brand tokens (SR Blue / Alert Red)', () => {
