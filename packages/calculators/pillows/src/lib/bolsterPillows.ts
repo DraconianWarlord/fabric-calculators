@@ -136,8 +136,8 @@ export function bolsterCutsFromFit(
 
 /**
  * Nest barrels + end circles on fabric width.
- * Horizontal: pattern around pillow -> circ along bolt, barrel-along across.
- * Vertical: pattern across pillow -> barrel-along along bolt, circ across.
+ * Horizontal: pattern around pillow -> circ down the nest, barrel-along across.
+ * Vertical: pattern across pillow -> barrel-along down the nest, circ across.
  * End circles fill leftover width beside barrel rows when possible.
  */
 export function nestBolster(
@@ -251,7 +251,7 @@ export function calculateBolster(input: BolsterInput): BolsterResult {
   ]
 
   const materials = [
-    `${nest.orderYards} yd fabric (${nest.exactYards.toFixed(2)} yd exact; ${round2(nest.lengthInches)} in along bolt)`,
+    `${nest.orderYards} yd fabric (${nest.exactYards.toFixed(2)} yd exact)`,
     `optional prefabricated piping: ${pipingOrderFt} ft (need ${pipingIn} in / ${pipingFt} ft)`,
     `Seamstick 1/4" basting tape: 1 roll`,
     `#4.5 zipper chain (coil): ${round2(zipperIn)} in`,

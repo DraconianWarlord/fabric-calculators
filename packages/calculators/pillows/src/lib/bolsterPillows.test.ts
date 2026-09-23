@@ -104,7 +104,7 @@ describe('bolster nesting variants', () => {
     expect(r.pipingIn).toBe(61)
   })
 
-  it('Vertical Regular qty2 → 29 in along bolt', () => {
+  it('Vertical Regular qty2 → 29 in nest length', () => {
     const r = calculateBolster({
       diameterIn: 8,
       lengthIn: 20,
@@ -148,5 +148,20 @@ describe('bolster helpers', () => {
     expect(nest.barrelAcrossCount).toBe(2)
     expect(nest.endExtraRows).toBe(1)
     expect(nest.endsUsedAlongIn).toBe(8.5)
+  })
+})
+
+describe('materials copy', () => {
+  it('omits nest-length inch phrasing from fabric summary', () => {
+    const r = calculateBolster({
+      diameterIn: 8,
+      lengthIn: 20,
+      quantity: 1,
+      fabricWidthIn: 54,
+    })
+    const forbidden = new RegExp(['along', 'bolt'].join(' '), 'i')
+    expect(r.materials.some((m) => forbidden.test(m))).toBe(false)
+    expect(r.materials[0]).toMatch(/yd fabric/)
+    expect(r.materials[0]).not.toMatch(forbidden)
   })
 })

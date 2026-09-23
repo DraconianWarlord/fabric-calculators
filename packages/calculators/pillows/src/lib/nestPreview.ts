@@ -37,7 +37,7 @@ export function patternHOffset(fabricWidthIn: number, hRepeatIn: number): number
 }
 
 /**
- * Major yard marks along bolt length (inches), same contract as Nesting Page yardTicks.
+ * Major yard marks along nest length (inches), same contract as Nesting Page yardTicks.
  * Includes one step past ceil(length/36) so the end of a partial yard still gets a mark
  * when the canvas is tall enough; callers clip draw to the bolt rect.
  */

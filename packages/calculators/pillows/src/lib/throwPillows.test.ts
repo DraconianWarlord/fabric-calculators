@@ -322,3 +322,19 @@ describe('leftover strip (live Sailrite parity)', () => {
     expect(r.pack.leftover).toEqual({ widthIn: 14, lengthIn: 48 })
   })
 })
+
+describe('materials copy', () => {
+  it('omits nest-length inch phrasing from fabric summary', () => {
+    const r = calculateThrowPillows({
+      formWidthIn: 18,
+      formLengthIn: 18,
+      quantity: 1,
+      fabricWidthIn: 54,
+    })
+    const forbidden = new RegExp(['along', 'bolt'].join(' '), 'i')
+    expect(r.materials.some((m) => forbidden.test(m))).toBe(false)
+    expect(r.materials[0]).toMatch(/yd fabric/)
+    expect(r.materials[0]).toMatch(/yd exact/)
+    expect(r.materials[0]).not.toMatch(/\bin\b/)
+  })
+})

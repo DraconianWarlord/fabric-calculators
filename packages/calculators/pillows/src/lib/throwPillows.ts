@@ -55,7 +55,7 @@ export const MATCHING_PIPING_STRIP_WIDTH_IN = 3
 export const MATCHING_PIPING_WIDTH_JOIN_LOSS_IN = 1
 
 /**
- * Bias-cut piping fabric add-on (inches along bolt):
+ * Bias-cut piping fabric add-on (inches of fabric length):
  * fabricWidth + round(2 * prefIn / (fabricWidth - adjust)).
  * Reverse-engineered from live Sailrite throw results (18x18 qty2 @54 -> 60 in).
  */
@@ -180,8 +180,8 @@ export type ThrowPillowResult = {
 }
 
 /**
- * Horizontal: pattern on pillow length -> length along bolt, width across.
- * Vertical: pattern on pillow width -> width along bolt, length across.
+ * Horizontal: pattern on pillow length -> length down the nest, width across.
+ * Vertical: pattern on pillow width -> width down the nest, length across.
  * None: try both; pick lower yardage (ties prefer horizontal).
  */
 export function orientationsForPattern(
@@ -390,7 +390,7 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
   ]
 
   const materials = [
-    `${best.orderYards} yd fabric (${best.exactYards.toFixed(2)} yd exact; ${best.lengthInches} in along bolt)`,
+    `${best.orderYards} yd fabric (${best.exactYards.toFixed(2)} yd exact)`,
     `${panelsNeeded} cut panels @ ${cutWidthIn} x ${cutLengthIn} in (knife-edge front + back; fill ${fillStyle})`,
     `finished cover approx ${finishedSize(formWidthIn, fillStyle, sa)} x ${finishedSize(formLengthIn, fillStyle, sa)} in (cut - ${2 * sa}" with ${sa}" seams)`,
     `optional prefabricated piping: ${piping.prefabricatedIn} in (${piping.prefabricatedFt} ft)`,

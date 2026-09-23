@@ -301,8 +301,16 @@ describe('pillows layout regressions', () => {
     expect(pageCss).toMatch(/padding-bottom:\s*2rem/)
   })
 
-  it('yardage omits along-bolt helper; cut list uses qty: dims', () => {
-    expect(pageTsx).not.toMatch(/along bolt/)
+  it('yardage/materials omit nest-length inch label; cut list uses qty: dims', () => {
+    // Forbid the old Materials/Yardage phrase without embedding it as a contiguous literal.
+    const forbidden = new RegExp(['along', 'bolt'].join(' '))
+    expect(pageTsx).not.toMatch(forbidden)
+    const throwLib = readFileSync(resolve(srcDir, 'lib/throwPillows.ts'), 'utf8')
+    const bolsterLib = readFileSync(resolve(srcDir, 'lib/bolsterPillows.ts'), 'utf8')
+    const exportPdf = readFileSync(resolve(srcDir, 'lib/exportPdf.ts'), 'utf8')
+    expect(throwLib).not.toMatch(forbidden)
+    expect(bolsterLib).not.toMatch(forbidden)
+    expect(exportPdf).not.toMatch(forbidden)
     expect(pageTsx).toMatch(/\{c\.qty\}: \{formatDim\(c\.widthIn, unit\)\}×\{formatDim\(c\.lengthIn, unit\)\}/)
   })
 
