@@ -597,10 +597,99 @@ export type FinishedPanelOutline =
   | { kind: 'aabb'; x: number; y: number; w: number; h: number }
   | { kind: 'poly'; points: Point[] }
 
+/** Intersection of two infinite lines p1+t*d1 and p2+s*d2, or null if parallel. */
+function lineLineIntersect(
+  p1: Point,
+  d1: Point,
+  p2: Point,
+  d2: Point,
+  eps = 1e-12,
+): Point | null {
+  const cross = d1.x * d2.y - d1.y * d2.x
+  if (Math.abs(cross) < eps) return null
+  const t = ((p2.x - p1.x) * d2.y - (p2.y - p1.y) * d2.x) / cross
+  return { x: p1.x + t * d1.x, y: p1.y + t * d1.y }
+}
+
+/**
+ * True inward polygon offset by `dist` for convex polygons (trap / irregular).
+ * Detects winding; offsets each edge toward the interior, then intersects
+ * consecutive offset lines to get new vertices. Returns null when dist ≤ 0,
+ * the poly is degenerate, or SA is too large (collapsed / inverted).
+ */
+export function insetPolygon(points: Point[], dist: number): Point[] | null {
+  if (!(dist > 0) || points.length < 3) return null
+  const n = points.length
+  const area = signedPolyArea(points)
+  if (!(Math.abs(area) > 1e-10)) return null
+  const ccw = area > 0
+
+  type OffsetEdge = { p: Point; d: Point }
+  const edges: OffsetEdge[] = []
+  for (let i = 0; i < n; i++) {
+    const a = points[i]
+    const b = points[(i + 1) % n]
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const len = Math.hypot(dx, dy)
+    if (!(len > 1e-12)) return null
+    const ux = dx / len
+    const uy = dy / len
+    // Inward unit normal: left of edge for CCW, right of edge for CW.
+    const nx = ccw ? -uy : uy
+    const ny = ccw ? ux : -ux
+    edges.push({
+      p: { x: a.x + nx * dist, y: a.y + ny * dist },
+      d: { x: ux, y: uy },
+    })
+  }
+
+  const out: Point[] = []
+  for (let i = 0; i < n; i++) {
+    // New vertex i = intersection of offset edge (i-1) and offset edge i.
+    const prev = edges[(i - 1 + n) % n]
+    const cur = edges[i]
+    const hit = lineLineIntersect(prev.p, prev.d, cur.p, cur.d)
+    if (!hit || !Number.isFinite(hit.x) || !Number.isFinite(hit.y)) return null
+    out.push(hit)
+  }
+
+  if (out.length < 3) return null
+  const newArea = signedPolyArea(out)
+  // Must keep winding and positive area; inset must shrink (not grow / flip).
+  if (!(Math.abs(newArea) > 1e-10)) return null
+  if (Math.sign(newArea) !== Math.sign(area)) return null
+  if (Math.abs(newArea) >= Math.abs(area) - 1e-12) return null
+
+  // When SA exceeds the inradius, offset edges reverse: reject flipped edges.
+  for (let i = 0; i < n; i++) {
+    const a = out[i]
+    const b = out[(i + 1) % n]
+    const ndx = b.x - a.x
+    const ndy = b.y - a.y
+    const nlen = Math.hypot(ndx, ndy)
+    if (!(nlen > 1e-9)) return null
+    // Original edge direction (unit) stored on edges[i].d
+    if (ndx * edges[i].d.x + ndy * edges[i].d.y <= 0) return null
+  }
+
+  // Discard near-duplicate / collapsed verts.
+  const cleaned: Point[] = []
+  for (let i = 0; i < out.length; i++) {
+    const a = out[i]
+    const b = out[(i + 1) % out.length]
+    if (Math.hypot(b.x - a.x, b.y - a.y) > 1e-9) cleaned.push(a)
+  }
+  if (cleaned.length < 3) return null
+  if (!(Math.abs(signedPolyArea(cleaned)) > 1e-10)) return null
+  return cleaned
+}
+
 /**
  * Finished (seam-allowance) outline for bolt-canvas overlays.
- * Cut sizes are stored on the panel; finished = cut − 2×SA on each dim.
- * Returns null when SA is 0 or finished dims collapse.
+ * Cut sizes are stored on the panel; finished = cut − SA inward.
+ * Poly panels (trap / irregular): true inward polygon offset of panelPolygon.
+ * Returns null when SA is 0 or the finished outline collapses.
  */
 export function finishedPanelOutline(
   p: Panel,
@@ -616,54 +705,12 @@ export function finishedPanelOutline(
     return { kind: 'circle', cx: c.x, cy: c.y, r: finD / 2 }
   }
 
-  if (isTrap(p)) {
-    const top = (p.topWidth ?? p.width) - 2 * sa
-    const bottom = (p.bottomWidth ?? p.width) - 2 * sa
-    const length = p.length - 2 * sa
-    if (top <= 0 || bottom <= 0 || length <= 0) return null
-    const fin: Panel = {
-      ...p,
-      width: Math.max(top, bottom),
-      length,
-      topWidth: top,
-      bottomWidth: bottom,
-      x: 0,
-      y: 0,
-    }
-    const cutFp = panelFootprint(p)
-    const finFp = panelFootprint(fin)
-    const ox = p.x + (cutFp.w - finFp.w) / 2
-    const oy = p.y + (cutFp.h - finFp.h) / 2
-    return { kind: 'poly', points: panelPolygon({ ...fin, x: ox, y: oy }) }
-  }
-
-  if (isIrregular(p)) {
-    const L = (p.sideLeft ?? 0) - 2 * sa
-    const F = (p.sideFront ?? 0) - 2 * sa
-    const R = (p.sideRight ?? 0) - 2 * sa
-    const B = (p.sideBack ?? 0) - 2 * sa
-    const D = (p.diagonal ?? 0) - 2 * sa
-    if (L <= 0 || F <= 0 || R <= 0 || B <= 0 || D <= 0) return null
-    const built = irregularCutFromFinished(L, F, R, B, D, 0)
-    if (!built) return null
-    const fin: Panel = {
-      ...p,
-      kind: 'irregular',
-      width: built.width,
-      length: built.length,
-      sideLeft: built.sideLeft,
-      sideFront: built.sideFront,
-      sideRight: built.sideRight,
-      sideBack: built.sideBack,
-      diagonal: built.diagonal,
-      x: 0,
-      y: 0,
-    }
-    const cutFp = panelFootprint(p)
-    const finFp = panelFootprint(fin)
-    const ox = p.x + (cutFp.w - finFp.w) / 2
-    const oy = p.y + (cutFp.h - finFp.h) / 2
-    return { kind: 'poly', points: panelPolygon({ ...fin, x: ox, y: oy }) }
+  // Trap / irregular: uniform inward offset of the cut polygon (not shrink-rebuild).
+  if (isPolyPanel(p)) {
+    const inset = insetPolygon(panelPolygon(p), sa)
+    if (!inset || inset.length < 4) return null
+    if (!(Math.abs(signedPolyArea(inset)) > 1e-10)) return null
+    return { kind: 'poly', points: inset }
   }
 
   // Rectangle: canvas draws the oriented footprint AABB — inset that AABB by SA.
