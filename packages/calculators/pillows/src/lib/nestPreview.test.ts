@@ -141,19 +141,17 @@ describe('nest preview panel counts', () => {
     const centersV = mv.panels.map((p) => [p.x + p.w / 2, p.y + p.h / 2])
     expect(centersH).not.toEqual(centersV)
 
-    // V-only: panel centers sit on horizontal stripe centers
+    // V-only: rigid grid origin puts every panel center on a V stripe center
+    // (along pitch is a multiple of vRepeat in this fixture).
     for (const [, cy] of centersV) {
       const frac = (cy / 12) % 1
       expect(Math.abs(frac - 0.5)).toBeLessThan(1e-6)
     }
-    // H-only: X on stripe centers when clamp allows; else edge-clamped
-    const hOff = patternHOffset(54, 12)
-    for (const [cx] of centersH) {
-      const frac = ((cx - hOff) / 12) % 1
-      const onCell = Math.abs(frac - 0.5) < 1e-6
-      const clampedEdge = cx <= 10 + 1e-6 // half of 20″ panel at x≈0
-      expect(onCell || clampedEdge).toBe(true)
-    }
+    // H-only: rigid pitch grid (not per-panel snap). Row Y / col X uniqueness.
+    const xs = [...new Set(mh.panels.map((p) => +p.x.toFixed(9)))]
+    const ys = [...new Set(mh.panels.map((p) => +p.y.toFixed(9)))]
+    expect(xs.length).toBe(hOnly.pack.acrossCount)
+    expect(ys.length).toBe(hOnly.pack.rows)
   })
 
   it('square 18×18: H vs V direction alone is identical (documents square illusion)', () => {
@@ -274,5 +272,52 @@ describe('fill-style nest: no pairwise AABB overlap', () => {
       expect(model.panels.length).toBeGreaterThanOrEqual(2)
       assertNoPairwiseOverlap(model.panels, `HV9 rot90 ${fill}`)
     }
+  })
+})
+
+describe('grid nest alignment (no per-panel pattern snap)', () => {
+  it('Zach H=23 V=11 + rotate 90: same row shares Y; same col shares X', () => {
+    const r = calculateThrowPillows({
+      formWidthIn: 18,
+      formLengthIn: 21,
+      quantity: 2,
+      fabricWidthIn: 54,
+      seamAllowanceIn: 0.5,
+      rotation: 90,
+      fillStyle: 'standard',
+      hRepeatIn: 23,
+      vRepeatIn: 11,
+    })
+    const model = throwNestPreview(r.pack, 54, { hRepeatIn: 23, vRepeatIn: 11 })
+    expect(model.panels.length).toBe(4)
+    const ys = [...new Set(model.panels.map((p) => +p.y.toFixed(9)))].sort((a, b) => a - b)
+    const xs = [...new Set(model.panels.map((p) => +p.x.toFixed(9)))].sort((a, b) => a - b)
+    expect(ys).toHaveLength(2)
+    expect(xs).toHaveLength(2)
+    for (const y of ys) {
+      const row = model.panels.filter((p) => Math.abs(p.y - y) < 1e-9)
+      expect(row).toHaveLength(2)
+    }
+    for (const x of xs) {
+      const col = model.panels.filter((p) => Math.abs(p.x - x) < 1e-9)
+      expect(col).toHaveLength(2)
+    }
+  })
+
+  it('mixed H/V repeats: distinct X count = across; Y count = rows', () => {
+    const r = calculateThrowPillows({
+      formWidthIn: 18,
+      formLengthIn: 18,
+      quantity: 2,
+      fabricWidthIn: 54,
+      pattern: 'horizontal',
+      hRepeatIn: 12,
+      vRepeatIn: 10,
+    })
+    const model = throwNestPreview(r.pack, 54, { hRepeatIn: 12, vRepeatIn: 10 })
+    const ys = [...new Set(model.panels.map((p) => +p.y.toFixed(9)))]
+    const xs = [...new Set(model.panels.map((p) => +p.x.toFixed(9)))]
+    expect(ys).toHaveLength(r.pack.rows)
+    expect(xs).toHaveLength(r.pack.acrossCount)
   })
 })

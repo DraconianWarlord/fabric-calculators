@@ -1,11 +1,9 @@
 /**
  * Panel placements for nest-on-bolt SVG preview (visualization).
  * Uses existing throw pack / bolster nest math (across × rows).
- * When H/V repeats > 0, panels are re-centered onto pattern cell centers
- * (same idea as Nesting snapCenterToPattern) — not paint-only.
- * Snap is applied only when it does not cause AABB overlap with already-placed
- * panels (Nesting canPlace parity) so fill-style cut-size changes never nest
- * intersecting panels.
+ * When H/V repeats > 0, the *whole grid* origin is aligned to pattern cell
+ * centers (Nesting-like). Per-panel snap is forbidden — it broke same-row Y
+ * alignment when columns snapped to different V cells.
  */
 
 import { dogEarPanelPolygon, type Point } from './dogEar'
@@ -129,24 +127,61 @@ export function snapIfNoOverlap(
 }
 
 
-/** Mutate placements: snap each to pattern when that pose overlaps no other. */
-function applyPatternSnapsNoOverlap(
-  panels: NestPanelPlacement[],
+/**
+ * Top-left of panel (0,0) for a regular pitch grid aligned to pattern repeats.
+ * Same-row panels share Y; same-column share X. Never per-panel snap (that broke
+ * row alignment when H/V repeats differed per column — Zach H=23 V=11).
+ */
+export function nestGridOrigin(
+  panelW: number,
+  panelH: number,
+  acrossPitch: number,
+  alongPitch: number,
+  acrossCount: number,
+  rows: number,
   fabricWidthIn: number,
-  hR: number,
-  vR: number,
-): void {
-  if (hR <= 0 && vR <= 0) return
-  for (let i = 0; i < panels.length; i++) {
-    const p = panels[i]!
-    const snapped = snapPanelToPatternCenter(p.w, p.h, p.x, p.y, fabricWidthIn, hR, vR)
-    const probe = { x: snapped.x, y: snapped.y, w: p.w, h: p.h }
-    const others = panels.filter((_, j) => j !== i)
-    if (!placementOverlapsAny(probe, others)) {
-      p.x = snapped.x
-      p.y = snapped.y
+  hRepeatIn: number,
+  vRepeatIn: number,
+): { x0: number; y0: number } {
+  void rows // reserved: multi-row pattern constraints if needed later
+  // Default: center panel in first pitch cell (½″ waste gap shared between neighbors).
+  let x0 = (acrossPitch - panelW) / 2
+  let y0 = (alongPitch - panelH) / 2
+
+  if (hRepeatIn > 0) {
+    const hOff = patternHOffset(fabricWidthIn, hRepeatIn)
+    // Prefer earliest pattern cell whose center can host panel 0 on-bolt.
+    let placed = false
+    for (let i = 0; i < 40; i++) {
+      const cx = hOff + (i + 0.5) * hRepeatIn
+      const cand = cx - panelW / 2
+      const lastRight = cand + (acrossCount - 1) * acrossPitch + panelW
+      if (cand >= -1e-9 && lastRight <= fabricWidthIn + 1e-9) {
+        x0 = Math.max(0, cand)
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      x0 = Math.max(0, Math.min(x0, fabricWidthIn - panelW - (acrossCount - 1) * acrossPitch))
     }
   }
+
+  if (vRepeatIn > 0) {
+    let placed = false
+    for (let j = 0; j < 80; j++) {
+      const cy = (j + 0.5) * vRepeatIn
+      const cand = cy - panelH / 2
+      if (cand >= -1e-9) {
+        y0 = cand
+        placed = true
+        break
+      }
+    }
+    if (!placed) y0 = Math.max(0, y0)
+  }
+
+  return { x0, y0 }
 }
 
 export type ThrowNestOpts = {
@@ -166,28 +201,32 @@ export function throwNestPlacements(
   const acrossPitch = nestCellPitch(acrossIn, hR)
   const alongPitch = nestCellPitch(alongIn, vR)
 
-  // Pass 1: cell-centered grid from current cut sizes (pitch ≥ cut → gap ≥ 0).
+  const { x0, y0 } = nestGridOrigin(
+    acrossIn,
+    alongIn,
+    acrossPitch,
+    alongPitch,
+    pack.acrossCount,
+    pack.rows,
+    fabricWidthIn,
+    hR,
+    vR,
+  )
+
   const panels: NestPanelPlacement[] = []
   for (let i = 0; i < pack.panelsNeeded; i++) {
     const row = Math.floor(i / pack.acrossCount)
     const col = i % pack.acrossCount
-    // Pitch cell = panel + waste (or pattern). Center in cell so gap sits between panels;
-    // pattern snap can still re-center onto repeat cells when safe.
-    const cellX = col * acrossPitch
-    const cellY = row * alongPitch
     panels.push({
       kind: 'throw-panel',
-      x: cellX + (acrossPitch - acrossIn) / 2,
-      y: cellY + (alongPitch - alongIn) / 2,
+      x: x0 + col * acrossPitch,
+      y: y0 + row * alongPitch,
       w: acrossIn,
       h: alongIn,
       polygon: opts.dogEar ? dogEarPanelPolygon(acrossIn, alongIn) : undefined,
       label: `P${i + 1}`,
     })
   }
-
-  // Pass 2: snap only when it keeps gap ≥ 0 vs every other panel (cells already filled).
-  applyPatternSnapsNoOverlap(panels, fabricWidthIn, hR, vR)
   return panels
 }
 
@@ -278,7 +317,7 @@ export function bolsterNestPreview(
     }
   }
 
-  applyPatternSnapsNoOverlap(panels, fabricWidthIn, hR, vR)
+  // No per-panel pattern snap — keep regular barrel/end grid (pitch already includes repeats).
 
   const maxBottom =
     panels.length === 0

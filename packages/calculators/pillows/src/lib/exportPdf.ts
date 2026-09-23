@@ -5,7 +5,7 @@
  */
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { NestPanelPlacement, NestPreviewModel } from './nestPreview'
+import { patternHOffset, type NestPanelPlacement, type NestPreviewModel } from './nestPreview'
 import { fromInches, type Unit } from './throwPillows'
 
 const SHOP_FABRIC_PDF =
@@ -176,6 +176,9 @@ type DrawNestSliceOpts = {
   sliceStartIn?: number
   sliceEndIn?: number
   showWidthNote?: boolean
+  /** Pattern repeat stripes (same as Nest Preview SVG). */
+  hRepeatIn?: number
+  vRepeatIn?: number
 }
 
 /**
@@ -201,6 +204,34 @@ export function drawPillowNest(
   doc.setDrawColor(40, 40, 50)
   doc.setLineWidth(0.8)
   doc.rect(scale.originX, scale.originY, boltWpt, boltHpt, 'FD')
+
+  // Pattern H/V guides — match NestPreviewSvg (lavender stripes/grid).
+  const hR = slice?.hRepeatIn ?? 0
+  const vR = slice?.vRepeatIn ?? 0
+  if (hR > 0 || vR > 0) {
+    doc.setDrawColor(197, 202, 233) // #c5cae9
+    doc.setLineWidth(0.5)
+    if (hR > 0) {
+      const hOff = patternHOffset(fabricWidthIn, hR)
+      const n = Math.ceil((fabricWidthIn - hOff) / hR) + 2
+      for (let i = 0; i < n; i++) {
+        const xIn = hOff + i * hR
+        if (xIn < -1e-6 || xIn > fabricWidthIn + 1e-6) continue
+        const { x } = fabricToPdf(xIn, sliceStart, scale, sliceStart)
+        doc.line(x, scale.originY, x, scale.originY + boltHpt)
+      }
+    }
+    if (vR > 0) {
+      const first = Math.floor(sliceStart / vR)
+      const last = Math.ceil(sliceEnd / vR) + 1
+      for (let j = first; j <= last; j++) {
+        const yIn = j * vR
+        if (yIn < sliceStart - 1e-6 || yIn > sliceEnd + 1e-6) continue
+        const { y } = fabricToPdf(0, yIn, scale, sliceStart)
+        doc.line(scale.originX, y, scale.originX + boltWpt, y)
+      }
+    }
+  }
 
   const firstYd = Math.floor(sliceStart / 36)
   const lastYd = Math.ceil(sliceEnd / 36)
@@ -535,6 +566,8 @@ export function exportPillowsPdf(input: ExportPillowsPdfInput): string {
       sliceStartIn: sl.startIn,
       sliceEndIn: sl.endIn,
       showWidthNote: i === slices.length - 1,
+      hRepeatIn,
+      vRepeatIn,
     })
 
     drawFooter(doc, margin, pageH)
