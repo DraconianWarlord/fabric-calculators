@@ -24,7 +24,7 @@ describe('nest preview panel counts', () => {
     const r = calculateThrowPillows({
       formWidthIn: 18, formLengthIn: 18, quantity: 1, fabricWidthIn: 54, pattern: 'horizontal',
     })
-    expect(throwNestPreview(r.pack, 54, { dogEar: true }).panels[0]?.polygon).toHaveLength(8)
+    expect(throwNestPreview(r.pack, 54, { dogEar: true }).panels[0]?.polygon).toHaveLength(12)
   })
 
   it('throw qty2 -> 4 panels', () => {

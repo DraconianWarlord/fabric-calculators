@@ -6,7 +6,7 @@ import {
 } from '@sailrite/calc-shell'
 import {
   dogEarPolygonPointsAttr,
-  dogEarSaMarks,
+  dogEarCornerMarks,
   dogEarTrimAlongEdge,
 } from '../lib/dogEar'
 import type { FillStyle } from '../lib/fillStyle'
@@ -70,16 +70,19 @@ export function ThrowReference(props: {
         <rect x={fx} y={fy} width={fw} height={fl} rx={2} {...fin} />
       )}
       {dogEarTrim &&
-        dogEarSaMarks(cutW, cutL).map((m) => (
-          <g key={m.corner}>
-            <circle cx={pad + m.a.x * scale} cy={pad + m.a.y * scale} r={1.2} fill={DIAGRAM_SR_BLUE} />
-            <circle cx={pad + m.b.x * scale} cy={pad + m.b.y * scale} r={1.2} fill={DIAGRAM_SR_BLUE} />
-          </g>
+        dogEarCornerMarks(cutW, cutL).map((m) => (
+          <circle
+            key={m.corner}
+            cx={pad + m.p.x * scale}
+            cy={pad + m.p.y * scale}
+            r={1.2}
+            fill={DIAGRAM_SR_BLUE}
+          />
         ))}
       {dogEarTrim && (
         <text x={pad} y={pad + cl + 12} className="diag-legend">
-          dog-ear side÷4 · e.g. {fmt(dogEarTrimAlongEdge(cutW), unit)} on{' '}
-          {fmt(cutW, unit)}
+          dog-ear: side÷4 to ½″ corner mark (ignores SA) · e.g.{' '}
+          {fmt(dogEarTrimAlongEdge(cutW), unit)} on {fmt(cutW, unit)}
         </text>
       )}
       {!compact && (

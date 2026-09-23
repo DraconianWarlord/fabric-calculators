@@ -2,17 +2,18 @@
  * Knife-edge dog-ear corner trim (throw only).
  *
  * Sailrite “How to Sew a Throw Pillow” (howto + video youtu.be/-Esvp31f65o ~3:19):
- * 1. Mark ½″ from the corner along each edge (SA reference)
- * 2. Trim distance = overall width ÷ 4 (e.g. 18″ → 4½″) — NO 2.5″ cap
- * 3. Strike a diagonal wedge that intersects the ½″ mark / opposite edge;
- *    same on both sides of the corner; cut the wedge (both layers / all corners)
+ * 1. From the corner, mark side ÷ 4 along each adjacent edge (18″ → 4½″)
+ * 2. Mark ½″ in from the corner (both directions → construction point at (0.5, 0.5)
+ *    in corner-local coords). This is a construction mark, NOT seam allowance.
+ * 3. Strike a line from each side÷4 edge mark to that ½″ corner mark; cut the wedge.
+ * 4. Repeat all corners. Dog-ear math ignores seamAllowanceIn entirely.
  *
- * Preview geometry: measure uncapped side÷4 along each edge from the corner →
- * octagon (same magnitude family as the Sailrite wedge; not a square chop).
+ * Preview geometry: 12-gon — per corner: edge mark → ½″ inset → other edge mark.
  * ReferenceSvg and NestPreviewSvg MUST use dogEarPanelPolygon — one path.
  */
 
-export const DOG_EAR_SA_MARK_IN = 0.5
+/** ½″ construction mark inset from the corner (not seam allowance). */
+export const DOG_EAR_CORNER_MARK_IN = 0.5
 export const DOG_EAR_TRIM_FRACTION = 0.25
 
 export type Point = { x: number; y: number }
@@ -26,15 +27,22 @@ export function dogEarPanelPolygon(widthIn: number, lengthIn: number): Point[] {
   // Clamp so trim stays strictly under half the side (degenerate edge guard).
   const tw = Math.min(dogEarTrimAlongEdge(widthIn), Math.max(0, widthIn / 2 - 1e-6))
   const tl = Math.min(dogEarTrimAlongEdge(lengthIn), Math.max(0, lengthIn / 2 - 1e-6))
+  // Inset must sit inside the wedge (before the edge marks).
+  const h = Math.min(DOG_EAR_CORNER_MARK_IN, Math.max(0, Math.min(tw, tl) - 1e-6))
+  // Clockwise from top edge: 3 pts × 4 corners = 12-gon.
   return [
     { x: tw, y: 0 },
     { x: widthIn - tw, y: 0 },
+    { x: widthIn - h, y: h }, // TR inset
     { x: widthIn, y: tl },
     { x: widthIn, y: lengthIn - tl },
+    { x: widthIn - h, y: lengthIn - h }, // BR inset
     { x: widthIn - tw, y: lengthIn },
     { x: tw, y: lengthIn },
+    { x: h, y: lengthIn - h }, // BL inset
     { x: 0, y: lengthIn - tl },
     { x: 0, y: tl },
+    { x: h, y: h }, // TL inset
   ]
 }
 
@@ -50,21 +58,24 @@ export function dogEarPolygonPointsAttr(
     .join(' ')
 }
 
-export function dogEarSaMarks(
+/** ½″ corner construction marks (one inset point per corner). Not seam allowance. */
+export function dogEarCornerMarks(
   widthIn: number,
   lengthIn: number,
-): { corner: string; a: Point; b: Point }[] {
-  const s = DOG_EAR_SA_MARK_IN
+): { corner: string; p: Point }[] {
+  const tw = Math.min(dogEarTrimAlongEdge(widthIn), Math.max(0, widthIn / 2 - 1e-6))
+  const tl = Math.min(dogEarTrimAlongEdge(lengthIn), Math.max(0, lengthIn / 2 - 1e-6))
+  const h = Math.min(DOG_EAR_CORNER_MARK_IN, Math.max(0, Math.min(tw, tl) - 1e-6))
   return [
-    { corner: 'tl', a: { x: s, y: 0 }, b: { x: 0, y: s } },
-    { corner: 'tr', a: { x: widthIn - s, y: 0 }, b: { x: widthIn, y: s } },
-    { corner: 'br', a: { x: widthIn - s, y: lengthIn }, b: { x: widthIn, y: lengthIn - s } },
-    { corner: 'bl', a: { x: s, y: lengthIn }, b: { x: 0, y: lengthIn - s } },
+    { corner: 'tl', p: { x: h, y: h } },
+    { corner: 'tr', p: { x: widthIn - h, y: h } },
+    { corner: 'br', p: { x: widthIn - h, y: lengthIn - h } },
+    { corner: 'bl', p: { x: h, y: lengthIn - h } },
   ]
 }
 
 export const DOG_EAR_CUT_LIST_NOTE =
-  'corners trimmed to reduce dog-ears (1/2" SA mark; trim at side÷4 each edge — Sailrite throw-pillow howto / video -Esvp31f65o ~3:19)'
+  'corners trimmed to reduce dog-ears (½″ corner mark; trim at side÷4 each edge — Sailrite throw-pillow howto / video -Esvp31f65o ~3:19; ignores SA)'
 
 export const DOG_EAR_OPTIONAL_NOTE =
-  'Optional — ½″ SA marks + side÷4 wedge (Sailrite). Some zipper+piping methods skip this.'
+  'Optional — side÷4 to ½″ corner mark wedge (Sailrite; ignores SA). Some zipper+piping methods skip this.'
