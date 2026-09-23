@@ -100,8 +100,9 @@
 }
 
 .calc-page--pillows .pillow-ref-compact {
-  max-width: 220px;
-  min-height: 6rem;
+  /* Left-stack Form×Fill diagram — full card width, secondary (not middle hero) */
+  max-width: 100%;
+  min-height: 8rem;
 }
 
 .calc-page--pillows .sidebar.left .card:last-child {
@@ -240,6 +241,12 @@
 .calc-page--pillows .ref-thumb[aria-current='true'] {
   border-width: 2px;
   border-color: var(--color-primary, #24285e);
+}
+
+.calc-page--pillows .ref-thumb--soon {
+  cursor: not-allowed;
+  opacity: 0.85;
+  background: var(--color-base-200, #fafafa);
 }
 
 @media (max-width: 800px) {

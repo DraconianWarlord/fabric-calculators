@@ -30,8 +30,19 @@ describe('pillows layout regressions', () => {
     expect(pageCss).toMatch(/@media \(max-width: 800px\)/)
   })
 
-  it('type cards are ≥44px Daisy ghost buttons', () => {
-    expect(pageTsx).toMatch(/btn btn-ghost h-auto min-h-11 w-full flex-col/)
+  it('form+fill chooser is Reference thumbs ≥44px (no separate Form/Fill cards)', () => {
+    expect(pageTsx).not.toMatch(/btn btn-ghost h-auto min-h-11 w-full flex-col/)
+    expect(pageTsx).not.toMatch(/^\s+form\s*$/m)
+    expect(pageTsx).not.toMatch(/^\s+fill\s*$/m)
+    expect(pageTsx).not.toMatch(/join w-full" role="group" aria-label="Fill style"/)
+    expect(pageTsx).toMatch(/className="ref-thumb/)
+    expect(pageTsx).toMatch(/ThrowFormThumb|FillStyleThumb/)
+    expect(pageTsx).toMatch(/aria-label="Pillow form"/)
+    expect(pageTsx).toMatch(/aria-label="Fill style"/)
+    expect(pageTsx).toMatch(/FILL_STYLE_HELP|BOLSTER_FILL_HELP/)
+    expect(pageTsx).toMatch(/Coming soon/)
+    expect(pageCss).toMatch(/\.ref-thumb\s*\{[^}]*min-height:\s*2\.75rem/)
+    expect(pageTsx).toMatch(/compact=\{false\}/)
   })
 
   it('unit toggles are Daisy join ≥44px and neutral when selected (not dual primary)', () => {
@@ -125,10 +136,12 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/Seam allowance/)
   })
 
-  it('compact reference strip lives in left stack (not hero above nest)', () => {
+  it('reference chooser lives in left stack (not hero above nest)', () => {
     expect(pageTsx).toMatch(/ThrowFormThumb|FillStyleThumb/)
     expect(referenceSvg).toMatch(/dogEarPanelPolygon|dogEarPolygonPointsAttr/)
     expect(pageTsx).toMatch(/reference/)
+    expect(pageTsx).toMatch(/sidebar left[\s\S]*?reference[\s\S]*?size/)
+    expect(pageTsx).not.toMatch(/canvas-wrap[\s\S]*?ThrowFormThumb/)
   })
 
   it('keeps Sailrite brand tokens (SR Blue / Alert Red)', () => {
@@ -196,11 +209,13 @@ describe('pillows layout regressions', () => {
     )
   })
 
-  it('left stack reference is after pattern (secondary) with scroll padding', () => {
-    const refAt = pageTsx.lastIndexOf('reference')
-    const patternAt = pageTsx.lastIndexOf('\n                pattern\n')
-    expect(patternAt).toBeGreaterThan(0)
-    expect(refAt).toBeGreaterThan(patternAt)
+  it('left stack order: reference → size → pattern (secondary chooser) with scroll padding', () => {
+    const refAt = pageTsx.indexOf('\n                reference\n')
+    const sizeAt = pageTsx.indexOf('\n                size\n')
+    const patternAt = pageTsx.indexOf('\n                pattern\n')
+    expect(refAt).toBeGreaterThan(0)
+    expect(sizeAt).toBeGreaterThan(refAt)
+    expect(patternAt).toBeGreaterThan(sizeAt)
     expect(pageCss).toMatch(/scroll-padding-bottom/)
     expect(pageCss).toMatch(/padding-bottom:\s*2rem/)
   })

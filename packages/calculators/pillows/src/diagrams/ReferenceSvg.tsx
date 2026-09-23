@@ -21,7 +21,7 @@ function fmt(inches: number, unit: Unit): string {
     : v.toFixed(0)
 }
 
-/** Compact cut/finished silhouette for left-stack reference (not a hero). */
+/** Form×Fill cut/finished silhouette for left-stack reference (secondary, not hero). */
 export function ThrowReference(props: {
   formW: number
   formL: number
