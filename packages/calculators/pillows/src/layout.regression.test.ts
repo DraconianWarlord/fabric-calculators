@@ -39,7 +39,8 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/ThrowFormThumb|FillStyleThumb/)
     expect(pageTsx).toMatch(/aria-label="Pillow form"/)
     expect(pageTsx).toMatch(/aria-label="Fill style"/)
-    expect(pageTsx).toMatch(/FILL_STYLE_HELP|BOLSTER_FILL_HELP/)
+    expect(pageTsx).toMatch(/Side\/Loft/)
+    expect(pageTsx).not.toMatch(/FILL_STYLE_HELP/)
     expect(pageTsx).toMatch(/Coming soon/)
     expect(pageCss).toMatch(/\.ref-thumb\s*\{[^}]*min-height:\s*2\.75rem/)
     expect(pageTsx).toMatch(/compact=\{false\}/)
@@ -95,11 +96,10 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).not.toMatch(/aria-label="Bolster pattern direction"/)
   })
 
-  it('yardage Shop is outline (not dual primary with header); header Shop outline + hidden on mobile', () => {
-    expect(pageTsx).toMatch(/btn btn-outline min-h-11/)
+  it('yardage Shop is Sailrite primary (btn-primary / SR Blue); header Shop outline + hidden on mobile', () => {
+    expect(pageTsx).toMatch(/className="btn btn-primary min-h-11"/)
     expect(pageTsx).toMatch(/shopFabricYardsLabel/)
-    // Results Shop must not be solid primary (header already has Shop)
-    expect(pageTsx).not.toMatch(/className="btn btn-primary min-h-11"/)
+    expect(pageTsx).not.toMatch(/btn btn-outline min-h-11/)
     expect(headerTsx).toMatch(/Shop Sailrite/)
     expect(headerTsx).toMatch(/btn btn-outline/)
     expect(headerTsx).toMatch(/hidden[\s\S]*?min-\[801px\]:inline-flex/)
@@ -117,14 +117,14 @@ describe('pillows layout regressions', () => {
     expect(referenceSvg).toMatch(/cutShapeSvgProps/)
     expect(referenceSvg).toMatch(/finishedShapeSvgProps/)
     expect(referenceSvg).toMatch(/CutFinishedKey/)
-    expect(referenceSvg).toMatch(/ThrowLoftKey/)
+    expect(referenceSvg).not.toMatch(/ThrowLoftKey/)
     expect(referenceSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_FINISHED_DASH|strokeDasharray/)
     expect(nestPreviewSvg).toMatch(/insetPolygon|seamAllowanceIn/)
-    // Nest cut panels keep dashed SA inset; throw loft uses mid stitch (no finished SA inset)
+    // Nest cut panels keep dashed SA inset; throw loft is finished silhouette (no mid stitch)
     expect(nestPreviewSvg).toMatch(/throwSeamAllowanceOutline|seamAllowanceIn|insetPolygon/)
-    expect(pageTsx).toMatch(/isBolster \? <CutFinishedKey \/> : <ThrowLoftKey \/>/)
+    expect(pageTsx).toMatch(/isBolster \? <CutFinishedKey \/> : null/)
     expect(pageTsx).not.toMatch(/stroke="#e75053"/)
     expect(referenceSvg).not.toMatch(/stroke="#e75053"/)
     expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
@@ -184,14 +184,16 @@ describe('pillows layout regressions', () => {
 
   it('throw fill Reference + FillStyleThumb are side/thickness loft views (not face-on)', () => {
     expect(referenceSvg).toMatch(/Throw reference thickness view/)
-    expect(referenceSvg).toMatch(/side \/ loft/)
+    expect(pageTsx).toMatch(/Side\/Loft/)
+    expect(referenceSvg).not.toMatch(/side \/ loft ·/)
+    expect(referenceSvg).not.toMatch(/form .* · cut .* · fin/)
     expect(referenceSvg).toMatch(/function throwLoftRatio/)
     expect(referenceSvg).toMatch(/function knifeEdgeSidePath/)
     expect(referenceSvg).toMatch(/export function FillStyleThumb[\s\S]*?knifeEdgeSidePath/)
     expect(referenceSvg).toMatch(/export function ThrowReference[\s\S]*?knifeEdgeSidePath/)
-    // Mid stitch along loft midline; no finished/SA dashed inset on thickness view
-    expect(referenceSvg).toMatch(
-      /export function ThrowReference[\s\S]*?stitchHalf[\s\S]*?strokeDasharray=\{DIAGRAM_FINISHED_DASH\}/,
+    // Large throw loft is finished pillow (no mid stitch / form-cut-fin labels)
+    expect(referenceSvg).not.toMatch(
+      /export function ThrowReference[\s\S]*?stitchHalf[\s\S]*?export function BolsterReference/,
     )
     expect(referenceSvg).toMatch(
       /export function FillStyleThumb[\s\S]*?stitchHalf[\s\S]*?strokeDasharray=\{DIAGRAM_FINISHED_DASH\}/,
@@ -298,4 +300,19 @@ describe('pillows layout regressions', () => {
     expect(pageCss).toMatch(/scroll-padding-bottom/)
     expect(pageCss).toMatch(/padding-bottom:\s*2rem/)
   })
+
+  it('yardage omits along-bolt helper; cut list uses qty: dims', () => {
+    expect(pageTsx).not.toMatch(/along bolt/)
+    expect(pageTsx).toMatch(/\{c\.qty\}: \{formatDim\(c\.widthIn, unit\)\}×\{formatDim\(c\.lengthIn, unit\)\}/)
+  })
+
+  it('Export PDF wired like Nesting (static import + header button + failure hint)', () => {
+    expect(pageTsx).toMatch(/import\s*\{\s*exportPillowsPdf\s*\}\s*from\s*'\.\/lib\/exportPdf'/)
+    expect(pageTsx).not.toMatch(/import\(\s*['"]\.\/lib\/exportPdf['"]\s*\)/)
+    expect(pageTsx).toMatch(/Export PDF/)
+    expect(pageTsx).toMatch(/export-pdf/)
+    expect(pageTsx).toMatch(/Export PDF failed/)
+    expect(pageTsx).toMatch(/ActionHintBanner/)
+  })
+
 })

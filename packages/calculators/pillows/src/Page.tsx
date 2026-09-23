@@ -23,7 +23,7 @@ import {
   calculateBolster,
   type BolsterFit,
 } from './lib/bolsterPillows'
-import { BOLSTER_SA_NOTE, FILL_STYLE_HELP } from './lib/fillStyle'
+import { BOLSTER_SA_NOTE } from './lib/fillStyle'
 import { DOG_EAR_OPTIONAL_NOTE } from './lib/dogEar'
 import { throwNestPreview, bolsterNestPreview } from './lib/nestPreview'
 import {
@@ -33,10 +33,38 @@ import {
   BolsterFormThumb,
   FillStyleThumb,
   CutFinishedKey,
-  ThrowLoftKey,
 } from './diagrams/ReferenceSvg'
 import { NestPreviewSvg } from './diagrams/NestPreviewSvg'
+import { exportPillowsPdf } from './lib/exportPdf'
 import './Page.css'
+
+function ActionHintBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  return (
+    <div
+      className="alert alert-error mx-3 mt-2 mb-2 flex items-center gap-3 px-4 py-2 text-sm font-semibold"
+      role="alert"
+    >
+      <p className="min-w-0 flex-1 whitespace-normal break-words">{message}</p>
+      <button
+        type="button"
+        className="btn btn-sm shrink-0 border-0 bg-white text-neutral hover:bg-white/90"
+        onClick={onDismiss}
+      >
+        Dismiss
+      </button>
+    </div>
+  )
+}
+
+function exportPillowsPdfClick(opts: Parameters<typeof exportPillowsPdf>[0]): string | null {
+  try {
+    // Static import keeps download inside the user-gesture (critical on mobile Safari).
+    return exportPillowsPdf(opts)
+  } catch (err) {
+    console.error('Export PDF failed', err)
+    return null
+  }
+}
 
 const SHOP = buildShopLinks('pillows', 'fabric_pillows')
 
@@ -64,6 +92,7 @@ export default function PillowsPage() {
   const [vRepeatDraft, setVRepeatDraft] = useState('0')
   const [bolsterRotation, setBolsterRotation] = useState<PanelRotation>(0)
   const [mobileView, setMobileView] = useState<'inputs' | 'results'>('results')
+  const [actionHint, setActionHint] = useState<string | null>(null)
 
   const formWidthIn = Math.max(0.1, toInches(Number(widthDraft) || 0, unit))
   const formLengthIn = Math.max(0.1, toInches(Number(lengthDraft) || 0, unit))
@@ -184,16 +213,69 @@ export default function PillowsPage() {
   useEffect(() => {
     if (!setHeaderStatus) return
     setHeaderStatus(
-      <div className="yards" aria-label="Yardage summary">
-        <span className="yards-exact">{exact.toFixed(2)} yd</span>
-        <span className="yards-order">Order {order} yd</span>
-      </div>,
+      <>
+        <div className="yards" aria-label="Yardage summary">
+          <span className="yards-exact">{exact.toFixed(2)} yd</span>
+          <span className="yards-order">Order {order} yd</span>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary btn-sm export-pdf min-h-9 border-base-100"
+          title="Open nest PDF in a new tab"
+          onClick={() => {
+            const ok = exportPillowsPdfClick({
+              pillowType: isBolster ? 'bolster' : 'throw',
+              fabricWidthIn,
+              seamAllowanceIn: isBolster ? 0 : seamAllowanceIn,
+              unit,
+              exact,
+              order,
+              quantity,
+              nest: nestModel,
+              cutList: isBolster ? bolsterResult.cutList : throwResult.cutList,
+              styleLabel: isBolster ? bolsterFit : throwFillStyle,
+              formWidthIn,
+              formLengthIn,
+              hRepeatIn,
+              vRepeatIn,
+              dogEarTrim: isBolster ? false : dogEarTrim,
+            })
+            if (ok == null) {
+              setActionHint('Export PDF failed — try again, or adjust inputs and retry.')
+            }
+          }}
+        >
+          Export PDF
+        </button>
+      </>,
     )
     return () => setHeaderStatus(null)
-  }, [setHeaderStatus, exact, order])
+  }, [
+    setHeaderStatus,
+    exact,
+    order,
+    isBolster,
+    fabricWidthIn,
+    seamAllowanceIn,
+    unit,
+    quantity,
+    nestModel,
+    bolsterResult.cutList,
+    throwResult.cutList,
+    bolsterFit,
+    throwFillStyle,
+    formWidthIn,
+    formLengthIn,
+    hRepeatIn,
+    vRepeatIn,
+    dogEarTrim,
+  ])
 
   return (
     <div className="calc-page calc-page--pillows">
+      {actionHint && (
+        <ActionHintBanner message={actionHint} onDismiss={() => setActionHint(null)} />
+      )}
       <nav
         className="mobile-tabs hidden shrink-0 gap-1.5 border-b border-base-300 bg-base-100 px-2.5 py-1.5 max-[800px]:flex"
         aria-label="Main sections"
@@ -261,6 +343,9 @@ export default function PillowsPage() {
               ) : null}
               {!isBolster && (
                 <>
+                  <h3 className="mb-0 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                    Side/Loft
+                  </h3>
                   <div className="ref-thumbs ref-thumbs--fill" role="group" aria-label="Fill style">
                     {(['flat', 'standard', 'plump'] as const).map((val) => (
                       <button
@@ -275,9 +360,6 @@ export default function PillowsPage() {
                       </button>
                     ))}
                   </div>
-                  <span className="field-help mt-0 text-xs leading-snug text-base-content/60">
-                    {FILL_STYLE_HELP[throwFillStyle]}
-                  </span>
                 </>
               )}
               {isBolster ? (
@@ -305,7 +387,7 @@ export default function PillowsPage() {
                   compact={false}
                 />
               )}
-              {isBolster ? <CutFinishedKey /> : <ThrowLoftKey />}
+              {isBolster ? <CutFinishedKey /> : null}
             </div>
           </section>
 
@@ -567,13 +649,6 @@ export default function PillowsPage() {
               <div className="results-yards mb-3 flex flex-wrap gap-x-6 gap-y-3">
                 <div>
                   <div className="text-3xl font-extrabold tracking-tight">{exact.toFixed(2)} yd</div>
-                  <div className="text-xs text-base-content/60">
-                    {formatDim(
-                      isBolster ? bolsterResult.nest.lengthInches : throwResult.pack.lengthInches,
-                      unit,
-                    )}{' '}
-                    {unitLabel} along bolt
-                  </div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-primary">Order {order} yd</div>
@@ -586,7 +661,7 @@ export default function PillowsPage() {
                   : `${quantity} pillow${quantity === 1 ? '' : 's'} → ${panelsNeeded} panels (throw)`}
               </p>
               <a
-                className="btn btn-outline min-h-11"
+                className="btn btn-primary min-h-11"
                 href={SHOP.fabric}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -605,7 +680,7 @@ export default function PillowsPage() {
                 {(isBolster ? bolsterResult.cutList : throwResult.cutList).map((c) => (
                   <li key={c.label}>
                     <strong>
-                      {c.qty}× {formatDim(c.widthIn, unit)} × {formatDim(c.lengthIn, unit)}{' '}
+                      {c.qty}: {formatDim(c.widthIn, unit)}×{formatDim(c.lengthIn, unit)}{' '}
                       {unitLabel}
                     </strong>
                     <span>{c.label}{'note' in c && c.note ? ` — ${c.note}` : ''}</span>
