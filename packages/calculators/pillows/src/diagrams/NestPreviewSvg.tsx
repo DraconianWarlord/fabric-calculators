@@ -5,7 +5,7 @@ import {
   DIAGRAM_SR_BLUE,
 } from '@sailrite/calc-shell'
 import { insetPolygon } from '../lib/insetPolygon'
-import { patternHOffset, type NestPreviewModel } from '../lib/nestPreview'
+import { patternHOffset, yardMajorInches, type NestPreviewModel } from '../lib/nestPreview'
 import { fromInches, type Unit } from '../lib/throwPillows'
 
 function fmt(inches: number, unit: Unit): string {
@@ -29,6 +29,11 @@ const SA_STROKE: CSSProperties = {
 const BOLT_STROKE: CSSProperties = {
   vectorEffect: 'non-scaling-stroke',
   strokeWidth: 1.5,
+}
+/** Nesting .tick-major — non-scaling so lines stay crisp as nest grows. */
+const YARD_TICK_STROKE: CSSProperties = {
+  vectorEffect: 'non-scaling-stroke',
+  strokeWidth: 1.75,
 }
 
 /**
@@ -58,6 +63,8 @@ export function NestPreviewSvg({
   const hOff = patternHOffset(fabricW, hRepeatIn)
   const showGrid = hRepeatIn > 0 || vRepeatIn > 0
   const sa = Math.max(0, seamAllowanceIn)
+  // Nesting Page.tsx ~1004–1008 / ~1629–1644 — majors every 36″ + labels
+  const yardMajors = yardMajorInches(len)
 
   if (model.panels.length === 0) {
     return (
@@ -117,6 +124,31 @@ export function NestPreviewSvg({
                 })}
             </g>
           )}
+          {yardMajors.map((yIn) => {
+            if (yIn > len + 1e-6) return null
+            const yd = yIn / 36
+            return (
+              <g key={`y-${yIn}`}>
+                <line
+                  x1={pad}
+                  x2={pad + fabricW}
+                  y1={pad + yIn}
+                  y2={pad + yIn}
+                  className="tick tick-major"
+                  stroke="rgba(20, 20, 20, 0.7)"
+                  style={YARD_TICK_STROKE}
+                />
+                <text
+                  x={pad + 0.15}
+                  y={pad + yIn}
+                  dy={yIn === 0 ? '1.1em' : '-0.35em'}
+                  className="tick-label"
+                >
+                  {yd === 0 ? '0' : `${yd} yd`}
+                </text>
+              </g>
+            )
+          })}
           {model.panels.map((p, i) => {
             const x = pad + p.x
             const y = pad + p.y

@@ -223,7 +223,22 @@ describe('pillows layout regressions', () => {
     expect(nestPreviewSvg).toMatch(/text-sm/)
     expect(nestPreviewSvg).toMatch(/text-base-content/)
     expect(nestPreviewSvg).not.toMatch(/text-base-content\/7/)
-    expect(nestPreviewSvg).not.toMatch(/<text[\s\S]*bolt/i)
+    // Captions are HTML ({boltCaption}); SVG <text> reserved for yard tick-labels
+    expect(nestPreviewSvg).toMatch(/className="tick-label"/)
+    expect(nestPreviewSvg).not.toMatch(/<text[^>]*>[^<]*Bolt/)
+    expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
+  })
+
+  it('nest preview yard ticks match Nesting (majors every 36″ + tick-label)', () => {
+    expect(nestPreviewSvg).toMatch(/yardMajorInches/)
+    expect(nestPreviewSvg).toMatch(/tick tick-major/)
+    expect(nestPreviewSvg).toMatch(/tick-label/)
+    expect(nestPreviewSvg).toMatch(/rgba\(20, 20, 20, 0\.7\)/)
+    expect(nestPreviewSvg).toMatch(/YARD_TICK_STROKE/)
+    expect(pageCss).toMatch(/\.pillow-nest-preview \.tick-label/)
+    expect(pageCss).toMatch(/font-size:\s*13px/)
+    expect(pageCss).toMatch(/font-weight:\s*700/)
+    // Captions stay HTML; yard marks are Nesting-style SVG labels (13px CSS, not viewBox-scaled)
     expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
   })
 

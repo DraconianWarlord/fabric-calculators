@@ -7,6 +7,7 @@ import {
   patternHOffset,
   snapPanelToPatternCenter,
   throwNestPreview,
+  yardMajorInches,
 } from './nestPreview'
 
 describe('nest preview panel counts', () => {
@@ -165,5 +166,29 @@ describe('nest preview panel counts', () => {
     expect(mh.panels.map((p) => [p.x, p.y, p.w, p.h])).toEqual(
       mv.panels.map((p) => [p.x, p.y, p.w, p.h]),
     )
+  })
+})
+
+describe('yardMajorInches (Nesting-parity)', () => {
+  it('matches Nesting majors: 0..ceil(len/36)+1 steps of 36', () => {
+    expect(yardMajorInches(36)).toEqual([0, 36, 72])
+    expect(yardMajorInches(40)).toEqual([0, 36, 72, 108])
+    expect(yardMajorInches(1)).toEqual([0, 36, 72])
+  })
+
+  it('tracks lengthInches from nest model so ticks update when cut dims change', () => {
+    const short = calculateThrowPillows({
+      formWidthIn: 18, formLengthIn: 18, quantity: 1, fabricWidthIn: 54, pattern: 'horizontal',
+    })
+    const long = calculateThrowPillows({
+      formWidthIn: 18, formLengthIn: 18, quantity: 4, fabricWidthIn: 54, pattern: 'horizontal',
+    })
+    const mShort = throwNestPreview(short.pack, 54)
+    const mLong = throwNestPreview(long.pack, 54)
+    expect(mLong.lengthInches).toBeGreaterThan(mShort.lengthInches)
+    const ticksShort = yardMajorInches(mShort.lengthInches).filter((y) => y <= mShort.lengthInches + 1e-6)
+    const ticksLong = yardMajorInches(mLong.lengthInches).filter((y) => y <= mLong.lengthInches + 1e-6)
+    expect(ticksLong.length).toBeGreaterThanOrEqual(ticksShort.length)
+    expect(ticksLong.at(-1)).toBeGreaterThanOrEqual(mLong.lengthInches > 36 ? 36 : 0)
   })
 })

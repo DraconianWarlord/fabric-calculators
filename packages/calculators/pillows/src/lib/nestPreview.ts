@@ -33,6 +33,18 @@ export function patternHOffset(fabricWidthIn: number, hRepeatIn: number): number
   return (fabricWidthIn % hRepeatIn) / 2
 }
 
+/**
+ * Major yard marks along bolt length (inches), same contract as Nesting Page yardTicks.
+ * Includes one step past ceil(length/36) so the end of a partial yard still gets a mark
+ * when the canvas is tall enough; callers clip draw to the bolt rect.
+ */
+export function yardMajorInches(lengthInches: number): number[] {
+  const majors: number[] = []
+  const maxYd = Math.ceil(Math.max(0, lengthInches) / 36) + 1
+  for (let yd = 0; yd <= maxYd; yd++) majors.push(yd * 36)
+  return majors
+}
+
 /** Snap panel top-left so its center lands on the nearest pattern cell/stripe center. */
 export function snapPanelToPatternCenter(
   panelW: number,
