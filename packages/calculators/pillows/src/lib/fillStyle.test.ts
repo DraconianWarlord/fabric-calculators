@@ -1,14 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-  BOLSTER_PATTERNING_ADD_IN,
   DEFAULT_FILL_STYLE,
   THROW_CUT_DELTA_IN,
-  bolsterPatterningAdd,
   throwCutFace,
   throwFinishedFace,
 } from './fillStyle'
 import { calculateThrowPillows, cutPanelSize, finishedSize } from './throwPillows'
-import { bolsterCuts, calculateBolster } from './bolsterPillows'
 
 describe('Videos Expert throw fill deltas', () => {
   it('documents Flat +1 / Standard 0 / Plump -1', () => {
@@ -49,34 +46,5 @@ describe('Videos Expert throw fill deltas', () => {
     expect(flat.cutWidthIn).toBe(19)
     expect(plump.cutWidthIn).toBe(17)
     expect(plump.pack.lengthInches).toBeLessThan(flat.pack.lengthInches)
-  })
-})
-
-describe('Videos Expert bolster patterning adds', () => {
-  it('Flat/Standard +1, Plump +0.5', () => {
-    expect(BOLSTER_PATTERNING_ADD_IN.flat).toBe(1)
-    expect(BOLSTER_PATTERNING_ADD_IN.standard).toBe(1)
-    expect(BOLSTER_PATTERNING_ADD_IN.plump).toBe(0.5)
-    expect(bolsterPatterningAdd('plump')).toBe(0.5)
-  })
-
-  it('Standard: end=D+1, along=L+1, circ=πD+2', () => {
-    const c = bolsterCuts(8, 20, 'standard')
-    expect(c.endDiameterIn).toBe(9)
-    expect(c.barrelAlongIn).toBe(21)
-    expect(c.barrelCircIn).toBeCloseTo(Math.PI * 8 + 2, 5)
-  })
-
-  it('Plump matches legacy Regular (+0.5)', () => {
-    expect(bolsterCuts(8, 20, 'plump')).toEqual(bolsterCuts(8, 20, 'regular'))
-    expect(bolsterCuts(8, 20, 'plump').endDiameterIn).toBe(8.5)
-  })
-
-  it('calculateBolster defaults to Standard (+1)', () => {
-    const r = calculateBolster({
-      diameterIn: 8, lengthIn: 20, quantity: 1, fabricWidthIn: 54, pattern: 'horizontal',
-    })
-    expect(r.fillStyle).toBe('standard')
-    expect(r.cuts.endDiameterIn).toBe(9)
   })
 })

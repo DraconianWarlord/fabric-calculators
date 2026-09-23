@@ -9,11 +9,6 @@
  */
 
 import {
-  DEFAULT_FILL_STYLE,
-  bolsterPatterningAdd,
-  type FillStyle,
-} from './fillStyle'
-import {
   DEFAULT_FABRIC_WIDTH_IN,
   MAX_QUANTITY,
   MIN_QUANTITY,
@@ -25,8 +20,7 @@ import {
   type Unit,
 } from './throwPillows'
 
-export type { Unit, FillStyle }
-export { DEFAULT_FILL_STYLE }
+export type { Unit }
 export { DEFAULT_FABRIC_WIDTH_IN, MAX_QUANTITY, MIN_QUANTITY, fromInches, toInches }
 
 export type BolsterPattern = 'horizontal' | 'vertical'
@@ -64,8 +58,7 @@ export type BolsterInput = {
   quantity: number
   fabricWidthIn: number
   pattern: BolsterPattern
-  fillStyle?: FillStyle
-  /** @deprecated Prefer fillStyle. regular->plump, tight->no add. */
+  /** Regular adds ½″; tight uses no cut add and a 1″ finished reduction. */
   fit?: BolsterFit
 }
 
@@ -91,7 +84,6 @@ export type BolsterNesting = {
 }
 
 export type BolsterResult = {
-  fillStyle: FillStyle
   cuts: BolsterCuts
   nest: BolsterNesting
   pipingIn: number
@@ -105,32 +97,29 @@ export type BolsterResult = {
 export function bolsterCuts(
   diameterIn: number,
   lengthIn: number,
-  fillOrFit: FillStyle | BolsterFit = DEFAULT_FILL_STYLE,
-): BolsterCuts {
-  if (fillOrFit === 'regular' || fillOrFit === 'tight') {
-    return bolsterCutsFromFit(diameterIn, lengthIn, fillOrFit)
-  }
-  const add = bolsterPatterningAdd(fillOrFit)
-  const endDiameterIn = diameterIn + add
-  const barrelAlongIn = lengthIn + add
-  const barrelCircIn = Math.PI * (endDiameterIn - 1) + CLOSURE_OVERLAP_IN
-  return { endDiameterIn, barrelAlongIn, barrelCircIn }
-}
-
-/** @deprecated Prefer fillStyle. regular->plump (+0.5"), tight->no add. */
-export function bolsterCutsFromFit(
-  diameterIn: number,
-  lengthIn: number,
-  fit: BolsterFit,
+  fit: BolsterFit = 'regular',
 ): BolsterCuts {
   if (fit === 'regular') {
-    return bolsterCuts(diameterIn, lengthIn, 'plump')
+    return {
+      endDiameterIn: diameterIn + REGULAR_SEAM_ALLOWANCE_IN,
+      barrelAlongIn: lengthIn + REGULAR_SEAM_ALLOWANCE_IN,
+      barrelCircIn: Math.PI * (diameterIn - REGULAR_SEAM_ALLOWANCE_IN) + CLOSURE_OVERLAP_IN,
+    }
   }
   return {
     endDiameterIn: diameterIn,
     barrelAlongIn: lengthIn,
     barrelCircIn: Math.PI * (diameterIn - TIGHT_FINISHED_REDUCTION_IN) + CLOSURE_OVERLAP_IN,
   }
+}
+
+/** Backward-compatible explicit fit helper. */
+export function bolsterCutsFromFit(
+  diameterIn: number,
+  lengthIn: number,
+  fit: BolsterFit,
+): BolsterCuts {
+  return bolsterCuts(diameterIn, lengthIn, fit)
 }
 
 /**
@@ -205,13 +194,8 @@ export function zipperInches(barrelAlongIn: number, quantity: number): number {
 }
 
 export function calculateBolster(input: BolsterInput): BolsterResult {
-  const { diameterIn, lengthIn, quantity, fabricWidthIn, pattern, fillStyle, fit } = input
-  const cuts =
-    fillStyle != null
-      ? bolsterCuts(diameterIn, lengthIn, fillStyle)
-      : fit != null
-        ? bolsterCutsFromFit(diameterIn, lengthIn, fit)
-        : bolsterCuts(diameterIn, lengthIn, DEFAULT_FILL_STYLE)
+  const { diameterIn, lengthIn, quantity, fabricWidthIn, pattern, fit = 'regular' } = input
+  const cuts = bolsterCuts(diameterIn, lengthIn, fit)
   const nest = nestBolster(cuts, quantity, fabricWidthIn, pattern)
 
   const pipingIn = bolsterPipingInches(cuts.endDiameterIn, quantity)
@@ -245,7 +229,6 @@ export function calculateBolster(input: BolsterInput): BolsterResult {
   ]
 
   return {
-    fillStyle: fillStyle ?? (fit === 'regular' ? 'plump' : DEFAULT_FILL_STYLE),
     cuts,
     nest,
     pipingIn,

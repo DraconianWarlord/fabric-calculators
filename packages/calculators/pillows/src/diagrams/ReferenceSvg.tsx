@@ -99,11 +99,9 @@ export function BolsterReference(props: {
   barrelAlongIn: number
   barrelCircIn: number
   unit: Unit
-  fillStyle: FillStyle
   compact?: boolean
 }) {
-  const { diameterIn, lengthIn, endDiameterIn, barrelAlongIn, barrelCircIn, unit, fillStyle } =
-    props
+  const { diameterIn, lengthIn, endDiameterIn, barrelAlongIn, barrelCircIn, unit } = props
   const compact = props.compact ?? true
   const r = compact ? 22 : 36
   const bodyW = compact ? 72 : 120
@@ -119,7 +117,7 @@ export function BolsterReference(props: {
       className="pillow-diagram pillow-ref-compact"
       viewBox={`0 0 ${svgW} ${svgH}`}
       role="img"
-      aria-label={`Bolster reference ${fillStyle}`}
+      aria-label="Bolster reference profile view"
     >
       <ellipse cx={cx} cy={cy} rx={r * 0.45} ry={r} {...cut} />
       <rect x={cx} y={cy - r} width={bodyW} height={bodyH} fill={DIAGRAM_CUT_FILL} stroke="none" />
@@ -136,7 +134,7 @@ export function BolsterReference(props: {
       <line x1={cx} y1={cy - r} x2={cx + bodyW} y2={cy - r} stroke={DIAGRAM_SR_BLUE} strokeWidth={2} />
       <line x1={cx} y1={cy + r} x2={cx + bodyW} y2={cy + r} stroke={DIAGRAM_SR_BLUE} strokeWidth={2} />
       <text x={cx + bodyW / 2} y={cy - r - 4} textAnchor="middle" className="diag-label">
-        B {fmt(lengthIn, unit)}→{fmt(barrelAlongIn, unit)} ({fillStyle})
+        B {fmt(lengthIn, unit)}→{fmt(barrelAlongIn, unit)}
       </text>
       <text x={cx + bodyW + 8} y={cy - 6} className="diag-legend">
         end ⌀{fmt(endDiameterIn, unit)}

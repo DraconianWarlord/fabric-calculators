@@ -39,7 +39,7 @@ describe('nest preview panel counts', () => {
   it('bolster qty1 plump: 1 barrel + 2 ends', () => {
     const r = calculateBolster({
       diameterIn: 8, lengthIn: 20, quantity: 1, fabricWidthIn: 54,
-      pattern: 'horizontal', fillStyle: 'plump',
+      pattern: 'horizontal', fit: 'regular',
     })
     const model = bolsterNestPreview(r.cuts, r.nest, 1, 54)
     expect(countNestPanels(model, 'barrel')).toBe(1)

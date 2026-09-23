@@ -74,6 +74,20 @@ describe('live Sailrite bolster parity — Regular Horizontal 8×20 qty2 @54', (
   })
 })
 
+describe('bolster defaults to independent fit math', () => {
+  it('default cuts use Regular fit, not throw fill styles', () => {
+    const r = calculateBolster({
+      diameterIn: 8,
+      lengthIn: 20,
+      quantity: 1,
+      fabricWidthIn: 54,
+      pattern: 'horizontal',
+    })
+    expect(r.cuts.endDiameterIn).toBe(8.5)
+    expect(r.cuts.barrelAlongIn).toBe(20.5)
+  })
+})
+
 describe('bolster nesting variants', () => {
   it('qty1 Regular H nests ends beside barrel → 25.56 in', () => {
     const r = calculateBolster({

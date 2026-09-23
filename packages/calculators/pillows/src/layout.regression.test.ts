@@ -45,6 +45,20 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).toMatch(/compact=\{false\}/)
   })
 
+  it('bolster hides throw fill chooser and uses independent fit math', () => {
+    expect(pageTsx).toMatch(/!isBolster\s*&&\s*\(\s*<>[\s\S]*?FillStyleThumb/)
+    expect(pageTsx).toMatch(/pattern: bolsterPattern,[\s\S]*?fit: bolsterFit/)
+    expect(pageTsx).not.toMatch(/calculateBolster\([\s\S]*?fillStyle:/)
+    expect(pageTsx).toMatch(/setThrowFillStyle/)
+  })
+
+  it('bolster references are single horizontal profile silhouettes', () => {
+    expect(referenceSvg).toMatch(/aria-label="Bolster reference profile view"/)
+    expect(referenceSvg).toMatch(/const bodyW = compact \? 72 : 120/)
+    expect(referenceSvg).toMatch(/export function BolsterFormThumb[\s\S]*?<ellipse[\s\S]*?<rect[\s\S]*?<ellipse/)
+    expect(referenceSvg).not.toMatch(/Bolster reference \$\{fillStyle\}/)
+  })
+
   it('unit toggles are Daisy join ≥44px and neutral when selected (not dual primary)', () => {
     expect(pageTsx).toMatch(/className="join(?: w-full)?"/)
     expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{unit === 'in' \? 'btn-neutral'/)

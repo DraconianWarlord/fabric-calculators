@@ -21,9 +21,10 @@ import {
 } from './lib/throwPillows'
 import {
   calculateBolster,
+  type BolsterFit,
   type BolsterPattern,
 } from './lib/bolsterPillows'
-import { BOLSTER_FILL_HELP, BOLSTER_SA_NOTE, FILL_STYLE_HELP } from './lib/fillStyle'
+import { BOLSTER_SA_NOTE, FILL_STYLE_HELP } from './lib/fillStyle'
 import { DOG_EAR_OPTIONAL_NOTE } from './lib/dogEar'
 import { throwNestPreview, bolsterNestPreview } from './lib/nestPreview'
 import {
@@ -56,7 +57,8 @@ export default function PillowsPage() {
   const [quantity, setQuantity] = useState(1)
   const [pattern, setPattern] = useState<PatternDirection>('horizontal')
   const [pillowTypeId, setPillowTypeId] = useState('throw')
-  const [fillStyle, setFillStyle] = useState<FillStyle>(DEFAULT_FILL_STYLE)
+  const [throwFillStyle, setThrowFillStyle] = useState<FillStyle>(DEFAULT_FILL_STYLE)
+  const [bolsterFit, setBolsterFit] = useState<BolsterFit>('regular')
   const [dogEarTrim, setDogEarTrim] = useState(false)
   const [hRepeatDraft, setHRepeatDraft] = useState('0')
   const [vRepeatDraft, setVRepeatDraft] = useState('0')
@@ -80,7 +82,7 @@ export default function PillowsPage() {
         quantity,
         fabricWidthIn,
         pattern,
-        fillStyle,
+        fillStyle: throwFillStyle,
         dogEarTrim,
         seamAllowanceIn,
         hRepeatIn,
@@ -92,7 +94,7 @@ export default function PillowsPage() {
       quantity,
       fabricWidthIn,
       pattern,
-      fillStyle,
+      throwFillStyle,
       dogEarTrim,
       seamAllowanceIn,
       hRepeatIn,
@@ -108,9 +110,9 @@ export default function PillowsPage() {
         quantity,
         fabricWidthIn,
         pattern: bolsterPattern,
-        fillStyle,
+        fit: bolsterFit,
       }),
-    [formWidthIn, formLengthIn, quantity, fabricWidthIn, bolsterPattern, fillStyle],
+    [formWidthIn, formLengthIn, quantity, fabricWidthIn, bolsterPattern, bolsterFit],
   )
 
   const nestModel = useMemo(() => {
@@ -166,6 +168,7 @@ export default function PillowsPage() {
       setWidthDraft(unit === 'in' ? '8' : String(Math.round(8 * 25.4)))
       setLengthDraft(unit === 'in' ? '20' : String(Math.round(20 * 25.4)))
       setBolsterPattern('horizontal')
+      setBolsterFit('regular')
     } else {
       setWidthDraft(unit === 'in' ? '18' : String(Math.round(18 * 25.4)))
       setLengthDraft(unit === 'in' ? '18' : String(Math.round(18 * 25.4)))
@@ -254,23 +257,27 @@ export default function PillowsPage() {
                     .join(', ')}
                 </p>
               ) : null}
-              <div className="ref-thumbs ref-thumbs--fill" role="group" aria-label="Fill style">
-                {(['flat', 'standard', 'plump'] as const).map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    className="ref-thumb"
-                    aria-current={fillStyle === val ? 'true' : undefined}
-                    onClick={() => setFillStyle(val)}
-                  >
-                    <FillStyleThumb fill={val} selected={fillStyle === val} />
-                    {val}
-                  </button>
-                ))}
-              </div>
-              <span className="field-help mt-0 text-xs leading-snug text-base-content/60">
-                {isBolster ? BOLSTER_FILL_HELP[fillStyle] : FILL_STYLE_HELP[fillStyle]}
-              </span>
+              {!isBolster && (
+                <>
+                  <div className="ref-thumbs ref-thumbs--fill" role="group" aria-label="Fill style">
+                    {(['flat', 'standard', 'plump'] as const).map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        className="ref-thumb"
+                        aria-current={throwFillStyle === val ? 'true' : undefined}
+                        onClick={() => setThrowFillStyle(val)}
+                      >
+                        <FillStyleThumb fill={val} selected={throwFillStyle === val} />
+                        {val}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="field-help mt-0 text-xs leading-snug text-base-content/60">
+                    {FILL_STYLE_HELP[throwFillStyle]}
+                  </span>
+                </>
+              )}
               {isBolster ? (
                 <BolsterReference
                   diameterIn={formWidthIn}
@@ -279,7 +286,6 @@ export default function PillowsPage() {
                   barrelAlongIn={bolsterResult.cuts.barrelAlongIn}
                   barrelCircIn={bolsterResult.cuts.barrelCircIn}
                   unit={unit}
-                  fillStyle={fillStyle}
                   compact={false}
                 />
               ) : (
@@ -291,7 +297,7 @@ export default function PillowsPage() {
                   finishedW={throwResult.finishedWidthIn}
                   finishedL={throwResult.finishedLengthIn}
                   unit={unit}
-                  fillStyle={fillStyle}
+                  fillStyle={throwFillStyle}
                   dogEarTrim={dogEarTrim}
                   compact={false}
                 />
@@ -441,9 +447,10 @@ export default function PillowsPage() {
               </h2>
               <div className="flex flex-col gap-4">
                 {isBolster ? (
-                  <fieldset className="m-0 min-w-0 border-0 p-0">
-                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
-                      pattern direction
+                  <>
+                    <fieldset className="m-0 min-w-0 border-0 p-0">
+                      <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                        pattern direction
                     </legend>
                     <div className="join w-full" role="group" aria-label="Bolster pattern direction">
                       {(
@@ -463,7 +470,29 @@ export default function PillowsPage() {
                         </button>
                       ))}
                     </div>
-                  </fieldset>
+                    </fieldset>
+                    <fieldset className="m-0 min-w-0 border-0 p-0">
+                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                      bolster fit
+                    </legend>
+                    <div className="join w-full" role="group" aria-label="Bolster fit">
+                      {([['regular', 'regular'], ['tight', 'tight']] as const).map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterFit === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                          aria-pressed={bolsterFit === val}
+                          onClick={() => setBolsterFit(val)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
+                      regular adds ½″ seam allowance; tight cuts to form and finishes about 1″ smaller.
+                    </span>
+                    </fieldset>
+                  </>
                 ) : (
                   <fieldset className="m-0 min-w-0 border-0 p-0">
                     <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
