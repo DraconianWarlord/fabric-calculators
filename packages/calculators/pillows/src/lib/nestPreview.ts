@@ -139,6 +139,10 @@ export function bolsterNestPreview(
 ): NestPreviewModel {
   const panels: NestPanelPlacement[] = []
   const endD = cuts.endDiameterIn
+  const barrelAcrossPitch = nest.barrelAcrossPitchIn ?? nest.barrelAcrossIn
+  const barrelAlongPitch = nest.barrelAlongPitchIn ?? nest.barrelAlongBoltIn
+  const endPitch = nest.endPitchIn ?? endD
+  const endAlongPitch = nest.endAlongPitchIn ?? endD
   let endsPlaced = 0
   const endsNeeded = quantity * 2
   const hR = opts.hRepeatIn ?? 0
@@ -149,10 +153,10 @@ export function bolsterNestPreview(
       row < nest.barrelRows - 1
         ? nest.barrelAcrossCount
         : quantity - (nest.barrelRows - 1) * nest.barrelAcrossCount
-    const y0 = row * nest.barrelAlongBoltIn
+    const y0 = row * barrelAlongPitch
     for (let col = 0; col < barrelsInRow; col++) {
-      let x = col * nest.barrelAcrossIn
-      let y = y0
+      let x = col * barrelAcrossPitch + (barrelAcrossPitch - nest.barrelAcrossIn) / 2
+      let y = y0 + (barrelAlongPitch - nest.barrelAlongBoltIn) / 2
       if (hR > 0 || vR > 0) {
         const snapped = snapPanelToPatternCenter(
           nest.barrelAcrossIn,
@@ -175,12 +179,12 @@ export function bolsterNestPreview(
         label: `barrel ${panels.filter((p) => p.kind === 'barrel').length + 1}`,
       })
     }
-    const free = fabricWidthIn - barrelsInRow * nest.barrelAcrossIn
-    const endsThisRow = Math.max(0, Math.floor(free / endD + 1e-9))
+    const free = fabricWidthIn - barrelsInRow * barrelAcrossPitch
+    const endsThisRow = Math.max(0, Math.floor(free / endPitch + 1e-9))
     const place = Math.min(endsThisRow, endsNeeded - endsPlaced)
     for (let e = 0; e < place; e++) {
-      let x = barrelsInRow * nest.barrelAcrossIn + e * endD
-      let y = y0
+      let x = barrelsInRow * barrelAcrossPitch + e * endPitch + (endPitch - endD) / 2
+      let y = y0 + (barrelAlongPitch - nest.barrelAlongBoltIn) / 2
       if (hR > 0 || vR > 0) {
         const snapped = snapPanelToPatternCenter(endD, endD, x, y, fabricWidthIn, hR, vR)
         x = snapped.x
@@ -200,12 +204,12 @@ export function bolsterNestPreview(
 
   const endsRemaining = Math.max(0, endsNeeded - endsPlaced)
   if (endsRemaining > 0) {
-    const endAcross = Math.max(1, Math.floor(fabricWidthIn / endD + 1e-9))
+    const endAcross = Math.max(1, Math.floor(fabricWidthIn / endPitch + 1e-9))
     for (let i = 0; i < endsRemaining; i++) {
       const row = Math.floor(i / endAcross)
       const col = i % endAcross
-      let x = col * endD
-      let y = nest.barrelUsedAlongIn + row * endD
+      let x = col * endPitch + (endPitch - endD) / 2
+      let y = nest.barrelUsedAlongIn + row * endAlongPitch
       if (hR > 0 || vR > 0) {
         const snapped = snapPanelToPatternCenter(endD, endD, x, y, fabricWidthIn, hR, vR)
         x = snapped.x

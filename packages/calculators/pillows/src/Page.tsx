@@ -16,13 +16,12 @@ import {
   fromInches,
   toInches,
   type FillStyle,
-  type PatternDirection,
+  type PanelRotation,
   type Unit,
 } from './lib/throwPillows'
 import {
   calculateBolster,
   type BolsterFit,
-  type BolsterPattern,
 } from './lib/bolsterPillows'
 import { BOLSTER_SA_NOTE, FILL_STYLE_HELP } from './lib/fillStyle'
 import { DOG_EAR_OPTIONAL_NOTE } from './lib/dogEar'
@@ -55,14 +54,14 @@ export default function PillowsPage() {
   const [fabricDraft, setFabricDraft] = useState(String(DEFAULT_FABRIC_WIDTH_IN))
   const [seamDraft, setSeamDraft] = useState(String(SEAM_ALLOWANCE_IN))
   const [quantity, setQuantity] = useState(1)
-  const [pattern, setPattern] = useState<PatternDirection>('horizontal')
+  const [throwRotation, setThrowRotation] = useState<PanelRotation>(0)
   const [pillowTypeId, setPillowTypeId] = useState('throw')
   const [throwFillStyle, setThrowFillStyle] = useState<FillStyle>(DEFAULT_FILL_STYLE)
   const [bolsterFit, setBolsterFit] = useState<BolsterFit>('regular')
   const [dogEarTrim, setDogEarTrim] = useState(false)
   const [hRepeatDraft, setHRepeatDraft] = useState('0')
   const [vRepeatDraft, setVRepeatDraft] = useState('0')
-  const [bolsterPattern, setBolsterPattern] = useState<BolsterPattern>('horizontal')
+  const [bolsterRotation, setBolsterRotation] = useState<PanelRotation>(0)
   const [mobileView, setMobileView] = useState<'inputs' | 'results'>('results')
 
   const formWidthIn = Math.max(0.1, toInches(Number(widthDraft) || 0, unit))
@@ -81,7 +80,7 @@ export default function PillowsPage() {
         formLengthIn,
         quantity,
         fabricWidthIn,
-        pattern,
+        rotation: throwRotation,
         fillStyle: throwFillStyle,
         dogEarTrim,
         seamAllowanceIn,
@@ -93,7 +92,7 @@ export default function PillowsPage() {
       formLengthIn,
       quantity,
       fabricWidthIn,
-      pattern,
+      throwRotation,
       throwFillStyle,
       dogEarTrim,
       seamAllowanceIn,
@@ -109,10 +108,12 @@ export default function PillowsPage() {
         lengthIn: formLengthIn,
         quantity,
         fabricWidthIn,
-        pattern: bolsterPattern,
+        rotation: bolsterRotation,
+        hRepeatIn,
+        vRepeatIn,
         fit: bolsterFit,
       }),
-    [formWidthIn, formLengthIn, quantity, fabricWidthIn, bolsterPattern, bolsterFit],
+    [formWidthIn, formLengthIn, quantity, fabricWidthIn, bolsterRotation, bolsterFit, hRepeatIn, vRepeatIn],
   )
 
   const nestModel = useMemo(() => {
@@ -167,12 +168,12 @@ export default function PillowsPage() {
     if (id === 'bolster') {
       setWidthDraft(unit === 'in' ? '8' : String(Math.round(8 * 25.4)))
       setLengthDraft(unit === 'in' ? '20' : String(Math.round(20 * 25.4)))
-      setBolsterPattern('horizontal')
+      setBolsterRotation(0)
       setBolsterFit('regular')
     } else {
       setWidthDraft(unit === 'in' ? '18' : String(Math.round(18 * 25.4)))
       setLengthDraft(unit === 'in' ? '18' : String(Math.round(18 * 25.4)))
-      setPattern('horizontal')
+      setThrowRotation(0)
       setDogEarTrim(false)
     }
   }
@@ -468,60 +469,35 @@ export default function PillowsPage() {
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
               <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
-                pattern
+                pattern & rotation
               </h2>
               <div className="flex flex-col gap-4">
-                {isBolster ? (
-                  <fieldset className="m-0 min-w-0 border-0 p-0">
-                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
-                      pattern direction
-                    </legend>
-                    <div className="join w-full" role="group" aria-label="Bolster pattern direction">
-                      {(
-                        [
-                          ['horizontal', 'horizontal'],
-                          ['vertical', 'vertical'],
-                        ] as const
-                      ).map(([val, label]) => (
-                        <button
-                          key={val}
-                          type="button"
-                          className={`btn join-item btn-sm min-h-11 flex-1 ${bolsterPattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                          aria-pressed={bolsterPattern === val}
-                          onClick={() => setBolsterPattern(val)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                ) : (
-                  <fieldset className="m-0 min-w-0 border-0 p-0">
-                    <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
-                      pattern direction
-                    </legend>
-                    <div className="join w-full" role="group" aria-label="Pattern direction">
-                      {(
-                        [
-                          ['horizontal', 'horizontal'],
-                          ['vertical', 'vertical'],
-                          ['none', 'none'],
-                        ] as const
-                      ).map(([val, label]) => (
-                        <button
-                          key={val}
-                          type="button"
-                          className={`btn join-item btn-sm min-h-11 flex-1 ${pattern === val ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                          aria-pressed={pattern === val}
-                          onClick={() => setPattern(val)}
-                          title={val === 'none' ? 'none / best pack' : label}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                )}
+                <fieldset className="m-0 min-w-0 border-0 p-0">
+                  <legend className="mb-1.5 float-none w-full px-0 text-sm font-normal">
+                    panel rotation
+                  </legend>
+                  <button
+                    type="button"
+                    className={`btn btn-sm min-h-11 w-full ${
+                      (isBolster ? bolsterRotation : throwRotation) === 90
+                        ? 'btn-neutral'
+                        : 'btn-ghost border-base-300'
+                    }`}
+                    aria-label="Rotate panels 90 degrees"
+                    aria-pressed={(isBolster ? bolsterRotation : throwRotation) === 90}
+                    onClick={() => {
+                      if (isBolster) setBolsterRotation((r) => (r === 0 ? 90 : 0))
+                      else setThrowRotation((r) => (r === 0 ? 90 : 0))
+                    }}
+                  >
+                    {(isBolster ? bolsterRotation : throwRotation) === 90
+                      ? 'Rotated 90° (tap to reset)'
+                      : 'Rotate 90°'}
+                  </button>
+                  <span className="field-help mt-1.5 text-xs leading-snug text-base-content/60">
+                    Swaps panel across/along placement for a tighter nest.
+                  </span>
+                </fieldset>
                 <details className="collapse collapse-arrow border border-base-300 bg-base-100">
                   <summary className="collapse-title min-h-11 py-2 text-sm font-medium">
                     Pattern repeats

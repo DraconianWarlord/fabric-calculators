@@ -21,6 +21,8 @@ export { DEFAULT_FILL_STYLE }
 
 export type Unit = 'in' | 'mm'
 export type PatternDirection = 'none' | 'horizontal' | 'vertical'
+/** Panel pose on the bolt. A 90° turn swaps across/along, like Nesting. */
+export type PanelRotation = 0 | 90
 
 export const MM_PER_IN = 25.4
 
@@ -111,7 +113,10 @@ export type ThrowPillowInput = {
   formLengthIn: number
   quantity: number
   fabricWidthIn: number
-  pattern: PatternDirection
+  /** Legacy grain-direction input. Prefer `rotation`; retained for API compatibility. */
+  pattern?: PatternDirection
+  /** 0° keeps width across the bolt; 90° puts length across the bolt. */
+  rotation?: PanelRotation
   /** Flat | Standard | Plump -- default Standard (cut = form). */
   fillStyle?: FillStyle
   /** Knife-edge dog-ear corner trim (default off). */
@@ -197,6 +202,15 @@ export function orientationsForPattern(
   if (pattern === 'horizontal') return [widthAcross]
   if (pattern === 'vertical') return [lengthAcross]
   return [widthAcross, lengthAcross]
+}
+
+/** Nesting-style orientation control: rotating a panel swaps its across/along edges. */
+export function orientationsForRotation(
+  formWidthIn: number,
+  formLengthIn: number,
+  rotation: PanelRotation = 0,
+): Orientation[] {
+  return orientationsForPattern(formWidthIn, formLengthIn, rotation === 90 ? 'vertical' : 'horizontal')
 }
 
 /**
@@ -332,7 +346,8 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
     formLengthIn,
     quantity,
     fabricWidthIn,
-    pattern,
+    pattern = 'horizontal',
+    rotation,
     fillStyle = DEFAULT_FILL_STYLE,
     dogEarTrim = false,
     seamAllowanceIn = SEAM_ALLOWANCE_IN,
@@ -345,7 +360,9 @@ export function calculateThrowPillows(input: ThrowPillowInput): ThrowPillowResul
   const cutLengthIn = cutPanelSize(formLengthIn, fillStyle, sa)
   const panelsNeeded = quantity * PANELS_PER_PILLOW
 
-  const orients = orientationsForPattern(cutWidthIn, cutLengthIn, pattern)
+  const orients = rotation === undefined
+    ? orientationsForPattern(cutWidthIn, cutLengthIn, pattern)
+    : orientationsForRotation(cutWidthIn, cutLengthIn, rotation)
   const packs = orients.map((o) => packPanels(o, panelsNeeded, fabricWidthIn, hRepeatIn, vRepeatIn))
 
   let best = packs[0]!

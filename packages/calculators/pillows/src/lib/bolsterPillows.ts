@@ -17,7 +17,9 @@ import {
   orderYards,
   round2,
   toInches,
+  patternCellPitch,
   type Unit,
+  type PanelRotation,
 } from './throwPillows'
 
 export type { Unit }
@@ -57,7 +59,12 @@ export type BolsterInput = {
   lengthIn: number
   quantity: number
   fabricWidthIn: number
-  pattern: BolsterPattern
+  pattern?: BolsterPattern
+  /** Nesting-style panel pose; 90° swaps barrel across/along. */
+  rotation?: PanelRotation
+  /** Pattern cell repeat across/along the bolt. */
+  hRepeatIn?: number
+  vRepeatIn?: number
   /** Regular adds ½″; tight uses no cut add and a 1″ finished reduction. */
   fit?: BolsterFit
 }
@@ -81,6 +88,11 @@ export type BolsterNesting = {
   lengthInches: number
   exactYards: number
   orderYards: number
+  /** Cell pitches used when pattern repeats are active. */
+  barrelAcrossPitchIn?: number
+  barrelAlongPitchIn?: number
+  endPitchIn?: number
+  endAlongPitchIn?: number
 }
 
 export type BolsterResult = {
@@ -133,17 +145,22 @@ export function nestBolster(
   quantity: number,
   fabricWidthIn: number,
   pattern: BolsterPattern,
+  hRepeatIn = 0,
+  vRepeatIn = 0,
 ): BolsterNesting {
   const barrelAcrossIn = pattern === 'horizontal' ? cuts.barrelAlongIn : cuts.barrelCircIn
   const barrelAlongBoltIn = pattern === 'horizontal' ? cuts.barrelCircIn : cuts.barrelAlongIn
+  const barrelAcrossPitchIn = patternCellPitch(barrelAcrossIn, hRepeatIn)
+  const barrelAlongPitchIn = patternCellPitch(barrelAlongBoltIn, vRepeatIn)
+  const endPitchIn = patternCellPitch(cuts.endDiameterIn, hRepeatIn)
 
-  const barrelAcrossCount = Math.max(1, Math.floor(fabricWidthIn / barrelAcrossIn + 1e-9))
+  const barrelAcrossCount = Math.max(1, Math.floor(fabricWidthIn / barrelAcrossPitchIn + 1e-9))
   const barrelRows = Math.ceil(quantity / barrelAcrossCount)
-  const barrelUsedAlongIn = barrelRows * barrelAlongBoltIn
+  const barrelUsedAlongIn = barrelRows * barrelAlongPitchIn
 
   const endsNeeded = quantity * 2
   const endD = cuts.endDiameterIn
-  const endAcrossCount = Math.max(1, Math.floor(fabricWidthIn / endD + 1e-9))
+  const endAcrossCount = Math.max(1, Math.floor(fabricWidthIn / endPitchIn + 1e-9))
 
   let endsPlacedBeside = 0
   for (let row = 0; row < barrelRows; row++) {
@@ -151,14 +168,14 @@ export function nestBolster(
       row < barrelRows - 1
         ? barrelAcrossCount
         : quantity - (barrelRows - 1) * barrelAcrossCount
-    const free = fabricWidthIn - barrelsInRow * barrelAcrossIn
-    endsPlacedBeside += Math.max(0, Math.floor(free / endD + 1e-9))
+    const free = fabricWidthIn - barrelsInRow * barrelAcrossPitchIn
+    endsPlacedBeside += Math.max(0, Math.floor(free / endPitchIn + 1e-9))
   }
   endsPlacedBeside = Math.min(endsPlacedBeside, endsNeeded)
 
   const endsRemaining = Math.max(0, endsNeeded - endsPlacedBeside)
   const endExtraRows = endsRemaining === 0 ? 0 : Math.ceil(endsRemaining / endAcrossCount)
-  const endsUsedAlongIn = endExtraRows * endD
+  const endsUsedAlongIn = endExtraRows * patternCellPitch(endD, vRepeatIn)
 
   const lengthInches = barrelUsedAlongIn + endsUsedAlongIn
   const exact = exactYards(lengthInches)
@@ -176,6 +193,10 @@ export function nestBolster(
     lengthInches,
     exactYards: exact,
     orderYards: orderYards(exact),
+    barrelAcrossPitchIn,
+    barrelAlongPitchIn,
+    endPitchIn,
+    endAlongPitchIn: patternCellPitch(endD, vRepeatIn),
   }
 }
 
@@ -194,9 +215,20 @@ export function zipperInches(barrelAlongIn: number, quantity: number): number {
 }
 
 export function calculateBolster(input: BolsterInput): BolsterResult {
-  const { diameterIn, lengthIn, quantity, fabricWidthIn, pattern, fit = 'regular' } = input
+  const {
+    diameterIn,
+    lengthIn,
+    quantity,
+    fabricWidthIn,
+    pattern = 'horizontal',
+    rotation,
+    hRepeatIn = 0,
+    vRepeatIn = 0,
+    fit = 'regular',
+  } = input
   const cuts = bolsterCuts(diameterIn, lengthIn, fit)
-  const nest = nestBolster(cuts, quantity, fabricWidthIn, pattern)
+  const resolvedPattern = rotation === 90 ? 'vertical' : rotation === 0 ? 'horizontal' : pattern
+  const nest = nestBolster(cuts, quantity, fabricWidthIn, resolvedPattern, hRepeatIn, vRepeatIn)
 
   const pipingIn = bolsterPipingInches(cuts.endDiameterIn, quantity)
   const pipingFt = round2(pipingIn / 12)

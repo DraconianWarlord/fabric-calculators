@@ -51,6 +51,25 @@ describe('nest preview panel counts', () => {
     expect(patternHOffset(54, 0)).toBe(0)
   })
 
+  it('bolster repeats expand nest pitch before preview centering', () => {
+    const r = calculateBolster({
+      diameterIn: 8,
+      lengthIn: 20,
+      quantity: 1,
+      fabricWidthIn: 54,
+      rotation: 0,
+      hRepeatIn: 12,
+      vRepeatIn: 12,
+      fit: 'regular',
+    })
+    expect(r.nest.barrelAcrossPitchIn).toBe(24)
+    expect(r.nest.barrelAlongPitchIn).toBe(36)
+    expect(r.nest.lengthInches).toBe(36)
+    const model = bolsterNestPreview(r.cuts, r.nest, 1, 54, { hRepeatIn: 12, vRepeatIn: 12 })
+    expect(countNestPanels(model, 'barrel')).toBe(1)
+    expect(model.lengthInches).toBeGreaterThanOrEqual(r.nest.lengthInches)
+  })
+
   it('H/V repeats re-center panels onto pattern cell centers', () => {
     const r = calculateThrowPillows({
       formWidthIn: 18, formLengthIn: 18, quantity: 1, fabricWidthIn: 54,

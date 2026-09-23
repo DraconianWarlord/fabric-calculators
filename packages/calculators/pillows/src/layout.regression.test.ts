@@ -47,14 +47,14 @@ describe('pillows layout regressions', () => {
 
   it('bolster hides throw fill chooser and uses independent fit math', () => {
     expect(pageTsx).toMatch(/!isBolster\s*&&\s*\(\s*<>[\s\S]*?FillStyleThumb/)
-    expect(pageTsx).toMatch(/pattern: bolsterPattern,[\s\S]*?fit: bolsterFit/)
+    expect(pageTsx).toMatch(/rotation: bolsterRotation,[\s\S]*?fit: bolsterFit/)
     expect(pageTsx).not.toMatch(/calculateBolster\([\s\S]*?fillStyle:/)
     expect(pageTsx).toMatch(/setThrowFillStyle/)
   })
 
   it('bolster fit (Regular|Tight) lives under Size near SA, not under Pattern', () => {
     const sizeAt = pageTsx.indexOf('\n                size\n')
-    const patternAt = pageTsx.indexOf('\n                pattern\n')
+    const patternAt = pageTsx.indexOf('\n                pattern & rotation\n')
     const fitAt = pageTsx.indexOf('aria-label="Bolster fit"')
     const saAt = pageTsx.indexOf('Seam allowance')
     expect(sizeAt).toBeGreaterThan(0)
@@ -65,9 +65,9 @@ describe('pillows layout regressions', () => {
     expect(fitAt).toBeGreaterThan(saAt)
     expect(pageTsx).toMatch(/isBolster && \([\s\S]*?aria-label="Bolster fit"/)
     expect(pageTsx).toMatch(/regular adds .* seam allowance; tight cuts to form/)
-    // Pattern card keeps direction only for bolster (no fit fieldset after pattern title before throw branch)
-    const patternSlice = pageTsx.slice(patternAt, patternAt + 1200)
-    expect(patternSlice).toMatch(/Bolster pattern direction/)
+    // Pattern card owns rotation/repeats only; fit remains in Size.
+    const patternSlice = pageTsx.slice(patternAt, patternAt + 1400)
+    expect(patternSlice).toMatch(/panel rotation/)
     expect(patternSlice).not.toMatch(/aria-label="Bolster fit"/)
   })
 
@@ -86,13 +86,13 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).not.toMatch(/unit === 'mm' \? 'btn-primary'/)
   })
 
-  it('pattern direction uses segmented join/btn ≥44px (not radio rows)', () => {
-    expect(pageTsx).toMatch(/aria-label="Pattern direction"/)
-    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{pattern === val \? 'btn-neutral'/)
-    expect(pageTsx).toMatch(/btn join-item btn-sm min-h-11 flex-1 \$\{bolsterPattern === val \? 'btn-neutral'/)
-    expect(pageTsx).not.toMatch(/name="pattern"/)
-    expect(pageTsx).not.toMatch(/name="bolster-pattern"/)
-    expect(pageTsx).not.toMatch(/radio radio-sm radio-primary/)
+  it('pattern card uses Nesting-style 90° rotation (not direction joins)', () => {
+    expect(pageTsx).toMatch(/aria-label="Rotate panels 90 degrees"/)
+    expect(pageTsx).toMatch(/setThrowRotation|setBolsterRotation/)
+    expect(pageTsx).toMatch(/panel rotation/)
+    expect(pageTsx).not.toMatch(/pattern direction/)
+    expect(pageTsx).not.toMatch(/aria-label="Pattern direction"/)
+    expect(pageTsx).not.toMatch(/aria-label="Bolster pattern direction"/)
   })
 
   it('yardage Shop is outline (not dual primary with header); header Shop outline + hidden on mobile', () => {
@@ -248,7 +248,7 @@ describe('pillows layout regressions', () => {
   it('left stack order: reference → size → pattern (secondary chooser) with scroll padding', () => {
     const refAt = pageTsx.indexOf('\n                reference\n')
     const sizeAt = pageTsx.indexOf('\n                size\n')
-    const patternAt = pageTsx.indexOf('\n                pattern\n')
+    const patternAt = pageTsx.indexOf('\n                pattern & rotation\n')
     expect(refAt).toBeGreaterThan(0)
     expect(sizeAt).toBeGreaterThan(refAt)
     expect(patternAt).toBeGreaterThan(sizeAt)

@@ -61,6 +61,20 @@ describe('live Sailrite reverse-engineer cases', () => {
     expect(r.pack.rows).toBe(2)
   })
 
+  it('Nesting-style rotation 90° swaps panel across/along packing', () => {
+    const r = calculateThrowPillows({
+      formWidthIn: 20,
+      formLengthIn: 16,
+      quantity: 1,
+      fabricWidthIn: 54,
+      rotation: 90,
+    })
+    expect(r.pack.orientation.label).toBe('length-across')
+    expect(r.pack.orientation.acrossIn).toBe(16)
+    expect(r.pack.orientation.alongIn).toBe(20)
+    expect(r.pack.lengthInches).toBe(20)
+  })
+
   it('rect 20×16 horizontal vs vertical packing', () => {
     const h = calculateThrowPillows({
       formWidthIn: 20,
