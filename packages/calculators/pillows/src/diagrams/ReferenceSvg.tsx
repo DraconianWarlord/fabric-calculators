@@ -3,6 +3,8 @@ import {
   finishedShapeSvgProps,
   DIAGRAM_SR_BLUE,
   DIAGRAM_CUT_FILL,
+  DIAGRAM_FINISHED_DASH,
+  DIAGRAM_FINISHED_STROKE_WIDTH,
 } from '@sailrite/calc-shell'
 import type { FillStyle } from '../lib/fillStyle'
 import { fromInches, type Unit } from '../lib/throwPillows'
@@ -54,7 +56,7 @@ function knifeEdgeSidePath(
   ].join(' ')
 }
 
-/** Form×Fill cut/finished silhouette for left-stack reference — side / loft view. */
+/** Form×Fill finished-pillow silhouette for left-stack reference — side / loft view (mid stitch, no SA). */
 export function ThrowReference(props: {
   formW: number
   formL: number
@@ -86,18 +88,14 @@ export function ThrowReference(props: {
   const halfSpan = Math.min(maxHalfSpan, maxHalfLoft / loftR) * spanR
   const halfLoft = halfSpan * (loftR / spanR)
 
-  // Flat cover larger → finished closer to outer; plump cover tighter → more inset
-  const finScale = fillStyle === 'flat' ? 0.92 : fillStyle === 'plump' ? 0.78 : 0.85
-  const finHalfSpan = Math.max(2, halfSpan * finScale)
-  const finHalfLoft = Math.max(2, halfLoft * finScale)
-
   const cx = stageW / 2
   const cy = padY + maxHalfLoft
   const svgW = stageW + (compact ? 0 : 8)
   const svgH = stageH + (compact ? 4 : 28)
   const cut = cutShapeSvgProps()
-  const fin = finishedShapeSvgProps()
   const groundY = Math.min(svgH - (compact ? 6 : 24), cy + halfLoft + 6)
+  // Mid stitch: sewing plane where top + bottom panels meet (Style B SR Blue dashed)
+  const stitchHalf = halfSpan * 0.88
 
   return (
     <svg
@@ -116,7 +114,15 @@ export function ThrowReference(props: {
         opacity={0.25}
       />
       <path d={knifeEdgeSidePath(cx, cy, halfSpan, halfLoft)} {...cut} />
-      <path d={knifeEdgeSidePath(cx, cy, finHalfSpan, finHalfLoft)} {...fin} />
+      <line
+        x1={cx - stitchHalf}
+        y1={cy}
+        x2={cx + stitchHalf}
+        y2={cy}
+        stroke={DIAGRAM_SR_BLUE}
+        strokeWidth={DIAGRAM_FINISHED_STROKE_WIDTH}
+        strokeDasharray={DIAGRAM_FINISHED_DASH}
+      />
       <text x={cx} y={Math.max(10, padY - 2)} textAnchor="middle" className="diag-label">
         side / loft · {fillStyle}
       </text>
@@ -210,7 +216,7 @@ export function BolsterFormThumb({ selected }: { selected?: boolean }) {
   )
 }
 
-/** Flat / Standard / Plump comparison thumb — side / loft view (cut solid, finished dashed). */
+/** Flat / Standard / Plump comparison thumb — side / loft view (mid stitch, no SA inset). */
 export function FillStyleThumb({
   fill,
   selected,
@@ -224,10 +230,9 @@ export function FillStyleThumb({
   const halfLoft = 16 * loftR
   const cx = 24
   const cy = 20
-  const finScale = fill === 'flat' ? 0.88 : fill === 'plump' ? 0.76 : 0.82
   const sw = selected ? 2 : 1.25
   const cut = cutShapeSvgProps()
-  const fin = finishedShapeSvgProps()
+  const stitchHalf = halfSpan * 0.88
   return (
     <svg viewBox="0 0 48 40" className="pillow-thumb-svg" aria-hidden="true">
       <path
@@ -236,18 +241,20 @@ export function FillStyleThumb({
         stroke={cut.stroke}
         strokeWidth={sw}
       />
-      <path
-        d={knifeEdgeSidePath(cx, cy, halfSpan * finScale, halfLoft * finScale)}
-        fill={fin.fill}
-        stroke={fin.stroke}
-        strokeWidth={1}
-        strokeDasharray={fin.strokeDasharray}
+      <line
+        x1={cx - stitchHalf}
+        y1={cy}
+        x2={cx + stitchHalf}
+        y2={cy}
+        stroke={DIAGRAM_SR_BLUE}
+        strokeWidth={1.25}
+        strokeDasharray={DIAGRAM_FINISHED_DASH}
       />
     </svg>
   )
 }
 
-/** HTML key under reference drawings (Nesting DimPreviewFrame pattern). */
+/** HTML key under bolster / nest-style cut+finished drawings. */
 export function CutFinishedKey() {
   return (
     <div className="pillow-ref-key text-xs text-base-content/60" aria-hidden="true">
@@ -269,10 +276,32 @@ export function CutFinishedKey() {
             y2="4"
             stroke={DIAGRAM_SR_BLUE}
             strokeWidth={1.5}
-            strokeDasharray="4 3"
+            strokeDasharray={DIAGRAM_FINISHED_DASH}
           />
         </svg>
         Finished (dashed)
+      </span>
+    </div>
+  )
+}
+
+/** HTML key under throw side/loft drawings — mid stitch, not fabric-plate SA. */
+export function ThrowLoftKey() {
+  return (
+    <div className="pillow-ref-key text-xs text-base-content/60" aria-hidden="true">
+      <span className="inline-flex items-center gap-1">
+        <svg width="14" height="8" viewBox="0 0 14 8" aria-hidden="true">
+          <line
+            x1="0"
+            y1="4"
+            x2="14"
+            y2="4"
+            stroke={DIAGRAM_SR_BLUE}
+            strokeWidth={1.5}
+            strokeDasharray={DIAGRAM_FINISHED_DASH}
+          />
+        </svg>
+        Mid stitch (top + bottom join)
       </span>
     </div>
   )

@@ -33,6 +33,7 @@ import {
   BolsterFormThumb,
   FillStyleThumb,
   CutFinishedKey,
+  ThrowLoftKey,
 } from './diagrams/ReferenceSvg'
 import { NestPreviewSvg } from './diagrams/NestPreviewSvg'
 import './Page.css'
@@ -304,7 +305,7 @@ export default function PillowsPage() {
                   compact={false}
                 />
               )}
-              <CutFinishedKey />
+              {isBolster ? <CutFinishedKey /> : <ThrowLoftKey />}
             </div>
           </section>
 

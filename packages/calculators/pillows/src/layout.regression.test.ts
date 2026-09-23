@@ -117,12 +117,14 @@ describe('pillows layout regressions', () => {
     expect(referenceSvg).toMatch(/cutShapeSvgProps/)
     expect(referenceSvg).toMatch(/finishedShapeSvgProps/)
     expect(referenceSvg).toMatch(/CutFinishedKey/)
+    expect(referenceSvg).toMatch(/ThrowLoftKey/)
     expect(referenceSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_FINISHED_DASH|strokeDasharray/)
     expect(nestPreviewSvg).toMatch(/insetPolygon|seamAllowanceIn/)
-    // Nest cut panels keep dashed SA inset; throw Reference is side/loft (no face-on SA plate)
+    // Nest cut panels keep dashed SA inset; throw loft uses mid stitch (no finished SA inset)
     expect(nestPreviewSvg).toMatch(/throwSeamAllowanceOutline|seamAllowanceIn|insetPolygon/)
+    expect(pageTsx).toMatch(/isBolster \? <CutFinishedKey \/> : <ThrowLoftKey \/>/)
     expect(pageTsx).not.toMatch(/stroke="#e75053"/)
     expect(referenceSvg).not.toMatch(/stroke="#e75053"/)
     expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
@@ -187,6 +189,19 @@ describe('pillows layout regressions', () => {
     expect(referenceSvg).toMatch(/function knifeEdgeSidePath/)
     expect(referenceSvg).toMatch(/export function FillStyleThumb[\s\S]*?knifeEdgeSidePath/)
     expect(referenceSvg).toMatch(/export function ThrowReference[\s\S]*?knifeEdgeSidePath/)
+    // Mid stitch along loft midline; no finished/SA dashed inset on thickness view
+    expect(referenceSvg).toMatch(
+      /export function ThrowReference[\s\S]*?stitchHalf[\s\S]*?strokeDasharray=\{DIAGRAM_FINISHED_DASH\}/,
+    )
+    expect(referenceSvg).toMatch(
+      /export function FillStyleThumb[\s\S]*?stitchHalf[\s\S]*?strokeDasharray=\{DIAGRAM_FINISHED_DASH\}/,
+    )
+    expect(referenceSvg).not.toMatch(
+      /export function ThrowReference[\s\S]*?finHalfSpan[\s\S]*?export function BolsterReference/,
+    )
+    expect(referenceSvg).not.toMatch(
+      /export function FillStyleThumb[\s\S]*?finScale[\s\S]*?export function CutFinishedKey/,
+    )
     // Dog-ear 12-gon stays on nest fabric plates, not the loft reference
     expect(referenceSvg).not.toMatch(/dogEarPolygonPointsAttr|dogEarPanelPolygon/)
     const nestLib = readFileSync(resolve(srcDir, 'lib/nestPreview.ts'), 'utf8')
