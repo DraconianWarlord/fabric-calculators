@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { calculateThrowPillows } from './throwPillows'
 import { calculateBolster } from './bolsterPillows'
 import {
+  aabbOverlap,
   bolsterNestPreview,
   countNestPanels,
   patternHOffset,
@@ -9,6 +10,7 @@ import {
   throwNestPreview,
   yardMajorInches,
 } from './nestPreview'
+import type { FillStyle } from './fillStyle'
 
 describe('nest preview panel counts', () => {
   it('throw qty1 -> 2 panels', () => {
@@ -190,5 +192,83 @@ describe('yardMajorInches (Nesting-parity)', () => {
     const ticksLong = yardMajorInches(mLong.lengthInches).filter((y) => y <= mLong.lengthInches + 1e-6)
     expect(ticksLong.length).toBeGreaterThanOrEqual(ticksShort.length)
     expect(ticksLong.at(-1)).toBeGreaterThanOrEqual(mLong.lengthInches > 36 ? 36 : 0)
+  })
+})
+
+
+describe('fill-style nest: no pairwise AABB overlap', () => {
+  const fills: FillStyle[] = ['flat', 'standard', 'plump']
+
+  function assertNoPairwiseOverlap(
+    panels: { x: number; y: number; w: number; h: number }[],
+    label: string,
+  ) {
+    for (let i = 0; i < panels.length; i++) {
+      for (let j = i + 1; j < panels.length; j++) {
+        expect(
+          aabbOverlap(panels[i]!, panels[j]!),
+          `${label}: panels ${i} and ${j} overlap`,
+        ).toBe(false)
+      }
+    }
+  }
+
+  it('qty≥2, each fill style, no pattern: cut dims re-pack with gap ≥ 0', () => {
+    for (const fill of fills) {
+      for (const rotation of [0, 90] as const) {
+        const r = calculateThrowPillows({
+          formWidthIn: 18,
+          formLengthIn: 18,
+          quantity: 2,
+          fabricWidthIn: 54,
+          rotation,
+          fillStyle: fill,
+        })
+        const model = throwNestPreview(r.pack, 54, { dogEar: true })
+        expect(model.panels.length).toBeGreaterThanOrEqual(2)
+        // Pack orientation must track cut size (not form) for this fill.
+        expect(model.panels[0]!.w).toBe(r.cutWidthIn === r.cutLengthIn ? r.cutWidthIn : r.pack.orientation.acrossIn)
+        expect(model.panels[0]!.w).toBe(r.pack.orientation.acrossIn)
+        expect(model.panels[0]!.h).toBe(r.pack.orientation.alongIn)
+        assertNoPairwiseOverlap(model.panels, `${fill} rot=${rotation}`)
+      }
+    }
+  })
+
+  it('qty≥2, each fill style, H repeat that used to snap-overlap Flat: no overlap', () => {
+    // Repro: 18×18 Flat + H=10 → pitch 20, unconditional snap put panels at x=0 and x=17.5 (overlap).
+    for (const fill of fills) {
+      const r = calculateThrowPillows({
+        formWidthIn: 18,
+        formLengthIn: 18,
+        quantity: 2,
+        fabricWidthIn: 54,
+        rotation: 0,
+        fillStyle: fill,
+        hRepeatIn: 10,
+        vRepeatIn: 0,
+      })
+      const model = throwNestPreview(r.pack, 54, { hRepeatIn: 10, vRepeatIn: 0, dogEar: true })
+      expect(model.panels.length).toBe(4)
+      assertNoPairwiseOverlap(model.panels, `H10 ${fill}`)
+    }
+  })
+
+  it('qty≥2, each fill style, H/V repeats + rotate 90: no overlap', () => {
+    for (const fill of fills) {
+      const r = calculateThrowPillows({
+        formWidthIn: 20,
+        formLengthIn: 16,
+        quantity: 2,
+        fabricWidthIn: 54,
+        rotation: 90,
+        fillStyle: fill,
+        hRepeatIn: 9,
+        vRepeatIn: 9,
+      })
+      const model = throwNestPreview(r.pack, 54, { hRepeatIn: 9, vRepeatIn: 9 })
+      expect(model.panels.length).toBeGreaterThanOrEqual(2)
+      assertNoPairwiseOverlap(model.panels, `HV9 rot90 ${fill}`)
+    }
   })
 })
