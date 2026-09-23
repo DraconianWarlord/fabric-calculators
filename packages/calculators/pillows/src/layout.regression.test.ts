@@ -349,4 +349,15 @@ describe('pillows layout regressions', () => {
     expect(exportPdf).toMatch(/cellWidth:\s*pieceCol/)
   })
 
+
+  it('nest preview has no full-bolt leftover scrap dashed chrome', () => {
+    expect(nestPreviewSvg).not.toMatch(/leftoverAcrossIn > 0\.1 &&/)
+    expect(nestPreviewSvg).not.toMatch(/strokeDasharray="3 3"/)
+    expect(nestPreviewSvg).toMatch(/DIAGRAM_FINISHED_DASH/)
+    const nestLib = readFileSync(resolve(srcDir, 'lib/nestPreview.ts'), 'utf8')
+    const throwLib = readFileSync(resolve(srcDir, 'lib/throwPillows.ts'), 'utf8')
+    expect(nestLib).toMatch(/nestCellPitch/)
+    expect(throwLib).toMatch(/NEST_WASTE_GAP_IN\s*=\s*0\.5/)
+  })
+
 })

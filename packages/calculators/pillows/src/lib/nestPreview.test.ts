@@ -20,7 +20,9 @@ describe('nest preview panel counts', () => {
     const model = throwNestPreview(r.pack, 54)
     expect(countNestPanels(model)).toBe(2)
     expect(countNestPanels(model, 'throw-panel')).toBe(2)
-    expect(model.panels[0]).toMatchObject({ x: 0, y: 0, w: 18, h: 18 })
+    expect(model.panels[0]).toMatchObject({ w: 18, h: 18 })
+    expect(model.panels[0]!.x).toBeCloseTo(0.25, 5)
+    expect(model.panels[0]!.y).toBeCloseTo(0.25, 5)
   })
 
   it('throw dog-ear polygons', () => {
@@ -36,7 +38,8 @@ describe('nest preview panel counts', () => {
     })
     const model = throwNestPreview(r.pack, 54)
     expect(countNestPanels(model)).toBe(4)
-    expect(model.lengthInches).toBe(36)
+    expect(model.lengthInches).toBeGreaterThanOrEqual(36.5)
+    expect(model.lengthInches).toBeLessThanOrEqual(37)
   })
 
   it('bolster qty1 plump: 1 barrel + 2 ends', () => {
@@ -67,7 +70,8 @@ describe('nest preview panel counts', () => {
     })
     expect(r.nest.barrelAcrossPitchIn).toBe(24)
     expect(r.nest.barrelAlongPitchIn).toBe(36)
-    expect(r.nest.lengthInches).toBe(36)
+    // 1 barrel row: span = barrel along (not full pattern pitch)
+    expect(r.nest.lengthInches).toBeCloseTo(r.nest.barrelAlongBoltIn, 5)
     const model = bolsterNestPreview(r.cuts, r.nest, 1, 54, { hRepeatIn: 12, vRepeatIn: 12 })
     expect(countNestPanels(model, 'barrel')).toBe(1)
     expect(model.lengthInches).toBeGreaterThanOrEqual(r.nest.lengthInches)
@@ -80,7 +84,7 @@ describe('nest preview panel counts', () => {
     })
     // Pitch expands to 24 (ceil(18/12)*12) → fewer across, longer nest
     expect(r.pack.acrossCount).toBe(2) // floor(54/24)
-    expect(r.pack.lengthInches).toBe(24) // 1 row * 24 pitch
+    expect(r.pack.lengthInches).toBe(18) // 1 row → panel along only (pitch pads between rows)
     const model = throwNestPreview(r.pack, 54, { hRepeatIn: 12, vRepeatIn: 12 })
     const p0 = model.panels[0]!
     const cx = p0.x + p0.w / 2
@@ -127,8 +131,8 @@ describe('nest preview panel counts', () => {
     const hOnly = calculateThrowPillows({ ...base, hRepeatIn: 12, vRepeatIn: 0 })
     const vOnly = calculateThrowPillows({ ...base, hRepeatIn: 0, vRepeatIn: 12 })
     // H repeat expands across pitch (20→24); V expands along (16→24)
-    expect(hOnly.pack.lengthInches).toBe(32) // 2 rows × 16
-    expect(vOnly.pack.lengthInches).toBe(48) // 2 rows × 24
+    expect(hOnly.pack.lengthInches).toBe(32.5) // 16 + ½″ + 16
+    expect(vOnly.pack.lengthInches).toBe(40) // along=20, pitch max(20.5,24)=24 → 20+24
     expect(hOnly.pack.lengthInches).not.toBe(vOnly.pack.lengthInches)
 
     const mh = throwNestPreview(hOnly.pack, 54, { hRepeatIn: 12, vRepeatIn: 0 })

@@ -14,10 +14,12 @@ import {
   MIN_QUANTITY,
   exactYards,
   fromInches,
+  nestCellPitch,
+  nestCountAcross,
+  nestSpanInches,
   orderYards,
   round2,
   toInches,
-  patternCellPitch,
   type Unit,
   type PanelRotation,
 } from './throwPillows'
@@ -150,17 +152,18 @@ export function nestBolster(
 ): BolsterNesting {
   const barrelAcrossIn = pattern === 'horizontal' ? cuts.barrelAlongIn : cuts.barrelCircIn
   const barrelAlongBoltIn = pattern === 'horizontal' ? cuts.barrelCircIn : cuts.barrelAlongIn
-  const barrelAcrossPitchIn = patternCellPitch(barrelAcrossIn, hRepeatIn)
-  const barrelAlongPitchIn = patternCellPitch(barrelAlongBoltIn, vRepeatIn)
-  const endPitchIn = patternCellPitch(cuts.endDiameterIn, hRepeatIn)
+  const barrelAcrossPitchIn = nestCellPitch(barrelAcrossIn, hRepeatIn)
+  const barrelAlongPitchIn = nestCellPitch(barrelAlongBoltIn, vRepeatIn)
+  const endPitchIn = nestCellPitch(cuts.endDiameterIn, hRepeatIn)
+  const endAlongPitchIn = nestCellPitch(cuts.endDiameterIn, vRepeatIn)
 
-  const barrelAcrossCount = Math.max(1, Math.floor(fabricWidthIn / barrelAcrossPitchIn + 1e-9))
+  const barrelAcrossCount = nestCountAcross(fabricWidthIn, barrelAcrossIn, barrelAcrossPitchIn)
   const barrelRows = Math.ceil(quantity / barrelAcrossCount)
-  const barrelUsedAlongIn = barrelRows * barrelAlongPitchIn
+  const barrelUsedAlongIn = nestSpanInches(barrelRows, barrelAlongBoltIn, barrelAlongPitchIn)
 
   const endsNeeded = quantity * 2
   const endD = cuts.endDiameterIn
-  const endAcrossCount = Math.max(1, Math.floor(fabricWidthIn / endPitchIn + 1e-9))
+  const endAcrossCount = nestCountAcross(fabricWidthIn, endD, endPitchIn)
 
   let endsPlacedBeside = 0
   for (let row = 0; row < barrelRows; row++) {
@@ -168,14 +171,16 @@ export function nestBolster(
       row < barrelRows - 1
         ? barrelAcrossCount
         : quantity - (barrelRows - 1) * barrelAcrossCount
-    const free = fabricWidthIn - barrelsInRow * barrelAcrossPitchIn
-    endsPlacedBeside += Math.max(0, Math.floor(free / endPitchIn + 1e-9))
+    const usedAcross = nestSpanInches(barrelsInRow, barrelAcrossIn, barrelAcrossPitchIn)
+    const free = Math.max(0, fabricWidthIn - usedAcross)
+    // Waste gap already in pitches; remaining strip packs end circles with endPitch.
+    endsPlacedBeside += free + 1e-9 >= endD ? nestCountAcross(free, endD, endPitchIn) : 0
   }
   endsPlacedBeside = Math.min(endsPlacedBeside, endsNeeded)
 
   const endsRemaining = Math.max(0, endsNeeded - endsPlacedBeside)
   const endExtraRows = endsRemaining === 0 ? 0 : Math.ceil(endsRemaining / endAcrossCount)
-  const endsUsedAlongIn = endExtraRows * patternCellPitch(endD, vRepeatIn)
+  const endsUsedAlongIn = nestSpanInches(endExtraRows, endD, endAlongPitchIn)
 
   const lengthInches = barrelUsedAlongIn + endsUsedAlongIn
   const exact = exactYards(lengthInches)
@@ -196,7 +201,7 @@ export function nestBolster(
     barrelAcrossPitchIn,
     barrelAlongPitchIn,
     endPitchIn,
-    endAlongPitchIn: patternCellPitch(endD, vRepeatIn),
+    endAlongPitchIn,
   }
 }
 

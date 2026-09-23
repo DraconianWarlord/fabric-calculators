@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   FORM_TO_FINISHED_REDUCTION_IN,
+  NEST_WASTE_GAP_IN,
   SEAM_ALLOWANCE_IN,
   calculateThrowPillows,
+  nestCellPitch,
+  nestCountAcross,
+  nestSpanInches,
   cutPanelSize,
   exactYards,
   finishedSize,
@@ -43,8 +47,8 @@ describe('live Sailrite reverse-engineer cases', () => {
     expect(r.panelsNeeded).toBe(2)
     expect(r.pack.lengthInches).toBe(18)
     expect(r.pack.exactYards).toBeCloseTo(0.5, 5)
-    expect(r.pack.acrossCount).toBe(3)
-    expect(r.pack.leftoverAcrossIn).toBe(18) // last row places 2 of 3 capacity
+    expect(r.pack.acrossCount).toBe(2) // floor with ½″ waste gap (was 3 flush)
+    expect(r.pack.leftoverAcrossIn).toBe(17.5) // 54 − (18 + 18.5)
     expect(r.pack.orderYards).toBe(1)
   })
 
@@ -57,7 +61,7 @@ describe('live Sailrite reverse-engineer cases', () => {
       pattern: 'horizontal',
     })
     expect(r.panelsNeeded).toBe(4)
-    expect(r.pack.lengthInches).toBe(36)
+    expect(r.pack.lengthInches).toBe(36.5) // 18 + ½″ gap + 18
     expect(r.pack.rows).toBe(2)
   })
 
@@ -106,8 +110,8 @@ describe('live Sailrite reverse-engineer cases', () => {
     })
     expect(r.pack.acrossCount).toBe(2)
     expect(r.pack.rows).toBe(3)
-    expect(r.pack.lengthInches).toBe(48)
-    expect(r.pack.exactYards).toBeCloseTo(48 / 36, 5)
+    expect(r.pack.lengthInches).toBe(49) // 3×16 along with 2×½″ gaps
+    expect(r.pack.exactYards).toBeCloseTo(49 / 36, 5)
   })
 
   it('narrow fabric 20×16 on 36″ → 32 in', () => {
@@ -120,7 +124,7 @@ describe('live Sailrite reverse-engineer cases', () => {
     })
     expect(r.pack.acrossCount).toBe(1)
     expect(r.pack.rows).toBe(2)
-    expect(r.pack.lengthInches).toBe(32)
+    expect(r.pack.lengthInches).toBe(32.5)
   })
 
   it('12×12 qty4 → 24 in', () => {
@@ -133,7 +137,7 @@ describe('live Sailrite reverse-engineer cases', () => {
     })
     expect(r.panelsNeeded).toBe(8)
     expect(r.pack.acrossCount).toBe(4)
-    expect(r.pack.lengthInches).toBe(24)
+    expect(r.pack.lengthInches).toBe(24.5)
   })
 
   it('30×18 horizontal 36 in; vertical 30 in', () => {
@@ -151,7 +155,7 @@ describe('live Sailrite reverse-engineer cases', () => {
       fabricWidthIn: 54,
       pattern: 'vertical',
     })
-    expect(h.pack.lengthInches).toBe(36)
+    expect(h.pack.lengthInches).toBe(36.5)
     expect(v.pack.lengthInches).toBe(30)
   })
 
@@ -165,7 +169,7 @@ describe('live Sailrite reverse-engineer cases', () => {
     })
     expect(r.pack.lengthInches).toBe(30)
     expect(r.pack.orientation.label).toBe('length-across')
-    expect(r.alternatePack?.lengthInches).toBe(36)
+    expect(r.alternatePack?.lengthInches).toBe(36.5)
   })
 })
 
@@ -203,7 +207,8 @@ describe('yardage responds to width / qty / fabric width', () => {
       fabricWidthIn: 54,
       pattern: 'horizontal',
     })
-    expect(q2.pack.lengthInches).toBe(q1.pack.lengthInches * 2)
+    expect(q2.pack.lengthInches).toBeGreaterThan(q1.pack.lengthInches)
+    expect(q2.pack.lengthInches).toBe(36.5) // not 2×18 — includes ½″ row gap
   })
 
   it('wider fabric can reduce rows', () => {
@@ -242,7 +247,7 @@ describe('packPanels', () => {
     )
     expect(p.acrossCount).toBe(1)
     expect(p.rows).toBe(2)
-    expect(p.lengthInches).toBe(40)
+    expect(p.lengthInches).toBe(40.5)
   })
 })
 
@@ -297,7 +302,7 @@ describe('leftover strip (live Sailrite parity)', () => {
       fabricWidthIn: 54,
       pattern: 'horizontal',
     })
-    expect(r.pack.leftover).toEqual({ widthIn: 36, lengthIn: 18 })
+    expect(r.pack.leftover).toEqual({ widthIn: 17.5, lengthIn: 36.5 })
   })
 
   it('18×18 qty2 fab36 → no leftover (full width used)', () => {
@@ -308,7 +313,7 @@ describe('leftover strip (live Sailrite parity)', () => {
       fabricWidthIn: 36,
       pattern: 'horizontal',
     })
-    expect(r.pack.leftover).toBeNull()
+    expect(r.pack.leftover).toEqual({ widthIn: 18, lengthIn: 73.5 })
   })
 
   it('20×16 qty3 fab54 → 14 × 48 side strip', () => {
@@ -319,7 +324,7 @@ describe('leftover strip (live Sailrite parity)', () => {
       fabricWidthIn: 54,
       pattern: 'horizontal',
     })
-    expect(r.pack.leftover).toEqual({ widthIn: 14, lengthIn: 48 })
+    expect(r.pack.leftover).toEqual({ widthIn: 13.5, lengthIn: 49 })
   })
 })
 
@@ -336,5 +341,25 @@ describe('materials copy', () => {
     expect(r.materials[0]).toMatch(/yd fabric/)
     expect(r.materials[0]).toMatch(/yd exact/)
     expect(r.materials[0]).not.toMatch(/\bin\b/)
+  })
+})
+
+
+describe('nest waste gap (½″ cutting clearance)', () => {
+  it('documents NEST_WASTE_GAP_IN and pitch helpers', () => {
+    expect(NEST_WASTE_GAP_IN).toBe(0.5)
+    expect(nestCellPitch(18)).toBe(18.5)
+    expect(nestCountAcross(54, 18, 18.5)).toBe(2)
+    expect(nestSpanInches(2, 18, 18.5)).toBe(36.5)
+    expect(nestSpanInches(1, 18, 18.5)).toBe(18)
+  })
+
+  it('yardage grows vs flush pack when multiple rows', () => {
+    const r = calculateThrowPillows({
+      formWidthIn: 18, formLengthIn: 18, quantity: 2, fabricWidthIn: 54,
+      pattern: 'horizontal',
+    })
+    expect(r.pack.rows).toBe(2)
+    expect(r.pack.lengthInches).toBe(36.5)
   })
 })

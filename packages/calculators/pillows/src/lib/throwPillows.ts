@@ -298,6 +298,39 @@ export function patternCellPitch(panelDimIn: number, repeatIn: number): number {
   return Math.max(panelDimIn, Math.ceil(panelDimIn / repeatIn - 1e-9) * repeatIn)
 }
 
+/**
+ * Cutting clearance / waste between adjacent nested panels (both axes).
+ * Included in pack pitch + yardage so totals stay honest.
+ */
+export const NEST_WASTE_GAP_IN = 0.5
+
+/**
+ * Origin-to-origin pitch for one nest cell: panel edge + waste gap,
+ * or larger when pattern repeat requires it.
+ */
+export function nestCellPitch(
+  panelDimIn: number,
+  repeatIn = 0,
+  gapIn = NEST_WASTE_GAP_IN,
+): number {
+  const minPitch = panelDimIn + Math.max(0, gapIn)
+  if (repeatIn <= 0) return minPitch
+  return Math.max(minPitch, patternCellPitch(panelDimIn, repeatIn))
+}
+
+/** Along-bolt (or across) span for `count` panels with pitch between origins. */
+export function nestSpanInches(count: number, panelDimIn: number, pitchIn: number): number {
+  if (count <= 0) return 0
+  return (count - 1) * pitchIn + panelDimIn
+}
+
+/** How many panels fit in `spanIn` with the given origin pitch. */
+export function nestCountAcross(spanIn: number, panelDimIn: number, pitchIn: number): number {
+  if (panelDimIn <= 0) return 1
+  if (panelDimIn > spanIn + 1e-9) return 1
+  return Math.max(1, Math.floor((spanIn - panelDimIn) / Math.max(pitchIn, 1e-9) + 1e-9) + 1)
+}
+
 export function packPanels(
   orientation: Orientation,
   panelsNeeded: number,
@@ -305,28 +338,32 @@ export function packPanels(
   hRepeatIn = 0,
   vRepeatIn = 0,
 ): PackResult {
-  const acrossPitch = patternCellPitch(orientation.acrossIn, hRepeatIn)
-  const alongPitch = patternCellPitch(orientation.alongIn, vRepeatIn)
-  const acrossCount = Math.max(1, Math.floor(fabricWidthIn / acrossPitch + 1e-9))
+  const acrossPitch = nestCellPitch(orientation.acrossIn, hRepeatIn)
+  const alongPitch = nestCellPitch(orientation.alongIn, vRepeatIn)
+  const acrossCount = nestCountAcross(fabricWidthIn, orientation.acrossIn, acrossPitch)
   const rows = Math.ceil(panelsNeeded / acrossCount)
-  const lengthInches = rows * alongPitch
+  const lengthInches = nestSpanInches(rows, orientation.alongIn, alongPitch)
   const exact = exactYards(lengthInches)
   const lastRowPanels = panelsNeeded - (rows - 1) * acrossCount
-  const leftoverAcrossIn = Math.max(0, fabricWidthIn - lastRowPanels * acrossPitch)
-  // leftoverStrip uses orientation dims; when patterned, approximate with pitches
-  const pitchOrient: Orientation = {
-    acrossIn: acrossPitch,
-    alongIn: alongPitch,
-    label: orientation.label,
-  }
-  const leftover = leftoverStrip(
-    pitchOrient,
-    panelsNeeded,
-    acrossCount,
-    rows,
-    lengthInches,
-    fabricWidthIn,
+  const leftoverAcrossIn = Math.max(
+    0,
+    fabricWidthIn - nestSpanInches(lastRowPanels, orientation.acrossIn, acrossPitch),
   )
+  // Side strip = unused width after a full acrossCount row (honest nest span, not count×pitch).
+  const fullRowSpan = nestSpanInches(acrossCount, orientation.acrossIn, acrossPitch)
+  const sideStrip = Math.max(0, fabricWidthIn - fullRowSpan)
+  const unusedInLastRow = Math.max(
+    0,
+    fullRowSpan - nestSpanInches(lastRowPanels, orientation.acrossIn, acrossPitch),
+  )
+  const leftoverWidth = sideStrip + unusedInLastRow
+  const leftover: LeftoverStrip | null =
+    leftoverWidth <= 1e-9
+      ? null
+      : {
+          widthIn: leftoverWidth,
+          lengthIn: sideStrip <= 1e-9 ? orientation.alongIn : lengthInches,
+        }
   return {
     orientation,
     panelsNeeded,

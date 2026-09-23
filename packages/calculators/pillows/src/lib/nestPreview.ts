@@ -9,7 +9,7 @@
  */
 
 import { dogEarPanelPolygon, type Point } from './dogEar'
-import { patternCellPitch, type PackResult } from './throwPillows'
+import { nestCellPitch, nestCountAcross, nestSpanInches, type PackResult } from './throwPillows'
 import type { BolsterCuts, BolsterNesting } from './bolsterPillows'
 
 export type NestPanelKind = 'throw-panel' | 'barrel' | 'end'
@@ -163,14 +163,16 @@ export function throwNestPlacements(
   const { acrossIn, alongIn } = pack.orientation
   const hR = opts.hRepeatIn ?? 0
   const vR = opts.vRepeatIn ?? 0
-  const acrossPitch = patternCellPitch(acrossIn, hR)
-  const alongPitch = patternCellPitch(alongIn, vR)
+  const acrossPitch = nestCellPitch(acrossIn, hR)
+  const alongPitch = nestCellPitch(alongIn, vR)
 
   // Pass 1: cell-centered grid from current cut sizes (pitch ≥ cut → gap ≥ 0).
   const panels: NestPanelPlacement[] = []
   for (let i = 0; i < pack.panelsNeeded; i++) {
     const row = Math.floor(i / pack.acrossCount)
     const col = i % pack.acrossCount
+    // Pitch cell = panel + waste (or pattern). Center in cell so gap sits between panels;
+    // pattern snap can still re-center onto repeat cells when safe.
     const cellX = col * acrossPitch
     const cellY = row * alongPitch
     panels.push({
@@ -195,6 +197,7 @@ export function throwNestPreview(
   opts: ThrowNestOpts = {},
 ): NestPreviewModel {
   const panels = throwNestPlacements(pack, fabricWidthIn, opts)
+  // Prefer pack length (includes waste gaps, no trailing half-cell); grow if snap moved panels down.
   const maxBottom =
     panels.length === 0
       ? pack.lengthInches
@@ -241,13 +244,14 @@ export function bolsterNestPreview(
         label: `barrel ${panels.filter((p) => p.kind === 'barrel').length + 1}`,
       })
     }
-    const free = fabricWidthIn - barrelsInRow * barrelAcrossPitch
-    const endsThisRow = Math.max(0, Math.floor(free / endPitch + 1e-9))
+    const usedAcross = nestSpanInches(barrelsInRow, nest.barrelAcrossIn, barrelAcrossPitch)
+    const free = Math.max(0, fabricWidthIn - usedAcross)
+    const endsThisRow = free + 1e-9 >= endD ? nestCountAcross(free, endD, endPitch) : 0
     const place = Math.min(endsThisRow, endsNeeded - endsPlaced)
     for (let e = 0; e < place; e++) {
       panels.push({
         kind: 'end',
-        x: barrelsInRow * barrelAcrossPitch + e * endPitch + (endPitch - endD) / 2,
+        x: usedAcross + e * endPitch + (endPitch - endD) / 2,
         y: y0 + (barrelAlongPitch - nest.barrelAlongBoltIn) / 2,
         w: endD,
         h: endD,
@@ -259,14 +263,14 @@ export function bolsterNestPreview(
 
   const endsRemaining = Math.max(0, endsNeeded - endsPlaced)
   if (endsRemaining > 0) {
-    const endAcross = Math.max(1, Math.floor(fabricWidthIn / endPitch + 1e-9))
+    const endAcross = nestCountAcross(fabricWidthIn, endD, endPitch)
     for (let i = 0; i < endsRemaining; i++) {
       const row = Math.floor(i / endAcross)
       const col = i % endAcross
       panels.push({
         kind: 'end',
         x: col * endPitch + (endPitch - endD) / 2,
-        y: nest.barrelUsedAlongIn + row * endAlongPitch,
+        y: nest.barrelUsedAlongIn + row * endAlongPitch + (endAlongPitch - endD) / 2,
         w: endD,
         h: endD,
         label: `end ${endsPlaced + i + 1}`,

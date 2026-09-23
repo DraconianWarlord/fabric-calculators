@@ -245,19 +245,6 @@ export function NestPreviewSvg({
               </g>
             )
           })}
-          {model.leftoverAcrossIn > 0.1 && (
-            <rect
-              x={pad + fabricW - s(model.leftoverAcrossIn)}
-              y={pad}
-              width={s(model.leftoverAcrossIn)}
-              height={len}
-              fill="none"
-              stroke={DIAGRAM_SR_BLUE}
-              strokeDasharray="3 3"
-              opacity={0.5}
-              style={{ vectorEffect: 'non-scaling-stroke', strokeWidth: 1 }}
-            />
-          )}
         </svg>
       </div>
       <div className="pillow-nest-captions">
