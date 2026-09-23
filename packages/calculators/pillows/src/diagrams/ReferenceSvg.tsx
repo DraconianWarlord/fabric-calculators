@@ -4,6 +4,7 @@ import {
   DIAGRAM_SR_BLUE,
   DIAGRAM_CUT_FILL,
   DIAGRAM_FINISHED_DASH,
+  DIAGRAM_FINISHED_STROKE_WIDTH,
 } from '@sailrite/calc-shell'
 import type { FillStyle } from '../lib/fillStyle'
 import { fromInches, type Unit } from '../lib/throwPillows'
@@ -55,7 +56,10 @@ function knifeEdgeSidePath(
   ].join(' ')
 }
 
-/** Form×Fill finished-pillow silhouette for left-stack reference — side / loft view (no seam). */
+/**
+ * Form×Fill loft silhouette for left-stack reference — side / loft thickness view.
+ * Mid stitch = pillow-join midline (NOT seam allowance). No SA dashed inset.
+ */
 export function ThrowReference(props: {
   formW: number
   formL: number
@@ -71,7 +75,7 @@ export function ThrowReference(props: {
   dogEarTrim?: boolean
   compact?: boolean
 }) {
-  // Dims kept for call-site stability; finished silhouette has no form/cut/fin labels.
+  // Dims kept for call-site stability; no form/cut/fin labels or SA overlay.
   void props.formW
   void props.formL
   void props.cutW
@@ -79,6 +83,7 @@ export function ThrowReference(props: {
   void props.finishedW
   void props.finishedL
   void props.unit
+  void props.seamAllowanceIn
   const { fillStyle } = props
   const compact = props.compact ?? true
   const loftR = throwLoftRatio(fillStyle)
@@ -101,6 +106,8 @@ export function ThrowReference(props: {
   const svgH = stageH + (compact ? 4 : 16)
   const cut = cutShapeSvgProps()
   const groundY = Math.min(svgH - (compact ? 6 : 10), cy + halfLoft + 6)
+  // Mid stitch: sewing plane where top + bottom panels meet (Style B SR Blue dashed) — not SA.
+  const stitchHalf = halfSpan * 0.88
 
   return (
     <svg
@@ -119,6 +126,15 @@ export function ThrowReference(props: {
         opacity={0.25}
       />
       <path d={knifeEdgeSidePath(cx, cy, halfSpan, halfLoft)} {...cut} />
+      <line
+        x1={cx - stitchHalf}
+        y1={cy}
+        x2={cx + stitchHalf}
+        y2={cy}
+        stroke={DIAGRAM_SR_BLUE}
+        strokeWidth={DIAGRAM_FINISHED_STROKE_WIDTH}
+        strokeDasharray={DIAGRAM_FINISHED_DASH}
+      />
     </svg>
   )
 }
@@ -272,3 +288,24 @@ export function CutFinishedKey() {
   )
 }
 
+/** HTML key under throw side/loft drawings — mid stitch (join), not fabric-plate SA. */
+export function ThrowLoftKey() {
+  return (
+    <div className="pillow-ref-key text-xs text-base-content/60" aria-hidden="true">
+      <span className="inline-flex items-center gap-1">
+        <svg width="14" height="8" viewBox="0 0 14 8" aria-hidden="true">
+          <line
+            x1="0"
+            y1="4"
+            x2="14"
+            y2="4"
+            stroke={DIAGRAM_SR_BLUE}
+            strokeWidth={1.5}
+            strokeDasharray={DIAGRAM_FINISHED_DASH}
+          />
+        </svg>
+        Mid stitch (top + bottom join)
+      </span>
+    </div>
+  )
+}

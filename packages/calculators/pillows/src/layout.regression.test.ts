@@ -117,14 +117,14 @@ describe('pillows layout regressions', () => {
     expect(referenceSvg).toMatch(/cutShapeSvgProps/)
     expect(referenceSvg).toMatch(/finishedShapeSvgProps/)
     expect(referenceSvg).toMatch(/CutFinishedKey/)
-    expect(referenceSvg).not.toMatch(/ThrowLoftKey/)
+    expect(referenceSvg).toMatch(/ThrowLoftKey/)
     expect(referenceSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_SR_BLUE|DIAGRAM_CUT_FILL/)
     expect(nestPreviewSvg).toMatch(/DIAGRAM_FINISHED_DASH|strokeDasharray/)
     expect(nestPreviewSvg).toMatch(/insetPolygon|seamAllowanceIn/)
-    // Nest cut panels keep dashed SA inset; throw loft is finished silhouette (no mid stitch)
+    // Nest cut panels keep dashed SA inset; throw loft uses mid stitch (join), not SA inset
     expect(nestPreviewSvg).toMatch(/throwSeamAllowanceOutline|seamAllowanceIn|insetPolygon/)
-    expect(pageTsx).toMatch(/isBolster \? <CutFinishedKey \/> : null/)
+    expect(pageTsx).toMatch(/isBolster \? <CutFinishedKey \/> : <ThrowLoftKey \/>/)
     expect(pageTsx).not.toMatch(/stroke="#e75053"/)
     expect(referenceSvg).not.toMatch(/stroke="#e75053"/)
     expect(pageCss).toMatch(/\.diag-label-inner\s*\{[^}]*fill:\s*var\(--color-primary/)
@@ -191,15 +191,21 @@ describe('pillows layout regressions', () => {
     expect(referenceSvg).toMatch(/function knifeEdgeSidePath/)
     expect(referenceSvg).toMatch(/export function FillStyleThumb[\s\S]*?knifeEdgeSidePath/)
     expect(referenceSvg).toMatch(/export function ThrowReference[\s\S]*?knifeEdgeSidePath/)
-    // Large throw loft is finished pillow (no mid stitch / form-cut-fin labels)
-    expect(referenceSvg).not.toMatch(
-      /export function ThrowReference[\s\S]*?stitchHalf[\s\S]*?export function BolsterReference/,
+    // Mid stitch on loft midline (thumbs + large); no form/cut/fin labels; no SA inset on loft
+    expect(referenceSvg).toMatch(
+      /export function ThrowReference[\s\S]*?stitchHalf[\s\S]*?strokeDasharray=\{DIAGRAM_FINISHED_DASH\}/,
     )
     expect(referenceSvg).toMatch(
       /export function FillStyleThumb[\s\S]*?stitchHalf[\s\S]*?strokeDasharray=\{DIAGRAM_FINISHED_DASH\}/,
     )
     expect(referenceSvg).not.toMatch(
       /export function ThrowReference[\s\S]*?finHalfSpan[\s\S]*?export function BolsterReference/,
+    )
+    expect(referenceSvg).not.toMatch(
+      /export function ThrowReference[\s\S]*?insetPolygon[\s\S]*?export function BolsterReference/,
+    )
+    expect(referenceSvg).not.toMatch(
+      /export function ThrowReference[\s\S]*?finishedShapeSvgProps[\s\S]*?export function BolsterReference/,
     )
     expect(referenceSvg).not.toMatch(
       /export function FillStyleThumb[\s\S]*?finScale[\s\S]*?export function CutFinishedKey/,
