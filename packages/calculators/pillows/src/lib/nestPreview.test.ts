@@ -75,4 +75,76 @@ describe('nest preview panel counts', () => {
     expect(x + 5).toBeCloseTo(9, 5) // hOff 3 + 6
     expect(y).toBeCloseTo(7, 5)
   })
+
+  it('non-square 20×16: H vs V pattern direction changes pack (guards square-only illusion)', () => {
+    const base = {
+      formWidthIn: 20,
+      formLengthIn: 16,
+      quantity: 2,
+      fabricWidthIn: 54,
+    }
+    const h = calculateThrowPillows({ ...base, pattern: 'horizontal' })
+    const v = calculateThrowPillows({ ...base, pattern: 'vertical' })
+    expect(h.pack.orientation.label).not.toBe(v.pack.orientation.label)
+    expect(h.pack.lengthInches).not.toBe(v.pack.lengthInches)
+    expect(h.pack.acrossCount).not.toBe(v.pack.acrossCount)
+    const mh = throwNestPreview(h.pack, 54)
+    const mv = throwNestPreview(v.pack, 54)
+    expect(mh.panels[0]!.w).not.toBe(mv.panels[0]!.w)
+    expect(mh.panels.map((p) => [p.x, p.y])).not.toEqual(mv.panels.map((p) => [p.x, p.y]))
+  })
+
+  it('non-square 20×16: H-only vs V-only repeat expands pitch and re-centers differently', () => {
+    const base = {
+      formWidthIn: 20,
+      formLengthIn: 16,
+      quantity: 2,
+      fabricWidthIn: 54,
+      pattern: 'horizontal' as const,
+    }
+    const hOnly = calculateThrowPillows({ ...base, hRepeatIn: 12, vRepeatIn: 0 })
+    const vOnly = calculateThrowPillows({ ...base, hRepeatIn: 0, vRepeatIn: 12 })
+    // H repeat expands across pitch (20→24); V expands along (16→24)
+    expect(hOnly.pack.lengthInches).toBe(32) // 2 rows × 16
+    expect(vOnly.pack.lengthInches).toBe(48) // 2 rows × 24
+    expect(hOnly.pack.lengthInches).not.toBe(vOnly.pack.lengthInches)
+
+    const mh = throwNestPreview(hOnly.pack, 54, { hRepeatIn: 12, vRepeatIn: 0 })
+    const mv = throwNestPreview(vOnly.pack, 54, { hRepeatIn: 0, vRepeatIn: 12 })
+    const centersH = mh.panels.map((p) => [p.x + p.w / 2, p.y + p.h / 2])
+    const centersV = mv.panels.map((p) => [p.x + p.w / 2, p.y + p.h / 2])
+    expect(centersH).not.toEqual(centersV)
+
+    // V-only: panel centers sit on horizontal stripe centers
+    for (const [, cy] of centersV) {
+      const frac = (cy / 12) % 1
+      expect(Math.abs(frac - 0.5)).toBeLessThan(1e-6)
+    }
+    // H-only: X on stripe centers when clamp allows; else edge-clamped
+    const hOff = patternHOffset(54, 12)
+    for (const [cx] of centersH) {
+      const frac = ((cx - hOff) / 12) % 1
+      const onCell = Math.abs(frac - 0.5) < 1e-6
+      const clampedEdge = cx <= 10 + 1e-6 // half of 20″ panel at x≈0
+      expect(onCell || clampedEdge).toBe(true)
+    }
+  })
+
+  it('square 18×18: H vs V direction alone is identical (documents square illusion)', () => {
+    const base = {
+      formWidthIn: 18,
+      formLengthIn: 18,
+      quantity: 2,
+      fabricWidthIn: 54,
+    }
+    const h = calculateThrowPillows({ ...base, pattern: 'horizontal' })
+    const v = calculateThrowPillows({ ...base, pattern: 'vertical' })
+    expect(h.pack.lengthInches).toBe(v.pack.lengthInches)
+    expect(h.pack.acrossCount).toBe(v.pack.acrossCount)
+    const mh = throwNestPreview(h.pack, 54)
+    const mv = throwNestPreview(v.pack, 54)
+    expect(mh.panels.map((p) => [p.x, p.y, p.w, p.h])).toEqual(
+      mv.panels.map((p) => [p.x, p.y, p.w, p.h]),
+    )
+  })
 })

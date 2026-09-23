@@ -51,10 +51,11 @@ describe('pillows layout regressions', () => {
     expect(pageTsx).not.toMatch(/radio radio-sm radio-primary/)
   })
 
-  it('yardage shop CTA is sole solid primary ≥44px; header Shop outline + hidden on mobile', () => {
-    expect(pageTsx).toMatch(/btn btn-primary min-h-11/)
-    expect(pageTsx.match(/btn-primary/g)?.length).toBeGreaterThanOrEqual(1)
+  it('yardage Shop is outline (not dual primary with header); header Shop outline + hidden on mobile', () => {
+    expect(pageTsx).toMatch(/btn btn-outline min-h-11/)
     expect(pageTsx).toMatch(/shopFabricYardsLabel/)
+    // Results Shop must not be solid primary (header already has Shop)
+    expect(pageTsx).not.toMatch(/className="btn btn-primary min-h-11"/)
     expect(headerTsx).toMatch(/Shop Sailrite/)
     expect(headerTsx).toMatch(/btn btn-outline/)
     expect(headerTsx).toMatch(/hidden[\s\S]*?min-\[801px\]:inline-flex/)
@@ -135,5 +136,22 @@ describe('pillows layout regressions', () => {
     expect(webStyles).toMatch(/--color-error:\s*#e75053/)
     expect(tokensCss).toMatch(/--sr-action:\s*#24285e/)
     expect(tokensCss).toMatch(/--sr-danger:\s*#e75053/)
+  })
+
+  it('nest captions are HTML outside SVG (no viewBox-scaled text labels)', () => {
+    expect(nestPreviewSvg).toMatch(/pillow-nest-frame/)
+    expect(nestPreviewSvg).toMatch(/pillow-nest-captions/)
+    expect(nestPreviewSvg).toMatch(/text-xs/)
+    expect(nestPreviewSvg).not.toMatch(/<text[\s\S]*bolt/i)
+    expect(nestPreviewSvg).not.toMatch(/fontSize=\{Math\.max/)
+  })
+
+  it('left stack reference is after pattern (secondary) with scroll padding', () => {
+    const refAt = pageTsx.lastIndexOf('reference')
+    const patternAt = pageTsx.lastIndexOf('\n                pattern\n')
+    expect(patternAt).toBeGreaterThan(0)
+    expect(refAt).toBeGreaterThan(patternAt)
+    expect(pageCss).toMatch(/scroll-padding-bottom/)
+    expect(pageCss).toMatch(/padding-bottom:\s*2rem/)
   })
 })

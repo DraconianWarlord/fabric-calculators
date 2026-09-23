@@ -267,75 +267,6 @@ export default function PillowsPage() {
             </div>
           </section>
 
-          {/* Compact Form×Fill reference strip (secondary — not hero) */}
-          <section className="card bg-base-100 border border-base-300 shadow-none">
-            <div className="card-body gap-3 p-4">
-              <h2 className="card-title mb-0 text-xs font-bold uppercase tracking-wider text-base-content/60">
-                reference
-              </h2>
-              <div className="ref-thumbs" role="group" aria-label="Pillow form">
-                <button
-                  type="button"
-                  className="ref-thumb"
-                  aria-current={pillowTypeId === 'throw' ? 'true' : undefined}
-                  onClick={() => selectPillowType('throw')}
-                >
-                  <ThrowFormThumb selected={pillowTypeId === 'throw'} />
-                  Throw
-                </button>
-                <button
-                  type="button"
-                  className="ref-thumb"
-                  aria-current={pillowTypeId === 'bolster' ? 'true' : undefined}
-                  onClick={() => selectPillowType('bolster')}
-                >
-                  <BolsterFormThumb selected={pillowTypeId === 'bolster'} />
-                  Bolster
-                </button>
-              </div>
-              <div className="ref-thumbs ref-thumbs--fill" role="group" aria-label="Fill comparison">
-                {(['flat', 'standard', 'plump'] as const).map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    className="ref-thumb"
-                    aria-current={fillStyle === val ? 'true' : undefined}
-                    onClick={() => setFillStyle(val)}
-                  >
-                    <FillStyleThumb fill={val} selected={fillStyle === val} />
-                    {val}
-                  </button>
-                ))}
-              </div>
-              {isBolster ? (
-                <BolsterReference
-                  diameterIn={formWidthIn}
-                  lengthIn={formLengthIn}
-                  endDiameterIn={bolsterResult.cuts.endDiameterIn}
-                  barrelAlongIn={bolsterResult.cuts.barrelAlongIn}
-                  barrelCircIn={bolsterResult.cuts.barrelCircIn}
-                  unit={unit}
-                  fillStyle={fillStyle}
-                  compact
-                />
-              ) : (
-                <ThrowReference
-                  formW={formWidthIn}
-                  formL={formLengthIn}
-                  cutW={throwResult.cutWidthIn}
-                  cutL={throwResult.cutLengthIn}
-                  finishedW={throwResult.finishedWidthIn}
-                  finishedL={throwResult.finishedLengthIn}
-                  unit={unit}
-                  fillStyle={fillStyle}
-                  dogEarTrim={dogEarTrim}
-                  compact
-                />
-              )}
-              <CutFinishedKey />
-            </div>
-          </section>
-
           <section className="card bg-base-100 border border-base-300 shadow-none">
             <div className="card-body gap-0 p-4">
               <h2 className="card-title mb-2 text-xs font-bold uppercase tracking-wider text-base-content/60">
@@ -564,6 +495,76 @@ export default function PillowsPage() {
               </div>
             </div>
           </section>
+
+          {/* Compact Form×Fill reference strip (secondary — not hero) */}
+          <section className="card bg-base-100 border border-base-300 shadow-none">
+            <div className="card-body gap-3 p-4">
+              <h2 className="card-title mb-0 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                reference
+              </h2>
+              <div className="ref-thumbs" role="group" aria-label="Pillow form">
+                <button
+                  type="button"
+                  className="ref-thumb"
+                  aria-current={pillowTypeId === 'throw' ? 'true' : undefined}
+                  onClick={() => selectPillowType('throw')}
+                >
+                  <ThrowFormThumb selected={pillowTypeId === 'throw'} />
+                  Throw
+                </button>
+                <button
+                  type="button"
+                  className="ref-thumb"
+                  aria-current={pillowTypeId === 'bolster' ? 'true' : undefined}
+                  onClick={() => selectPillowType('bolster')}
+                >
+                  <BolsterFormThumb selected={pillowTypeId === 'bolster'} />
+                  Bolster
+                </button>
+              </div>
+              <div className="ref-thumbs ref-thumbs--fill" role="group" aria-label="Fill comparison">
+                {(['flat', 'standard', 'plump'] as const).map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    className="ref-thumb"
+                    aria-current={fillStyle === val ? 'true' : undefined}
+                    onClick={() => setFillStyle(val)}
+                  >
+                    <FillStyleThumb fill={val} selected={fillStyle === val} />
+                    {val}
+                  </button>
+                ))}
+              </div>
+              {isBolster ? (
+                <BolsterReference
+                  diameterIn={formWidthIn}
+                  lengthIn={formLengthIn}
+                  endDiameterIn={bolsterResult.cuts.endDiameterIn}
+                  barrelAlongIn={bolsterResult.cuts.barrelAlongIn}
+                  barrelCircIn={bolsterResult.cuts.barrelCircIn}
+                  unit={unit}
+                  fillStyle={fillStyle}
+                  compact
+                />
+              ) : (
+                <ThrowReference
+                  formW={formWidthIn}
+                  formL={formLengthIn}
+                  cutW={throwResult.cutWidthIn}
+                  cutL={throwResult.cutLengthIn}
+                  finishedW={throwResult.finishedWidthIn}
+                  finishedL={throwResult.finishedLengthIn}
+                  unit={unit}
+                  fillStyle={fillStyle}
+                  dogEarTrim={dogEarTrim}
+                  compact
+                />
+              )}
+              <CutFinishedKey />
+            </div>
+          </section>
+
         </aside>
 
         {/* MIDDLE — nest preview = focus (Nesting bolt parity) */}
@@ -608,7 +609,7 @@ export default function PillowsPage() {
                   : `${quantity} pillow${quantity === 1 ? '' : 's'} → ${panelsNeeded} panels (throw)`}
               </p>
               <a
-                className="btn btn-primary min-h-11"
+                className="btn btn-outline min-h-11"
                 href={SHOP.fabric}
                 target="_blank"
                 rel="noopener noreferrer"
