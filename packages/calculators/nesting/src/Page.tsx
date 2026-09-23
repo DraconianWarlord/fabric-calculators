@@ -324,6 +324,8 @@ export default function NestingPage() {
   const [vRepeatDraft, setVRepeatDraft] = useState<number | ''>(0)
   const [nestCycleIndex, setNestCycleIndex] = useState(0)
   const [nestHint, setNestHint] = useState<string | null>(null)
+  const [autoNestBusy, setAutoNestBusy] = useState(false)
+  const [autoNestShowSpinner, setAutoNestShowSpinner] = useState(false)
   const [actionHint, setActionHint] = useState<string | null>(null)
   const [openFabric, setOpenFabric] = useState(true)
   const [openAdd, setOpenAdd] = useState(true)
@@ -891,17 +893,31 @@ export default function NestingPage() {
     mq.addEventListener('change', sync)
     return () => mq.removeEventListener('change', sync)
   }, [])
-  function runAutoNest() {
-    if (panels.length === 0) return
-    const candidates = autoNestCandidates(panels, fabricWidthIn, 0.25, effectiveH, effectiveV)
-    if (candidates.length === 0) return
-    const idx = nestCycleIndex % candidates.length
-    const layout = candidates[idx]
-    setPanels((prev) => applyNestLayoutById(prev, layout))
-    const remapped = applyNestLayoutById(panels, layout)
-    const usedYd = exactYards(usedLengthInches(remapped), waste)
-    setNestHint(`Nest ${idx + 1} of ${candidates.length} · ${usedYd.toFixed(2)} yd`)
-    setNestCycleIndex((idx + 1) % candidates.length)
+  async function runAutoNest() {
+    if (panels.length === 0 || autoNestBusy) return
+    setAutoNestBusy(true)
+    const spinnerTimer = window.setTimeout(() => setAutoNestShowSpinner(true), 200)
+    try {
+      // Yield so React can paint disabled/busy UI before heavy sync work.
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve())
+        })
+      })
+      const candidates = autoNestCandidates(panels, fabricWidthIn, 0.25, effectiveH, effectiveV)
+      if (candidates.length === 0) return
+      const idx = nestCycleIndex % candidates.length
+      const layout = candidates[idx]
+      setPanels((prev) => applyNestLayoutById(prev, layout))
+      const remapped = applyNestLayoutById(panels, layout)
+      const usedYd = exactYards(usedLengthInches(remapped), waste)
+      setNestHint(`Nest ${idx + 1} of ${candidates.length} · ${usedYd.toFixed(2)} yd`)
+      setNestCycleIndex((idx + 1) % candidates.length)
+    } finally {
+      window.clearTimeout(spinnerTimer)
+      setAutoNestShowSpinner(false)
+      setAutoNestBusy(false)
+    }
   }
 
   function clearAllPanels() {
@@ -1532,9 +1548,14 @@ export default function NestingPage() {
               className="btn btn-outline w-full auto-nest add-panel-auto-nest mt-4"
               title="Cycle through ranked nest layouts"
               onClick={runAutoNest}
-              disabled={panels.length === 0}
+              disabled={panels.length === 0 || autoNestBusy}
+              aria-busy={autoNestBusy}
+              aria-label={autoNestBusy ? 'Nesting…' : 'Auto-Nest'}
             >
-              Auto-Nest
+              {autoNestShowSpinner && (
+                <span className="loading loading-spinner loading-sm" aria-hidden />
+              )}
+              {autoNestShowSpinner ? 'Nesting…' : 'Auto-Nest'}
             </button>
             {nestHint && <p className="hint nest-hint text-xs font-semibold text-primary mt-1">{nestHint}</p>}
             {!nestHint && panels.length > 0 && (
@@ -1551,9 +1572,14 @@ export default function NestingPage() {
                 className="btn btn-outline w-full auto-nest"
                 title="Cycle through ranked nest layouts"
                 onClick={runAutoNest}
-                disabled={panels.length === 0}
+                disabled={panels.length === 0 || autoNestBusy}
+                aria-busy={autoNestBusy}
+                aria-label={autoNestBusy ? 'Nesting…' : 'Auto-Nest'}
               >
-                Auto-Nest
+                {autoNestShowSpinner && (
+                  <span className="loading loading-spinner loading-sm" aria-hidden />
+                )}
+                {autoNestShowSpinner ? 'Nesting…' : 'Auto-Nest'}
               </button>
               {nestHint && <p className="hint nest-hint text-xs font-semibold text-primary mt-1">{nestHint}</p>}
             </div>

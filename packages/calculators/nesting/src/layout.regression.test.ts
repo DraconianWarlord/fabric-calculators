@@ -97,6 +97,15 @@ describe('layout regressions', () => {
     expect(pageCss).toMatch(/\.add-panel-auto-nest\s*\{[^}]*margin-top:\s*1\.25rem/)
   })
 
+  it('Auto-Nest shows Daisy spinner while busy (after paint yield)', () => {
+    expect(pageTsx).toMatch(/autoNestBusy/)
+    expect(pageTsx).toMatch(/autoNestShowSpinner/)
+    expect(pageTsx).toMatch(/loading loading-spinner loading-sm/)
+    expect(pageTsx).toMatch(/aria-busy=\{autoNestBusy\}/)
+    expect(pageTsx).toMatch(/disabled=\{panels\.length === 0 \|\| autoNestBusy\}/)
+    expect(pageTsx).toMatch(/btn btn-outline w-full auto-nest/)
+  })
+
   it('Selected Rotate/Duplicate/Flip use Daisy ghost buttons (≥44px)', () => {
     expect(pageTsx).toMatch(/btn btn-sm btn-ghost min-h-11[\s\S]*?Rotate 90/)
     expect(pageTsx).toMatch(/btn btn-sm btn-ghost min-h-11[\s\S]*?Duplicate/)
